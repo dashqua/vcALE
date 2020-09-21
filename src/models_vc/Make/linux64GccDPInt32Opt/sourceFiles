@@ -1,2 +1,3 @@
 SOURCE = \
-solidModel/solidModel.C 
+solidModel/solidModel.C \
+aleModel/aleModel.C 

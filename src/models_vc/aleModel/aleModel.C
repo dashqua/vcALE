@@ -45,67 +45,7 @@ aleModel::aleModel
 )
 :
     mesh_(vm),
-
-    P_
-    (
-        IOobject
-        (
-            "P",
-            F.time().timeName(),
-            F.db(),
-            IOobject::NO_READ,
-            IOobject::NO_WRITE
-        ),
-        F.mesh(),
-        dimensionedTensor("P", dimensionSet(1,-1,-2,0,0,0,0), tensor::zero)
-    ),
-
-    one_
-    (
-        IOobject
-        (
-            "one",
-            F.time().timeName(),
-            F.db(),
-            IOobject::NO_READ,
-            IOobject::NO_WRITE
-        ),
-        F.mesh(),
-        1.0
-    ),
-
-    p_
-    (
-        IOobject
-        (
-            "p",
-            F.time().timeName(),
-            F.db(),
-            IOobject::NO_READ,
-            IOobject::NO_WRITE
-        ),
-        F.mesh(),
-        dimensionedScalar("p", dimensionSet(1,-1,-2,0,0,0,0), 0.0)
-    ),
-
-    energyAlgorithm_
-    (
-        IOobject
-        (
-            "energyAlgorithm",
-            F.time().timeName(),
-            F.db(),
-            IOobject::NO_READ,
-            IOobject::NO_WRITE
-        ),
-        F.mesh(),
-        dimensionedScalar
-        (
-            "energyAlgorithm",
-            dimensionSet(1,-1,-2,0,0,0,0),
-            0.0
-        )
-    ),
+    pMesh_(mesh_),
 
     model_(dict.lookup("aleModel")),
 
@@ -118,62 +58,24 @@ aleModel::aleModel
 
     Up_ (sqrt((lambda_+2.0*mu_)/rho_)),
     Us_ (sqrt(mu_/rho_))
-{
-    p_.write();
-}
+{}
 
 
 // * * * * * * * * * * * * * * * Destructor  * * * * * * * * * * * * * * * * //
-aleModel::~solidModel()
+aleModel::~aleModel()
 {}
 
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
 void aleModel::correct()
-{
-    const pointMesh& pMesh_ = P_.mesh();
-    const objectRegistry& db = pMesh_.thisDb();
-    const pointTensorField& H__ = db.lookupObject<pointTensorField>("H");
-    const pointTensorField& F__ = db.lookupObject<pointTensorField>("F");
-    const pointScalarField& J__ = db.lookupObject<pointScalarField>("J");
-
-    const tensorField& H_ = H__.internalField();
-    const tensorField& F_ = F__.internalField();
-    const scalarField& J_ = J__.internalField();
-
-    forAll(mesh_.points(), nodeID)
-    {
-        p_[nodeID] = kappa_.value()*(J_[nodeID]-1.0);
-
-        P_[nodeID] =
-            mu_.value()*pow(J_[nodeID],(-2.0/3.0))*F_[nodeID]
-          - ((mu_.value()/3.0)*pow(J_[nodeID],(-5.0/3.0))*(F_[nodeID] && F_[nodeID])*H_[nodeID])
-          + p_[nodeID]*H_[nodeID];
-    }
-
-}
+{}
 
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 void aleModel::printMaterialProperties()
 {
-    Info<< "\nPrinting material properties ..." << nl
-        << "Constitutive model = " << model_ << nl
-        << "Density = " << rho_.value() << " " << rho_.dimensions() << nl
-        << "Young's modulus = " << E_.value() << " " << E_.dimensions() << nl
-        << "Poisson's ratio = " << nu_.value() << " " << nu_.dimensions() << nl
-        << "Lame's first parameter lambda = " << lambda_.value() << " "
-        << lambda_.dimensions() << nl
-        << "Lame's second parameter mu = " << mu_.value() << " "
-        << mu_.dimensions() << nl
-        << "Bulk modulus kappa = " << kappa_.value() << " "
-        << kappa_.dimensions() << nl
-        << "Linear pressure wave speed = " << Up_.value() << " "
-        << Up_.dimensions() << nl
-        << "Linear shear wave speed = " << Us_.value() << " "
-        << Us_.dimensions() << endl;
 }
 
 

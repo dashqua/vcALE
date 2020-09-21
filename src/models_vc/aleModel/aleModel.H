@@ -50,19 +50,10 @@ class aleModel
         // Mesh
          const fvMesh& mesh_;
 
-        //- First Piola Kirchhoff stress tensor
-        pointTensorField P_;
-
-        //- First Piola Kirchhoff stress tensor
-        pointScalarField one_;
-
-        //- Pressure
-        pointScalarField p_;
-
-        //- Energy of algorithm
-        pointScalarField energyAlgorithm_;
-
-       //- Constitutive model
+  // pointMesh
+  const pointMesh pMesh_;
+  
+        //- Constitutive model
         word model_;
 
         //- Density
@@ -94,7 +85,7 @@ private:
     // Private Member Functions
 
         //- Disallow default bitwise copy construct
-        aleModel(const solidModel&);
+        aleModel(const aleModel&);
 
         //- Disallow default bitwise assignment
         void operator=(const aleModel&);
@@ -105,7 +96,7 @@ public:
     TypeName("aleModel");
 
 
-  // Constructors
+  //- Constructor
   aleModel
   (
    const pointTensorField&,
@@ -117,59 +108,39 @@ public:
   virtual ~aleModel();
 
 
-    // Member functions
+  // Member functions
 
-        // Access
+  // Access
 
-            const pointTensorField& piola() const
-            {
-                return P_;
-            }
+  const dimensionedScalar& Up() const
+  {
+    return Up_;
+  }
 
-            const pointScalarField& pressure() const
-            {
-                return p_;
-            }
+  const dimensionedScalar& Us() const
+  {
+    return Us_;
+  }
 
-           const pointScalarField& energyAlgorithm() const
-            {
-                return energyAlgorithm_;
-            }
 
-            const dimensionedScalar& density() const
-            {
-                return rho_;
-            }
+  // ALE mappings
 
-            const dimensionedScalar& lambda() const
-            {
-                return lambda_;
-            }
+  //- Motion Mapping
+  const pointVectorField motMap(pointVectorField& x)
+  {
+    pointVectorField motMap
+      (
+       IOobject("motMap", mesh_),
+       pMesh_,
+       dimensionedVector("motMap", dimensionSet(0,1,0,0,0,0,0), vector::zero)
+       );
 
-            const dimensionedScalar& mu() const
-            {
-                return mu_;
-            }
+    return motMap;
+  }
 
-            const dimensionedScalar& nu() const
-            {
-                return nu_;
-            }
-
-            const dimensionedScalar& kappa() const
-            {
-                return kappa_;
-            }
-
-            const dimensionedScalar& Up() const
-            {
-                return Up_;
-            }
-
-            const dimensionedScalar& Us() const
-            {
-                return Us_;
-            }
+  //- Deformation Gradient
+  
+  //
 
   // Edit
 
