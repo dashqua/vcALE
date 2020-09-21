@@ -1,3 +1,4 @@
 solidModel/solidModel.C
+aleModel/aleModel.C
 
 LIB = $(FOAM_USER_LIBBIN)/libModels_vc
