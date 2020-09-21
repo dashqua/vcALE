@@ -80,6 +80,18 @@ class aleModel
         //- Shear wave speed
         dimensionedScalar Us_;
 
+  //- ALE Motion Mapping
+  pointVectorField motMap_;
+
+  //- ALE Deformation Gradient
+  pointTensorField defGrad_;
+  
+  //- ALE pressure wave speed
+  dimensionedScalar aleUp_;
+
+  //- ALE Shear wave speed
+  dimensionedScalar aleUs_;
+
 private:
 
     // Private Member Functions
@@ -126,19 +138,28 @@ public:
   // ALE mappings
 
   //- Motion Mapping
-  const pointVectorField motMap(pointVectorField& x)
+  pointVectorField motMap()
   {
-    pointVectorField motMap
-      (
-       IOobject("motMap", mesh_),
-       pMesh_,
-       dimensionedVector("motMap", dimensionSet(0,1,0,0,0,0,0), vector::zero)
-       );
-
-    return motMap;
+    return motMap_;
   }
 
   //- Deformation Gradient
+  pointTensorField defGrad()
+  {
+    return defGrad_;
+  }
+
+  //- Jacobian
+  pointScalarField jacobian()
+  {
+    return det(defGrad_);
+  }
+
+  //- CoFactor
+  pointTensorField coFactor()
+  {
+    return jacobian() * inv(defGrad_.T());
+  }
   
   //
 

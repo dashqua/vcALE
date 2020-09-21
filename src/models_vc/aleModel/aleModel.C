@@ -56,9 +56,30 @@ aleModel::aleModel
     lambda_(nu_*E_/((1.0 + nu_)*(1.0 - 2.0*nu_))),
     kappa_(lambda_ + (2.0/3.0)*mu_),
 
-    Up_ (sqrt((lambda_+2.0*mu_)/rho_)),
-    Us_ (sqrt(mu_/rho_))
-{}
+    Up_(sqrt((lambda_+2.0*mu_)/rho_)),
+    Us_(sqrt(mu_/rho_)),
+
+    motMap_
+    (
+     IOobject("motMap", mesh_),
+     pMesh_,
+     dimensionedVector("motMap", dimensionSet(0,1,0,0,0,0,0), vector::zero)
+    ),
+
+    defGrad_
+    (
+     IOobject("defGrad", mesh_),
+     pMesh_,
+     Foam::tensor::I
+    )
+{
+
+  // The structure of the solidModel is kept so far.
+  // The new wave speeds are initialized here.
+
+  //aleUp_ = inv(this->jacobian(pMesh_.points()));
+  //aleUs_ = aleUp_;
+}
 
 
 // * * * * * * * * * * * * * * * Destructor  * * * * * * * * * * * * * * * * //
