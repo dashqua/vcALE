@@ -1,0 +1,4 @@
+SOURCE = \
+dualMesh/dualMesh.C \
+operations/operations.C \
+mechanics/mechanics.C 
