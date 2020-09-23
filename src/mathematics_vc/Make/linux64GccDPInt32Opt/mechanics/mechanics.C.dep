@@ -7,7 +7,7 @@ $(WM_PROJECT_DIR)/src/finiteVolume/lnInclude/surfaceFields.H \
 $(WM_PROJECT_DIR)/src/OpenFOAM/lnInclude/pointFields.H \
 $(WM_PROJECT_DIR)/src/finiteVolume/lnInclude/fvc.H \
 lnInclude/operations.H \
-/home/thomas/OpenFOAM/explicitSolidDynamics_vc/src/mathematics_vc/../schemes_vc/lnInclude/interpolationSchemes.H \
+/home/thomas/OpenFOAM/vcALE/src/mathematics_vc/../schemes_vc/lnInclude/interpolationSchemes.H \
 $(WM_PROJECT_DIR)/src/OpenFOAM/lnInclude/polyMesh.H \
 $(WM_PROJECT_DIR)/src/OpenFOAM/lnInclude/lduMesh.H \
 $(WM_PROJECT_DIR)/src/OpenFOAM/lnInclude/primitiveMesh.H \
@@ -698,7 +698,7 @@ $(WM_PROJECT_DIR)/src/finiteVolume/lnInclude/surfaceFields.H :
 $(WM_PROJECT_DIR)/src/OpenFOAM/lnInclude/pointFields.H :
 $(WM_PROJECT_DIR)/src/finiteVolume/lnInclude/fvc.H :
 lnInclude/operations.H :
-/home/thomas/OpenFOAM/explicitSolidDynamics_vc/src/mathematics_vc/../schemes_vc/lnInclude/interpolationSchemes.H :
+/home/thomas/OpenFOAM/vcALE/src/mathematics_vc/../schemes_vc/lnInclude/interpolationSchemes.H :
 $(WM_PROJECT_DIR)/src/OpenFOAM/lnInclude/polyMesh.H :
 $(WM_PROJECT_DIR)/src/OpenFOAM/lnInclude/lduMesh.H :
 $(WM_PROJECT_DIR)/src/OpenFOAM/lnInclude/primitiveMesh.H :

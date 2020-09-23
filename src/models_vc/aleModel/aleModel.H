@@ -37,6 +37,8 @@ SourceFiles
 
 #include "fvMesh.H"
 #include "pointFields.H"
+#include "vectorList.H"
+#include "interpolationSchemes.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -80,18 +82,26 @@ class aleModel
         //- Shear wave speed
         dimensionedScalar Us_;
 
+  //- (for ALE) material normals
+  const vectorList N_;
+  
   //- ALE Motion Mapping
   pointVectorField motMap_;
 
+  //- Time derivative of motMap
+  pointVectorField w_;
+  
   //- ALE Deformation Gradient
   pointTensorField defGrad_;
   
   //- ALE pressure wave speed
-  dimensionedScalar aleUp_;
-
+  //dimensionedScalar aleUp_;
+  pointScalarField aleUp_;
+  
   //- ALE Shear wave speed
-  dimensionedScalar aleUs_;
-
+  //dimensionedScalar aleUs_;
+  pointScalarField aleUs_;
+  
 private:
 
     // Private Member Functions
@@ -113,7 +123,8 @@ public:
   (
    const pointTensorField&,
    const dictionary&,
-   const fvMesh&
+   const fvMesh&,
+   const vectorList&
    );
 
   //- Destructor
@@ -143,6 +154,12 @@ public:
     return motMap_;
   }
 
+  //- Time derivative of motMap
+  pointVectorField w()
+  {
+    return w_;
+  }
+  
   //- Deformation Gradient
   pointTensorField defGrad()
   {
@@ -155,14 +172,40 @@ public:
     return det(defGrad_);
   }
 
+  //- inverse of the Jacobian
+  pointScalarField invJacobian()
+  {
+    pointScalarField jac = jacobian();
+    forAll(jac, x){ jac[x] = 1./jac[x]; }
+    return jac;
+  }
+  
   //- CoFactor
   pointTensorField coFactor()
   {
     return jacobian() * inv(defGrad_.T());
   }
   
-  //
+  //- Lambda coefficient
+  /*
+  pointScalarField lambdaCoeff()
+  {
+  //return (defGrad() & mesh_.magSf()/mesh_.Sf()) & (defGrad() & mesh_.magSf()/mesh_.Sf());
+    interpolationSchemes inter(mesh_);
+    vectorField han = (inter.pointToEdge(coFactor()) & N_);
+    scalarField ent = han & han;
+    pointScalarField hanhan(ent);
+    
+    return aleUp_;//(inter.pointToEdge(coFactor()) & N_) & (inter.pointToEdge(coFactor()) & N_);
 
+    // problem with H * N
+    // because N cannot be reached somehow
+
+    // solution: H would have to be interpolated
+    // see updateVariables.H
+  }
+  */
+  
   // Edit
 
   //- Correct material model

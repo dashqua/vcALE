@@ -1,7 +1,0 @@
-#!/bin/bash
-
-printf "\n\n........................................\n"
-printf "Compiling solidVertexFoam solver\n"
-printf "........................................\n\n"
-
-wclean && wmake

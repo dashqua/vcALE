@@ -41,7 +41,8 @@ aleModel::aleModel
 (
     const pointTensorField& F,
     const dictionary& dict,
-    const fvMesh& vm
+    const fvMesh& vm,
+    const vectorList& N
 )
 :
     mesh_(vm),
@@ -59,6 +60,8 @@ aleModel::aleModel
     Up_(sqrt((lambda_+2.0*mu_)/rho_)),
     Us_(sqrt(mu_/rho_)),
 
+    N_(N),
+    
     motMap_
     (
      IOobject("motMap", mesh_),
@@ -66,14 +69,31 @@ aleModel::aleModel
      dimensionedVector("motMap", dimensionSet(0,1,0,0,0,0,0), vector::zero)
     ),
 
+    w_
+    (
+     IOobject("w", mesh_),
+     pMesh_,
+     dimensionedVector("w", dimensionSet(0,1,0,0,0,0,0), vector::zero)     
+    ),
+    
     defGrad_
     (
      IOobject("defGrad", mesh_),
      pMesh_,
      Foam::tensor::I
+    ),
+
+    // issue: how to get the inverse of the jacobian ?
+    aleUp_
+    (
+     jacobian()
+    ),
+
+    aleUs_
+    (
+     jacobian()
     )
 {
-
   // The structure of the solidModel is kept so far.
   // The new wave speeds are initialized here.
 
