@@ -12,7 +12,7 @@ cd ../mathematics_vc
 cd ../models_vc
 ./compile
 
-cd ../../applications/solvers/solidVertexFoam
+cd ../../applications/solvers/vcALEFoam
 ./compile
 
 cd ../../utilities/initialConditions_vc

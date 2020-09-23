@@ -1,7 +1,0 @@
-#!/bin/bash
-
-printf "\n\n........................................\n"
-printf "Compiling initial conditions\n"
-printf "........................................\n\n"
-
-wclean && wmake
