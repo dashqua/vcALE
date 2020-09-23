@@ -1,7 +1,0 @@
-#!/bin/bash
-
-printf "\n\n........................................\n"
-printf '\e[1;34m%-6s\e[m' "Compiling schemes_vc"
-printf "\n........................................\n\n"
-
-wclean libso && wmake -update -j libso

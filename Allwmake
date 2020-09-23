@@ -3,17 +3,17 @@
 
 clear
 
-cd src/schemes_vc
+cd src/schemes_vcALE
 ./compile
 
-cd ../mathematics_vc
+cd ../mathematics_vcALE
 ./compile
 
-cd ../models_vc
+cd ../models_vcALE
 ./compile
 
 cd ../../applications/solvers/vcALEFoam
 ./compile
 
-cd ../../utilities/initialConditions_vc
+cd ../../utilities/initialConditions_vcALE
 ./compile

@@ -1,16 +1,16 @@
 EXE_INC = \
-	-I$(PWD)/../../../src/models_vc/lnInclude \
-	-I$(PWD)/../../../src/schemes_vc/lnInclude \
-	-I$(PWD)/../../../src/mathematics_vc/lnInclude \
+	-I$(PWD)/../../../src/models_vcALE/lnInclude \
+	-I$(PWD)/../../../src/schemes_vcALE/lnInclude \
+	-I$(PWD)/../../../src/mathematics_vcALE/lnInclude \
 	-I$(LIB_SRC)/finiteVolume/lnInclude \
 	-I$(LIB_SRC)/meshTools/lnInclude
 
 
 EXE_LIBS = \
     -L$(FOAM_USER_LIBBIN) \
-	-lModels_vc \
-	-lSchemes_vc \
-	-lMathematics_vc \
+	-lModels_vcALE \
+	-lSchemes_vcALE \
+	-lMathematics_vcALE \
 	-L$(FOAM_LIBBIN) \
 	-lfiniteVolume \
 	-lmeshTools
