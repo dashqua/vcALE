@@ -153,6 +153,7 @@ pointScalarField Us
 // TEMPORARY HELD HERE:
 // Modification of wave speeds
 aleModel aleModel_(F, mechanicalProperties, mesh, N);
+aleModel_.correct();
 pointScalarField aleJ = aleModel_.jacobian();
 pointScalarField aleInvJ = aleModel_.invJacobian();
 pointTensorField aleFinvT = inv(aleModel_.defGrad().T());
@@ -161,6 +162,7 @@ scalarField lambdaH = sqrt((inter.pointToEdge(aleFinvT) & N) & (inter.pointToEdg
 pointScalarField lambdaH_(IOobject("lambdaH_", mesh), pMesh, 0.0);
 lambdaH_.primitiveFieldRef() = lambdaH;
 pointVectorField w_    = aleModel_.w();
+pointVectorField p_    = aleModel_.aleP();
 
 pointScalarField aleUp = aleInvJ;
 pointScalarField aleUs = aleInvJ;

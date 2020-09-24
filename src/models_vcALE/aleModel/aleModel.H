@@ -93,6 +93,12 @@ class aleModel
   
   //- ALE Deformation Gradient
   pointTensorField defGrad_;
+
+  //- ALE density
+  pointScalarField aleRho_;
+
+  //- ALE motion type
+  word motionType_;
   
   //- ALE pressure wave speed
   //dimensionedScalar aleUp_;
@@ -100,7 +106,7 @@ class aleModel
   
   //- ALE Shear wave speed
   //dimensionedScalar aleUs_;
-  pointScalarField aleUs_;
+  pointScalarField aleUs_;  
   
 private:
 
@@ -145,7 +151,6 @@ public:
     return Us_;
   }
 
-
   // ALE mappings
 
   //- Motion Mapping
@@ -184,6 +189,23 @@ public:
   pointTensorField coFactor()
   {
     return jacobian() * inv(defGrad_.T());
+  }
+
+  //- Density
+  pointScalarField aleRho()
+  {
+    return aleRho_;
+  }
+
+  //- Momentum
+  pointVectorField aleP()
+  {
+    return aleRho_ * w_;
+  }
+
+  word motionType()
+  {
+    return motionType_;
   }
   
   //- Lambda coefficient

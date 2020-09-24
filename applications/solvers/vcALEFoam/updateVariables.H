@@ -18,6 +18,15 @@ lmGrad = grad.gradient(lm);
 grad.reconstruct(lm, lmGrad, lmM, lmP);
 
 // Contact fluxes
+//Info << "  Contact fluxes" << nl;
+//Info << " dim P: " << P.dimensions() << nl;
+//Info << " dim aleInvJ: " << aleInvJ.dimensions() << nl;
+//Info << " dim w_: " << w_.dimensions() << nl;
+//Info << " dim p_: " << p_.dimensions() << nl;
+//Info << " dim N: " << "no numerical dimensions" << nl; //N.dimensions();
+
+//ALE model
+aleModel_.correct();
+
 lmC = inter.pointToEdge(lm);
-tC = (inter.pointToEdge(P + aleInvJ * (w_ * w_)) & N) + (0.5*mech.Smatrix(Up, Us) & (lmP - lmM));
-// rho_phi is assumed to be 1
+tC = (inter.pointToEdge(P + aleInvJ * (p_ * w_)) & N) + (0.5*mech.Smatrix(aleUp, aleUs) & (lmP - lmM));

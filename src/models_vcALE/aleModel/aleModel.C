@@ -73,7 +73,7 @@ aleModel::aleModel
     (
      IOobject("w", mesh_),
      pMesh_,
-     dimensionedVector("w", dimensionSet(0,1,0,0,0,0,0), vector::zero)     
+     dimensionedVector("w", dimensionSet(0,1,-1,0,0,0,0), vector::zero)     
     ),
     
     defGrad_
@@ -83,7 +83,16 @@ aleModel::aleModel
      Foam::tensor::I
     ),
 
-    // issue: how to get the inverse of the jacobian ?
+    aleRho_
+    (
+     IOobject("aleRho", mesh_),
+     pMesh_,
+     dimensionedScalar("aleRho", dimensionSet(1,-3,0,0,0,0,0), 1.0)
+    ),
+
+    motionType_(dict.lookup("motionType")),
+    
+    // to remove
     aleUp_
     (
      jacobian()
@@ -93,6 +102,7 @@ aleModel::aleModel
     (
      jacobian()
     )
+    
 {
   // The structure of the solidModel is kept so far.
   // The new wave speeds are initialized here.
@@ -110,14 +120,64 @@ aleModel::~aleModel()
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
 void aleModel::correct()
-{}
+{
+  if (motionType() == "sinusoid")
+  {
+ //XE = xe + 1./20. * 2.0 * sin(2*pi*xe/1.) * sin(2*pi*ye/6.) * sin(2*pi*t/T)
+ //YE = ye + 3./5. * 1.5 * sin(2*pi*xe/1.) * sin(2*pi*ye/6.) * sin(4*pi*t/T)
+    scalar t = mesh_.time().value();
+    scalar T = 2.0;
+    scalar pi = Foam::constant::mathematical::pi;
+    forAll(motMap_, p)
+    {
+      //motion Mapping
+      scalar x = mesh_.points()[p][0];//pMesh_[p][0];
+      scalar y = mesh_.points()[p][1];//pMesh_[p][1];
+      motMap_[p][0] = x + 1.0/10.0 * Foam::sin(2*pi*x)
+	* Foam::sin(pi*y/3.0)
+	* Foam::sin(2*pi*t/T);
+      motMap_[p][1] = y + 9.0/10.0 * Foam::sin(2*pi*x)
+	* Foam::sin(pi*y/3.0)
+	* Foam::sin(4*pi*t/T);
+      //Velocity
+      w_[p][0] = pi/(5.0*T) * Foam::sin(2*pi*x)
+	* Foam::sin(pi*y/3.0)
+	* Foam::cos(2*pi*t/T);
+      w_[p][1] = 2.0*9.0*pi/(5.0*T) * Foam::sin(2*pi*x)
+	* Foam::sin(pi*y/3.0)
+	* Foam::cos(4*pi*t/T) ;
+      //deformation Gradient
+      defGrad_[p] = tensor
+	(
+	 1 + pi/5.0 * Foam::cos(2*pi*x)
+	 * Foam::sin(pi*y/3.0)
+	 * Foam::sin(2*pi*t/T),
+	 pi/30.0 * Foam::sin(2*pi*x)
+	 * Foam::cos(pi*y/3.0)
+	 * Foam::sin(2*pi*t/T),
+	 0,
+	 9.0*pi/5.0 * Foam::cos(2*pi*x)
+	 * Foam::sin(pi*y/3.0)
+	 * Foam::sin(4*pi*t/T),
+	 1 + 3.0*pi/10.0 * Foam::sin(2*pi*x)
+	 * Foam::cos(pi*y/3.0)
+	 * Foam::sin(4*pi*t/T),
+	 0,
+	 0,
+	 0,
+	 0
+	);
+    }   
+  }
+		       
+		       
+}
 
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 void aleModel::printMaterialProperties()
-{
-}
+{}
 
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
