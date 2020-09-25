@@ -121,7 +121,7 @@ aleModel::~aleModel()
 
 void aleModel::correct()
 {
-  /*
+  
   if (fictitiousMotionType() == "sinusoid")
   {
  //XE = xe + 1./20. * 2.0 * sin(2*pi*xe/1.) * sin(2*pi*ye/6.) * sin(2*pi*t/T)
@@ -170,8 +170,6 @@ void aleModel::correct()
 	);
     }   
   }
-		       
-  */		       
 }
 
 

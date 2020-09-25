@@ -98,7 +98,7 @@ class aleModel
   pointScalarField aleRho_;
 
   //- ALE motion type
-  //word fictitiousMotionType_;
+  word fictitiousMotionType_;
   
   //- ALE pressure wave speed
   //dimensionedScalar aleUp_;
@@ -202,12 +202,12 @@ public:
   {
     return aleRho_ * w_;
   }
-  /*
+  
   word fictitiousMotionType()
   {
     return fictitiousMotionType_;
   }
-  */  
+    
 
 
   //- Lambda coefficient
