@@ -10,5 +10,6 @@ meshFile=$(grep '^meshFile.*;$' constant/runParameters | sed -e 's/meshFile\(.*\
 gmshToFoam $meshFile
 	
 # Run solver
-$solver > log.$solver &
+#$solver
+vcALEFoam > log.$solver &
 tail -f log.$solver

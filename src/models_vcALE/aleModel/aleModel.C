@@ -90,7 +90,7 @@ aleModel::aleModel
      dimensionedScalar("aleRho", dimensionSet(1,-3,0,0,0,0,0), 1.0)
     ),
 
-    //fictitiousMotionType_(dict.lookup("fictitiousMotionType")),
+    fictitiousMotionType_(dict.lookup("fictitiousMotionType")),
     
     // to remove
     aleUp_
@@ -176,7 +176,10 @@ void aleModel::correct()
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 void aleModel::printMaterialProperties()
-{}
+{
+  Info << "aleModel: " << model_ << nl;
+  Info << "fictitious Motion Type: " << fictitiousMotionType() << nl;
+}
 
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
