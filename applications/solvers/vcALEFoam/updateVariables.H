@@ -29,4 +29,4 @@ grad.reconstruct(lm, lmGrad, lmM, lmP);
 //aleModel_.correct();
 
 lmC = inter.pointToEdge(lm);
-tC = (inter.pointToEdge(P + aleInvJ * (p_ * w_)) & N) + (0.5*mech.Smatrix(aleUp, aleUs) & (lmP - lmM));
+tC = (inter.pointToEdge((P + aleInvJ * (p_ * w_)) & aleH ) & N) + (0.5*mech.Smatrix(aleUp, aleUs) & (lmP - lmM));
