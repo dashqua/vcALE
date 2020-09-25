@@ -90,7 +90,7 @@ aleModel::aleModel
      dimensionedScalar("aleRho", dimensionSet(1,-3,0,0,0,0,0), 1.0)
     ),
 
-    motionType_(dict.lookup("motionType")),
+    //fictitiousMotionType_(dict.lookup("fictitiousMotionType")),
     
     // to remove
     aleUp_
@@ -121,7 +121,8 @@ aleModel::~aleModel()
 
 void aleModel::correct()
 {
-  if (motionType() == "sinusoid")
+  /*
+  if (fictitiousMotionType() == "sinusoid")
   {
  //XE = xe + 1./20. * 2.0 * sin(2*pi*xe/1.) * sin(2*pi*ye/6.) * sin(2*pi*t/T)
  //YE = ye + 3./5. * 1.5 * sin(2*pi*xe/1.) * sin(2*pi*ye/6.) * sin(4*pi*t/T)
@@ -170,7 +171,7 @@ void aleModel::correct()
     }   
   }
 		       
-		       
+  */		       
 }
 
 

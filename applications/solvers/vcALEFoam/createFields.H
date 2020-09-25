@@ -153,7 +153,7 @@ pointScalarField Us
 // TEMPORARY HELD HERE:
 // Modification of wave speeds
 aleModel aleModel_(F, mechanicalProperties, mesh, N);
-aleModel_.correct();
+//aleModel_.correct();
 pointScalarField aleJ = aleModel_.jacobian();
 pointScalarField aleInvJ = aleModel_.invJacobian();
 pointTensorField aleFinvT = inv(aleModel_.defGrad().T());

@@ -26,7 +26,7 @@ grad.reconstruct(lm, lmGrad, lmM, lmP);
 //Info << " dim N: " << "no numerical dimensions" << nl; //N.dimensions();
 
 //ALE model
-aleModel_.correct();
+//aleModel_.correct();
 
 lmC = inter.pointToEdge(lm);
 tC = (inter.pointToEdge(P + aleInvJ * (p_ * w_)) & N) + (0.5*mech.Smatrix(aleUp, aleUs) & (lmP - lmM));
