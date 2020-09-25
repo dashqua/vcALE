@@ -83,6 +83,20 @@ aleModel::aleModel
      Foam::tensor::I
     ),
 
+    J_
+    (
+     IOobject("J", mesh_),
+     pMesh_,
+     1
+    ),
+
+    invJ_
+    (
+     IOobject("invJ", mesh_),
+     pMesh_,
+     1     
+    ),
+    
     aleRho_
     (
      IOobject("aleRho", mesh_),
@@ -168,6 +182,9 @@ void aleModel::correct()
 	 0,
 	 0
 	);
+      // Jacobian
+      J_[p] = det(defGrad_[p]);
+      invJ_[p] = 1.0 / J_[p];
     }   
   }
 }

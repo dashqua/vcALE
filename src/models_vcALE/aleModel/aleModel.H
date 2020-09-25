@@ -94,6 +94,12 @@ class aleModel
   //- ALE Deformation Gradient
   pointTensorField defGrad_;
 
+  //- ALE Jacobian
+  pointScalarField J_;
+
+  //- ALE inverse Jacobian
+  pointScalarField invJ_;
+  
   //- ALE density
   pointScalarField aleRho_;
 
@@ -174,15 +180,24 @@ public:
   //- Jacobian
   pointScalarField jacobian()
   {
-    return det(defGrad_);
+    return J_; 
   }
 
-  //- inverse of the Jacobian
+  //- inverse Jacobian
   pointScalarField invJacobian()
   {
-    pointScalarField jac = jacobian();
-    forAll(jac, x){ jac[x] = 1./jac[x]; }
-    return jac;
+    return invJ_;
+  }
+  
+  //- inverse transpose of the def Grad
+  pointTensorField defGradinvT()
+  {
+    pointTensorField dgit = defGrad();
+    forAll(dgit, pt)
+      {
+	dgit[pt] = inv(defGrad_[pt].T());
+      }
+    return dgit;
   }
   
   //- CoFactor

@@ -152,26 +152,29 @@ pointScalarField Us
 ////////////////////////////////////////////////////////////
 // TEMPORARY HELD HERE:
 // Modification of wave speeds
-aleModel aleModel_(F, mechanicalProperties, mesh, N);
-aleModel_.correct();
-pointScalarField aleJ = aleModel_.jacobian();
-pointScalarField aleInvJ = aleModel_.invJacobian();
-pointTensorField aleFinvT = inv(aleModel_.defGrad().T());
-pointTensorField aleF = aleModel_.defGrad();
-pointTensorField aleH = aleModel_.coFactor();
-scalarField lambdaH = sqrt((inter.pointToEdge(aleFinvT) & N) & (inter.pointToEdge(aleFinvT) & N));
-pointScalarField lambdaH_(IOobject("lambdaH_", mesh), pMesh, 0.0);
-lambdaH_.primitiveFieldRef() = lambdaH;
-pointVectorField w_    = aleModel_.w();
-pointVectorField p_    = aleModel_.aleP();
+Info << "Creating ALE objects ..." << nl;
+aleModel aleModel_(F, mechanicalProperties, mesh, N); Info << "Model initialized\n;";
+aleModel_.correct(); Info << "Model corrected\n;";
+pointScalarField aleJ = aleModel_.jacobian();  Info << "aleJ created\n;";
+pointScalarField aleInvJ = aleModel_.invJacobian(); Info << "aleInvJ created\n;";
+pointTensorField aleFinvT = aleModel_.defGradinvT();//inv(aleModel_.defGrad().T());
+Info << "aleFinvT created\n;";
+pointTensorField aleF = aleModel_.defGrad(); Info << "aleF created\n;";
+pointTensorField aleH = aleModel_.coFactor(); Info << "aleH created\n;";
+scalarField lambdaH = sqrt((inter.pointToEdge(aleFinvT) & N) & (inter.pointToEdge(aleFinvT) & N)); Info << "lambdaH created\n;";
+pointScalarField lambdaH_(IOobject("lambdaH_", mesh), pMesh, 0.0); Info << "lambdaH_ created\n;";
+lambdaH_.primitiveFieldRef() = lambdaH; 
+pointVectorField w_    = aleModel_.w(); Info << "w_ created\n;";
+pointVectorField p_    = aleModel_.aleP(); Info << "p_ created\n;";
 
-pointScalarField aleUp = aleInvJ;
-pointScalarField aleUs = aleInvJ;
+pointScalarField aleUp = aleInvJ; Info << "aleUp created\n;";
+pointScalarField aleUs = aleInvJ; Info << "aleUs created\n;";
 forAll(aleUp, pt)
 {
   aleUp[pt] *= (lambdaH_[pt] * Up[pt]) - (w_[pt] & (aleF[pt] & N[pt] ));
   aleUs[pt] *= (lambdaH_[pt] * Us[pt]) - (w_[pt] & (aleF[pt] & N[pt] ));
 }
+Info << "aleUs and aleUp initialized\n;";
 
 
 // Stretch
