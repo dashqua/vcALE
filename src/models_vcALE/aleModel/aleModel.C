@@ -75,7 +75,7 @@ aleModel::aleModel
      (
       "w",
       mesh_.time().timeName(),
-      mesh_
+      mesh_,
       IOobject::NO_READ,
       IOobject::AUTO_WRITE
      ),
