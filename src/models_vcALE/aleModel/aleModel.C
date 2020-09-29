@@ -85,7 +85,14 @@ aleModel::aleModel
 
     J_
     (
-     IOobject("J", mesh_),
+     IOobject
+     (
+      "J",
+      mesh_.time().timeName(),
+      mesh_,
+      IOobject::NO_READ,
+      IOobject::AUTO_WRITE
+     ),
      pMesh_,
      1
     ),
@@ -145,7 +152,7 @@ void aleModel::correct()
     scalar pi = Foam::constant::mathematical::pi;
     forAll(motMap_, p)
     {
-      //motion Mapping
+      //Info << "correcting ALE Motion Mapping\n";
       scalar x = mesh_.points()[p][0];//pMesh_[p][0];
       scalar y = mesh_.points()[p][1];//pMesh_[p][1];
       motMap_[p][0] = x + 1.0/10.0 * Foam::sin(2*pi*x)
@@ -154,14 +161,14 @@ void aleModel::correct()
       motMap_[p][1] = y + 9.0/10.0 * Foam::sin(2*pi*x)
 	* Foam::sin(pi*y/3.0)
 	* Foam::sin(4*pi*t/T);
-      //Velocity
+      //Info << "correcting ALE Velocity\n";
       w_[p][0] = pi/(5.0*T) * Foam::sin(2*pi*x)
 	* Foam::sin(pi*y/3.0)
 	* Foam::cos(2*pi*t/T);
       w_[p][1] = 2.0*9.0*pi/(5.0*T) * Foam::sin(2*pi*x)
 	* Foam::sin(pi*y/3.0)
 	* Foam::cos(4*pi*t/T) ;
-      //deformation Gradient
+      //Info << "correcting ALE defGrad\n";
       defGrad_[p] = tensor
 	(
 	 1 + pi/5.0 * Foam::cos(2*pi*x)
@@ -180,13 +187,16 @@ void aleModel::correct()
 	 0,
 	 0,
 	 0,
-	 0
+	 1
 	);
-      // Jacobian
+      //Info << "correcting ALE Jacobian\n";
       J_[p] = det(defGrad_[p]);
+      //Info << "J[p] = " << J_[p] << nl;
+      //Info << "correcting ALE invJacobian\n";
       invJ_[p] = 1.0 / J_[p];
     }   
   }
+  //Info << "ALE correction done\n";
 }
 
 

@@ -175,6 +175,20 @@ forAll(aleUp, pt)
   aleUs[pt] *= (lambdaH_[pt] * Us[pt]) - (w_[pt] & (aleF[pt] & N[pt] ));
 }
 Info << "aleUs and aleUp initialized\n;";
+pointVectorField aleRecLM
+(
+ IOobject("aleRecLM", mesh, IOobject::NO_READ, IOobject::AUTO_WRITE),
+ pMesh,
+ dimensionedVector("aleRecLM", dimensionSet(1,-2,-1,0,0,0,0), vector::zero)
+ /*
+      This odd dimension is required because "lm" has the same one
+  */
+);
+Info << aleRecLM.dimensions() << nl;
+Info << lm.dimensions() << nl;
+Info << aleJ.dimensions() <<nl;
+aleRecLM = lm * aleJ;
+Info << "reconstructed Linear Momentum initialized\n";
 
 
 // Stretch

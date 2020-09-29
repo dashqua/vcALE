@@ -100,7 +100,11 @@ int main(int argc, char *argv[])
 
             p = model.pressure();
             p.write();
-        }
+
+	    //ALE postProcessing
+            #include postProALE.H
+	
+  	}
 
         Info<< " Simulation completed = "
              << (t.value()/runTime.endTime().value())*100 << "%" << endl;
