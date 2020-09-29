@@ -22,6 +22,6 @@ forAll(v_, pt)
 {
 	v_[pt] = lm[pt] * aleInvJ[pt] * 1./(rho.value());
 }
-
+v_.write();
 //- vHat
 
