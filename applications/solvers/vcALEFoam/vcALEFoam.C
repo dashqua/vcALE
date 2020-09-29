@@ -102,7 +102,7 @@ int main(int argc, char *argv[])
             p.write();
 
 	    //ALE postProcessing
-            #include postProALE.H
+            #include "postProALE.H"
 	
   	}
 

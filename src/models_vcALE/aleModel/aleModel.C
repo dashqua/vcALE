@@ -71,7 +71,14 @@ aleModel::aleModel
 
     w_
     (
-     IOobject("w", mesh_),
+     IOobject
+     (
+      "w",
+      mesh_.time().timeName(),
+      mesh_
+      IOobject::NO_READ,
+      IOobject::AUTO_WRITE
+     ),
      pMesh_,
      dimensionedVector("w", dimensionSet(0,1,-1,0,0,0,0), vector::zero)     
     ),
