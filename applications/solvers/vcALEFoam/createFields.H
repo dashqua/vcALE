@@ -136,6 +136,21 @@ p.write();
 // First Piola Kirchhoff stress tensor
 pointTensorField P = model.piola();
 
+//- ALE: Piola Hat
+pointTensorField PHat
+(
+    IOobject
+    (
+        "PHat",
+	P.time().timeName(),
+	P.db(),
+	IOobject::NO_READ,
+	IOobject::NO_WRITE
+    ),
+    P.mesh(),
+    dimensionedTensor("PHat", dimensionSet(1,-1,-2,0,0,0,0), tensor::zero)
+);
+
 
 Info << "Creating fields for wave speeds ..." << endl;
 
@@ -170,9 +185,9 @@ pointScalarField aleJ = aleModel_.jacobian();
 pointTensorField aleFinv = aleModel_.invDefGrad();
 pointScalarField aleInvJ = aleModel_.invJacobian();
 
-//- ALE: Initialization of trueF
+//- ALE: Initialization of trueF and Piola Hat
 trueF = aleF & F;
-
+PHat = P + ((aleInvJ * lm) * w_);
 
 
 
