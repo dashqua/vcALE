@@ -196,13 +196,14 @@ aleModel_.correct();
 pointVectorField w_    = aleModel_.w();
 pointTensorField aleF = aleModel_.defGrad(); 
 pointScalarField aleJ = aleModel_.jacobian();
+pointTensorField aleH = aleModel_.coFactor();
 
 pointTensorField aleFinv = aleModel_.invDefGrad();
 pointScalarField aleInvJ = aleModel_.invJacobian();
 
 //- ALE: Initialization of trueF and Piola Hat
 trueF = aleF & F;
-PHat = P + ((aleInvJ * lm) * w_);
+PHat = (P + ((aleInvJ * lm) * w_) ) & aleH;
 
 
 
@@ -313,7 +314,7 @@ vHat = (aleInvJ * v_) + ((F & aleFinv) & w_);
 vectorList vC = inter.pointToEdge(v_);
 
 // Edge traction
-vectorField tC = (inter.pointToEdge(P) & N) + (0.5*mech.Smatrix(Up, Us) & (lmP-lmM));
+vectorField tC = (inter.pointToEdge(PHat) & N) + (0.5*mech.Smatrix(Up, Us) & (lmP-lmM));
 
 Info << "Creating fields for angular momentum ..." << endl;
 

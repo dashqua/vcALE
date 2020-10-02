@@ -15,7 +15,7 @@ trueJ = det(trueF);
 trueH = trueJ * op.invT(trueF);
 model.correct(trueF, trueH, trueJ);
 P = model.piola(); // 'trueP' obtained from true F, H and J
-PHat = P + (aleInvJ*(lm * w_));
+PHat = ( P + (aleInvJ*(lm * w_)) ) & aleH;
 
 // Linear reconstruction
 lmGrad = grad.gradient(lm);
