@@ -88,9 +88,9 @@ pointTensorField F
 );
 
 //Deformation gradient tensor for P material model
-pointTensorField piolaF
+pointTensorField trueF
 (
- 	IOobject("piolaF", mesh),
+ 	IOobject("trueF", mesh),
 	pMesh,
 	Foam::tensor::I
 );
@@ -122,7 +122,7 @@ pointScalarField J
 Info << "Creating constitutive model ..." << endl;
 
 // Solid model class
-solidModel model(piolaF, mechanicalProperties, mesh);
+solidModel model(trueF, mechanicalProperties, mesh);
 model.correct();
 
 // Density
@@ -130,7 +130,7 @@ const dimensionedScalar& rho = model.density();
 
 // Pressure
 pointScalarField p = model.pressure();
-// p.write();
+p.write();
 
 
 // First Piola Kirchhoff stress tensor
@@ -164,6 +164,9 @@ pointScalarField Us
 Info << "Creating ALE objects ..." << nl;
 aleModel aleModel_(F, mechanicalProperties, mesh, N); Info << "Model initialized\n;";
 aleModel_.correct(); Info << "Model corrected\n;";
+
+
+/*
 pointScalarField aleJ = aleModel_.jacobian();  Info << "aleJ created\n;";
 pointScalarField aleInvJ = aleModel_.invJacobian(); Info << "aleInvJ created\n;";
 pointTensorField aleFinvT = aleModel_.defGradinvT();//inv(aleModel_.defGrad().T());
@@ -184,21 +187,25 @@ forAll(aleUp, pt)
   aleUs[pt] *= (lambdaH_[pt] * Us[pt]) - (w_[pt] & (aleF[pt] & N[pt] ));
 }
 Info << "aleUs and aleUp initialized\n;";
+*/
+
+
+/*
 pointVectorField aleRecLM
 (
  IOobject("aleRecLM", mesh, IOobject::NO_READ, IOobject::AUTO_WRITE),
  pMesh,
  dimensionedVector("aleRecLM", dimensionSet(1,-2,-1,0,0,0,0), vector::zero)
- /*
-      This odd dimension is required because "lm" has the same one
-  */
+ 
+ //     This odd dimension is required because "lm" has the same one
+  
 );
 Info << aleRecLM.dimensions() << nl;
 Info << lm.dimensions() << nl;
 Info << aleJ.dimensions() <<nl;
 aleRecLM = lm * aleJ;
 Info << "reconstructed Linear Momentum initialized\n";
-
+*/
 
 // Stretch
 pointScalarField stretch = mech.stretch();
@@ -273,7 +280,15 @@ pointVectorField u
 u.write();
 X -= u;
 
-// vHat
+//- ALE: v
+pointVectorField v_
+(
+	IOobject("v_", runTime.timeName(), mesh, IOobject::NO_READ, IOobject::AUTO_WRITE),
+	pMesh,
+	dimensionedVector("v_", dimensionSet(0,1,-1,0,0,0,0), vector::zero)
+);
+
+//- ALE:  vHat
 pointVectorField vHat
 (
 	IOobject("vHat", runTime.timeName(), mesh, IOobject::NO_READ, IOobject::AUTO_WRITE),
