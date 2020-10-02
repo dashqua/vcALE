@@ -1,6 +1,6 @@
 // Compute interior terms for right hand sides
 rhsLm.primitiveFieldRef() = op.surfaceSum(tC*magSf);
-rhsF.primitiveFieldRef() = op.surfaceSum((lmC/rho.value())*Sf);
+rhsF.primitiveFieldRef() = op.surfaceSum((vC)*Sf);
 
 if (angularMomentumConservation == "yes")
 {
@@ -63,11 +63,11 @@ forAll(mesh.boundary(), patch)
             }
 
             vector tC = 0.125*(6.0*t1 + t2 + t3);
-            vector lmC = 0.125*(6.0*lm1 + lm2 + lm3);
+            vector lmClocal = 0.125*(6.0*lm1 + lm2 + lm3);
 
             rhsLm[node] += tC*(magSf_p.boundaryField()[patch][facei]/3.0);
             rhsF[node] +=
-                (lmC/rho.value())*(Sf_p.boundaryField()[patch][facei]/3.0);
+                (lmClocal/rho.value())*(Sf_p.boundaryField()[patch][facei]/3.0);
 
             if (angularMomentumConservation == "yes")
             {
@@ -91,7 +91,9 @@ if (angularMomentumConservation == "yes")
 
 // Compute node coordinates
 //x += deltaT*(aleInvJ * lm/rho);
-x += deltaT*(lm/rho);
+v_ = lm/rho;
+vHat = (aleInvJ * v_) + ((F & aleFinv) & w_);
+x += deltaT * v_;
 
 // Compute linear momentum
 lm += deltaT*rhsLm;

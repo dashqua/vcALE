@@ -21,7 +21,8 @@ PHat = P + (aleInvJ*(lm * w_));
 lmGrad = grad.gradient(lm);
 grad.reconstruct(lm, lmGrad, lmM, lmP);
 
+v_ = lm/rho; 
+vC = inter.pointToEdge(v_); 
 
-lmC = inter.pointToEdge(lm);
 //tC = (inter.pointToEdge((P + aleInvJ * (p_ * w_)) & aleH ) & N) + (0.5*mech.Smatrix(aleUp, aleUs) & (lmP - lmM));/////////
 tC = (inter.pointToEdge(PHat) & N)  + (0.5*mech.Smatrix(Up, Us) & (lmP - lmM));

@@ -289,8 +289,28 @@ grad.reconstruct(lm, lmGrad, lmM, lmP);
 
 Info << "Creating fields for fluxes ..." << endl;
 
+//- ALE: v
+pointVectorField v_
+(
+	IOobject("v_", runTime.timeName(), mesh, IOobject::NO_READ, IOobject::AUTO_WRITE),
+	pMesh,
+	dimensionedVector("v_", dimensionSet(0,1,-1,0,0,0,0), vector::zero)
+);
+v_ = lm/rho;
+
+//- ALE:  vHat
+pointVectorField vHat
+(
+	IOobject("vHat", runTime.timeName(), mesh, IOobject::NO_READ, IOobject::AUTO_WRITE),
+	pMesh,
+	dimensionedVector("vHat", dimensionSet(0,1,-1,0,0,0,0), vector::zero)
+);
+vHat = (aleInvJ * v_) + ((F & aleFinv) & w_);
+
+
+
 // Edge linear momentum
-vectorList lmC = inter.pointToEdge(lm);
+vectorList vC = inter.pointToEdge(v_);
 
 // Edge traction
 vectorField tC = (inter.pointToEdge(P) & N) + (0.5*mech.Smatrix(Up, Us) & (lmP-lmM));
@@ -332,27 +352,6 @@ pointVectorField u
 
 u.write();
 X -= u;
-
-//- ALE: v
-pointVectorField v_
-(
-	IOobject("v_", runTime.timeName(), mesh, IOobject::NO_READ, IOobject::AUTO_WRITE),
-	pMesh,
-	dimensionedVector("v_", dimensionSet(0,1,-1,0,0,0,0), vector::zero)
-);
-v_ = lm/rho;
-
-//- ALE:  vHat
-pointVectorField vHat
-(
-	IOobject("vHat", runTime.timeName(), mesh, IOobject::NO_READ, IOobject::AUTO_WRITE),
-	pMesh,
-	dimensionedVector("vHat", dimensionSet(0,1,-1,0,0,0,0), vector::zero)
-);
-vHat = aleInvJ * v_ + ((F & aleFinv) & w_);
-
-
-
 
 
 Info << "Creating variables for time ..." << endl;
