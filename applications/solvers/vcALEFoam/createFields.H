@@ -205,6 +205,23 @@ pointScalarField aleInvJ = aleModel_.invJacobian();
 trueF = aleF & F;
 PHat = (P + ((aleInvJ * lm) * w_) ) & aleH;
 
+//- ALE: Initialization of new wave speeds
+//- ALE: Longitudinal wave speed
+pointScalarField aleUp
+(
+    IOobject("aleUp", mesh),
+    pMesh,
+    model.Up()/beta
+);
+
+//- ALE: Shear wave speed
+pointScalarField aleUs
+(
+    IOobject("Us", mesh),
+    pMesh,
+    model.Us()*beta
+);
+
 
 
 
