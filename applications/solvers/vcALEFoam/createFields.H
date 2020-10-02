@@ -87,6 +87,15 @@ pointTensorField F
     Foam::tensor::I
 );
 
+//Deformation gradient tensor for P material model
+pointTensorField piolaF
+(
+ 	IOobject("piolaF", mesh),
+	pMesh,
+	Foam::tensor::I
+);
+
+
 // RHS of F equation
 pointTensorField rhsF
 (
@@ -113,7 +122,7 @@ pointScalarField J
 Info << "Creating constitutive model ..." << endl;
 
 // Solid model class
-solidModel model(F, mechanicalProperties, mesh);
+solidModel model(piolaF, mechanicalProperties, mesh);
 model.correct();
 
 // Density
@@ -264,6 +273,16 @@ pointVectorField u
 u.write();
 X -= u;
 
+// vHat
+pointVectorField vHat
+(
+	IOobject("vHat", runTime.timeName(), mesh, IOobject::NO_READ, IOobject::AUTO_WRITE),
+	pMesh,
+	dimensionedVector("vHat", dimensionSet(0,1,-1,0,0,0,0), vector::zero)
+);
+
+
+
 
 Info << "Creating variables for time ..." << endl;
 
@@ -296,3 +315,10 @@ am.printGlobalMomentum(lm,x,V);
 // Print centroid of mesh
 dual.printPrimalMeshCentroid();
 dual.printDualMeshCentroid();
+
+
+
+
+
+
+

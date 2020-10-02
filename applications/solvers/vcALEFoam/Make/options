@@ -13,4 +13,5 @@ EXE_LIBS = \
 	-lMathematics_vcALE \
 	-L$(FOAM_LIBBIN) \
 	-lfiniteVolume \
-	-lmeshTools
+	-lmeshTools \
+	-lpthread

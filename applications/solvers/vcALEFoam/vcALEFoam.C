@@ -85,6 +85,7 @@ int main(int argc, char *argv[])
         lm = 0.5*(lm.oldTime() + lm);
         F = 0.5*(F.oldTime() + F);
         x = 0.5*(x.oldTime() + x);
+	//intW = 0.5*(intW.oldTime() + intW);
 
         #include "updateVariables.H"
 
@@ -101,8 +102,9 @@ int main(int argc, char *argv[])
             p = model.pressure();
             p.write();
 
-	    //ALE postProcessing
-            #include "postProALE.H"
+	    //intW.write();
+	    ////ALE postProcessing
+            //#include "postProALE.H"
 	
   	}
 

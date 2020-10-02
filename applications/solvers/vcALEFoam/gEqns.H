@@ -90,7 +90,7 @@ if (angularMomentumConservation == "yes")
 }
 
 // Compute node coordinates
-x += deltaT*(lm/rho);
+x += deltaT*(aleInvJ * lm/rho);
 
 // Compute linear momentum
 lm += deltaT*rhsLm;
