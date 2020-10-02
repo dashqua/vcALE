@@ -178,7 +178,7 @@ public:
         // Edit
 
             //- Correct material model
-            virtual void correct();
+            virtual void correct(pointTensorField&, pointTensorField&, pointScalarField&);
 
         // Print
 

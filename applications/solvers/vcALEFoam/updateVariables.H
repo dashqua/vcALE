@@ -10,19 +10,14 @@ forAll(mesh.points(), node)
 }
 
 // Constitutive model
-model.correct();
+trueJ = det(trueF);
+trueH = trueJ * op.invT(trueF);
+model.correct(trueF, trueH, trueJ);
 P = model.piola();
-
-// update of vHat
-//vHat = (aleInvJ * lm / rho) + ( F & inv(aleF) & w_);
 
 // Linear reconstruction
 lmGrad = grad.gradient(lm);
 grad.reconstruct(lm, lmGrad, lmM, lmP);
-
-//ALE model
-//aleModel_.correct();
-//aleRecLM = lm * aleJ;
 
 
 lmC = inter.pointToEdge(lm);

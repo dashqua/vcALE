@@ -130,13 +130,28 @@ solidModel::~solidModel()
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
-void solidModel::correct()
+  void solidModel::correct(pointTensorField& F, pointTensorField& H, pointScalarField& J)
 {
-    const pointMesh& pMesh_ = P_.mesh();
-    const objectRegistry& db = pMesh_.thisDb();
-    const pointTensorField& H__ = db.lookupObject<pointTensorField>("H");
-    const pointTensorField& F__ = db.lookupObject<pointTensorField>("F");
-    const pointScalarField& J__ = db.lookupObject<pointScalarField>("J");
+  /*
+    F has to be 'trueF' now.
+    Because we only need the 'true' tensors here, F is retrieved as an argument from runTime
+    and H and J and re-computed from that F (which is, as mentionned, trueF).
+ 
+    EDIT: H obviously needs F to be inversed, which is not possible in vanilla OF
+    so H will be passed as well. At this point, it is also worth sending J.
+
+    F, H and J come not const, so a const_cast is necessary.
+  */
+    //const pointMesh& pMesh_ = P_.mesh();
+    //const objectRegistry& db = pMesh_.thisDb();
+
+    const pointTensorField& F__ = const_cast<pointTensorField&>(F);
+    const pointTensorField& H__ = const_cast<pointTensorField&>(H);
+    const pointScalarField& J__ = const_cast<pointScalarField&>(J);
+
+    //const pointTensorField& H__ = db.lookupObject<pointTensorField>("H");
+    //const pointTensorField& F__ = db.lookupObject<pointTensorField>("F");
+    //const pointScalarField& J__ = db.lookupObject<pointScalarField>("J");
 
     const tensorField& H_ = H__.internalField();
     const tensorField& F_ = F__.internalField();

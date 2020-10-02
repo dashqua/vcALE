@@ -87,15 +87,6 @@ pointTensorField F
     Foam::tensor::I
 );
 
-//Deformation gradient tensor for P material model
-pointTensorField trueF
-(
- 	IOobject("trueF", mesh),
-	pMesh,
-	Foam::tensor::I
-);
-
-
 // RHS of F equation
 pointTensorField rhsF
 (
@@ -118,12 +109,37 @@ pointScalarField J
     det(F)
 );
 
+//Deformation gradient tensor for P material model
+pointTensorField trueF
+(
+ 	IOobject("trueF", mesh),
+	pMesh,
+	Foam::tensor::I
+);
+
+//cofactor tensor for P material model
+pointTensorField trueH
+(
+ 	IOobject("trueH", mesh),
+	pMesh,
+	Foam::tensor::I
+);
+
+//Jacobian for P material model
+pointScalarField trueJ
+(
+ 	IOobject("trueJ", mesh),
+	pMesh,
+	1.0
+);
+
+
 
 Info << "Creating constitutive model ..." << endl;
 
 // Solid model class
 solidModel model(trueF, mechanicalProperties, mesh);
-model.correct();
+model.correct(trueF, trueH, trueJ);
 
 // Density
 const dimensionedScalar& rho = model.density();
