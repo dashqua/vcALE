@@ -166,7 +166,7 @@ pointTensorField PHat
     P.mesh(),
     dimensionedTensor("PHat", dimensionSet(1,-1,-2,0,0,0,0), tensor::zero)
 );
-
+PHat = P + (aleInvJ*(lm * w_));
 
 Info << "Creating fields for wave speeds ..." << endl;
 
