@@ -167,6 +167,9 @@ pointVectorField w_    = aleModel_.w();
 pointTensorField aleF = aleModel_.defGrad(); 
 pointScalarField aleJ = aleModel_.jacobian();
 
+pointTensorField aleFinv = aleModel_.invDefGrad();
+pointScalarField aleInvJ = aleModel_.invJacobian();
+
 //- ALE: Initialization of trueF
 trueF = aleF & F;
 
@@ -316,6 +319,9 @@ pointVectorField vHat
 	pMesh,
 	dimensionedVector("vHat", dimensionSet(0,1,-1,0,0,0,0), vector::zero)
 );
+vHat = aleInvJ * v_ + ((F & aleFinv) & w_);
+
+
 
 
 

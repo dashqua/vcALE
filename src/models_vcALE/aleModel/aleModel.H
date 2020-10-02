@@ -188,6 +188,17 @@ public:
   {
     return invJ_;
   }
+
+  //- inverse of the def Grad
+  pointTensorField invDefGrad()
+  {
+    pointTensorField idg = defGrad();
+    forAll(idg, pt)
+      {
+	idg[pt] = inv(defGrad_[pt]);
+      }
+    return idg;
+  }
   
   //- inverse transpose of the def Grad
   pointTensorField defGradinvT()
