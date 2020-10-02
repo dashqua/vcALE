@@ -21,8 +21,10 @@ PHat = ( P + (aleInvJ*(lm * w_)) ) & aleH;
 lmGrad = grad.gradient(lm);
 grad.reconstruct(lm, lmGrad, lmM, lmP);
 
-v_ = lm/rho; 
-vC = inter.pointToEdge(v_); 
+v_ = lm/rho;
+vHat = (aleInvJ * v_) + ((F & aleFinv) & w_);
+vC = inter.pointToEdge(vHat); 
+// ask for confirmation: has to be vHat
 
 //tC = (inter.pointToEdge((P + aleInvJ * (p_ * w_)) & aleH ) & N) + (0.5*mech.Smatrix(aleUp, aleUs) & (lmP - lmM));/////////
 scalarField aleUp___ = inter.pointToEdge(aleInvJ) *
