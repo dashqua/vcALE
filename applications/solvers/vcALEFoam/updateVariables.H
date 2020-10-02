@@ -25,4 +25,16 @@ v_ = lm/rho;
 vC = inter.pointToEdge(v_); 
 
 //tC = (inter.pointToEdge((P + aleInvJ * (p_ * w_)) & aleH ) & N) + (0.5*mech.Smatrix(aleUp, aleUs) & (lmP - lmM));/////////
-tC = (inter.pointToEdge(PHat) & N)  + (0.5*mech.Smatrix(Up, Us) & (lmP - lmM));
+scalarField aleUp___ = inter.pointToEdge(aleInvJ) *
+       (
+         (lambdaH * inter.pointToEdge(Up))
+       - (inter.pointToEdge(w_) & (inter.pointToEdge(aleH) & N))
+       );
+
+scalarField aleUs___ = inter.pointToEdge(aleInvJ) *
+       (
+         (lambdaH * inter.pointToEdge(Us))
+       - (inter.pointToEdge(w_) & (inter.pointToEdge(aleH) & N))
+       );
+
+tC = (inter.pointToEdge(PHat) & N)  + (0.5*mech.SmatrixMod(aleUp___, aleUs___) & (lmP - lmM));

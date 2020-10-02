@@ -118,6 +118,13 @@ public:
             const GeometricField<scalar, pointPatchField, pointMesh>&,
             const GeometricField<scalar, pointPatchField, pointMesh>&
         );
+
+	tensorField SmatrixMod
+        (
+            scalarField&,
+            scalarField&
+        );
+
 };
 
 

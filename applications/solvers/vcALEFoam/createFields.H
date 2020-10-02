@@ -200,12 +200,14 @@ pointTensorField aleH = aleModel_.coFactor();
 
 pointTensorField aleFinv = aleModel_.invDefGrad();
 pointScalarField aleInvJ = aleModel_.invJacobian();
+pointTensorField aleFinvT = aleModel_.defGradinvT();
 
 //- ALE: Initialization of trueF and Piola Hat
 trueF = aleF & F;
 PHat = (P + ((aleInvJ * lm) * w_) ) & aleH;
 
-//- ALE: Initialization of new wave speeds
+//- ALE: Initialization of new wave speeds 
+// Note : that part is not useful anymore ?
 //- ALE: Longitudinal wave speed
 pointScalarField aleUp
 (
@@ -222,8 +224,19 @@ pointScalarField aleUs
     model.Us()*beta
 );
 
+//- ALE: initialization of wave speeds
+scalarField lambdaH = sqrt((inter.pointToEdge(aleFinvT) & N) & (inter.pointToEdge(aleFinvT) & N));
+scalarField aleUp___ = inter.pointToEdge(aleInvJ) * 
+       (
+         (lambdaH * inter.pointToEdge(Up)) 
+       - (inter.pointToEdge(w_) & (inter.pointToEdge(aleH) & N))
+       );
 
-
+scalarField aleUs___ = inter.pointToEdge(aleInvJ) * 
+       (
+         (lambdaH * inter.pointToEdge(Us)) 
+       - (inter.pointToEdge(w_) & (inter.pointToEdge(aleH) & N))
+       );
 
 
 /*
@@ -331,7 +344,7 @@ vHat = (aleInvJ * v_) + ((F & aleFinv) & w_);
 vectorList vC = inter.pointToEdge(v_);
 
 // Edge traction
-vectorField tC = (inter.pointToEdge(PHat) & N) + (0.5*mech.Smatrix(Up, Us) & (lmP-lmM));
+vectorField tC = (inter.pointToEdge(PHat) & N) + (0.5*mech.SmatrixMod(aleUp___, aleUs___) & (lmP-lmM));
 
 Info << "Creating fields for angular momentum ..." << endl;
 
