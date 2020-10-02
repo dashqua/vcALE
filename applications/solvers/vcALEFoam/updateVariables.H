@@ -10,6 +10,7 @@ forAll(mesh.points(), node)
 }
 
 // Constitutive model
+trueF = aleF & F;
 trueJ = det(trueF);
 trueH = trueJ * op.invT(trueF);
 model.correct(trueF, trueH, trueJ);
