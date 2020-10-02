@@ -53,7 +53,7 @@ class aleModel
          const fvMesh& mesh_;
 
   // pointMesh
-  const pointMesh pMesh_;
+  const pointMesh& pMesh_;
   
         //- Constitutive model
         word model_;
@@ -133,9 +133,9 @@ public:
   //- Constructor
   aleModel
   (
-   const pointTensorField&,
    const dictionary&,
    const fvMesh&,
+   pointMesh&,
    const vectorList&
    );
 

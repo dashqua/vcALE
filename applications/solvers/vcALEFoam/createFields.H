@@ -159,11 +159,20 @@ pointScalarField Us
 );
 
 ////////////////////////////////////////////////////////////
-// TEMPORARY HELD HERE:
-// Modification of wave speeds
+//- ALE: Declaration and initialization of ALE Objects
 Info << "Creating ALE objects ..." << nl;
-aleModel aleModel_(F, mechanicalProperties, mesh, N); Info << "Model initialized\n;";
-aleModel_.correct(); Info << "Model corrected\n;";
+aleModel aleModel_(mechanicalProperties, mesh, pMesh, N);
+aleModel_.correct(); 
+pointVectorField w_    = aleModel_.w();
+pointTensorField aleF = aleModel_.defGrad(); 
+pointScalarField aleJ = aleModel_.jacobian();
+
+//- ALE: Initialization of trueF
+trueF = aleF & F;
+
+
+
+
 
 
 /*
@@ -206,6 +215,17 @@ Info << aleJ.dimensions() <<nl;
 aleRecLM = lm * aleJ;
 Info << "reconstructed Linear Momentum initialized\n";
 */
+
+
+
+
+
+
+
+
+
+
+
 
 // Stretch
 pointScalarField stretch = mech.stretch();
@@ -287,6 +307,7 @@ pointVectorField v_
 	pMesh,
 	dimensionedVector("v_", dimensionSet(0,1,-1,0,0,0,0), vector::zero)
 );
+v_ = lm/rho;
 
 //- ALE:  vHat
 pointVectorField vHat
@@ -295,7 +316,6 @@ pointVectorField vHat
 	pMesh,
 	dimensionedVector("vHat", dimensionSet(0,1,-1,0,0,0,0), vector::zero)
 );
-
 
 
 

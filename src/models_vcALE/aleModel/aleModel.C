@@ -39,14 +39,14 @@ defineTypeNameAndDebug(aleModel, 0);
 
 aleModel::aleModel
 (
-    const pointTensorField& F,
     const dictionary& dict,
     const fvMesh& vm,
+    pointMesh& pMesh,
     const vectorList& N
 )
 :
     mesh_(vm),
-    pMesh_(mesh_),
+    pMesh_(pMesh),
 
     model_(dict.lookup("aleModel")),
 
