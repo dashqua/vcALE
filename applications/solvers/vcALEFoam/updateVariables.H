@@ -1,6 +1,6 @@
 // Strain measures
-H = det(F)*op.invT(F);
-J = det(F);
+//H = det(F)*op.invT(F);
+//J = det(F);
 stretch = mech.stretch();
 
 // Wave speeds
@@ -10,7 +10,7 @@ forAll(mesh.points(), node)
 }
 
 // Constitutive model
-trueF = aleF & F;
+trueF = F & aleFinv;
 trueJ = det(trueF);
 trueH = trueJ * op.invT(trueF);
 model.correct(trueF, trueH, trueJ);
@@ -21,10 +21,10 @@ PHat = ( P + (aleInvJ*(lm * w_)) ) & aleH;
 lmGrad = grad.gradient(lm);
 grad.reconstruct(lm, lmGrad, lmM, lmP);
 
-v_ = lm/rho;
-vHat = (aleInvJ * v_) + ((F & aleFinv) & w_);
+v_ = aleInvJ * lm/rho;
+vHat = v_ + ((F & aleFinv) & w_);
 vC = inter.pointToEdge(vHat); 
-// ask for confirmation: has to be vHat
+// ask for confirmation: has to be vHat OK
 
 //tC = (inter.pointToEdge((P + aleInvJ * (p_ * w_)) & aleH ) & N) + (0.5*mech.Smatrix(aleUp, aleUs) & (lmP - lmM));/////////
 scalarField aleUp___ = inter.pointToEdge(aleInvJ) *

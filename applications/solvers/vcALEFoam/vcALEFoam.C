@@ -85,7 +85,7 @@ int main(int argc, char *argv[])
         lm = 0.5*(lm.oldTime() + lm);
         F = 0.5*(F.oldTime() + F);
         x = 0.5*(x.oldTime() + x);
-	//intW = 0.5*(intW.oldTime() + intW);
+	xw = 0.5*(xw.oldTime() + xw);
 
         #include "updateVariables.H"
 
@@ -98,6 +98,9 @@ int main(int argc, char *argv[])
         {
             u = x - X;
             u.write();
+
+	    uw = xw - X;
+	    uw.write();
 
             p = model.pressure();
             p.write();

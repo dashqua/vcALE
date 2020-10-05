@@ -54,6 +54,15 @@ pointVectorField x
 x.primitiveFieldRef() = mesh.points();
 
 // Material nodal coordinate
+pointVectorField xw
+(
+    IOobject("xw", mesh),
+    pMesh,
+    dimensionedVector("xw", dimensionSet(0,1,0,0,0,0,0), vector::zero)
+);
+xw.primitiveFieldRef() = mesh.points();
+
+// Referential (previously Material) nodal coordinate
 pointVectorField X
 (
     IOobject ("X", mesh),
@@ -203,7 +212,7 @@ pointScalarField aleInvJ = aleModel_.invJacobian();
 pointTensorField aleFinvT = aleModel_.defGradinvT();
 
 //- ALE: Initialization of trueF and Piola Hat
-trueF = aleF & F;
+trueF = F & aleFinv;
 PHat = (P + ((aleInvJ * lm) * w_) ) & aleH;
 
 //- ALE: Initialization of new wave speeds 
@@ -379,6 +388,13 @@ pointVectorField u
     IOobject ("u", runTime.timeName(), mesh, IOobject::NO_READ, IOobject::AUTO_WRITE),
     pMesh,
     dimensionedVector("u", dimLength, vector::zero)
+);
+// w Nodal displacements
+pointVectorField uw
+(
+    IOobject ("uw", runTime.timeName(), mesh, IOobject::NO_READ, IOobject::AUTO_WRITE),
+    pMesh,
+    dimensionedVector("uw", dimLength, vector::zero)
 );
 
 u.write();
