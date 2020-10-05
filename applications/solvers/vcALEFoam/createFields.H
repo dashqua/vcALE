@@ -201,7 +201,7 @@ pointScalarField Us
 //- ALE: Declaration and initialization of ALE Objects
 Info << "Creating ALE objects ..." << nl;
 aleModel aleModel_(mechanicalProperties, mesh, pMesh, N);
-aleModel_.correct(); 
+aleModel_.correct();
 pointVectorField w_    = aleModel_.w();
 pointTensorField aleF = aleModel_.defGrad(); 
 pointScalarField aleJ = aleModel_.jacobian();

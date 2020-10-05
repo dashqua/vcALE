@@ -106,6 +106,12 @@ class aleModel
   //- ALE motion type
   word fictitiousMotionType_;
   
+  //- ALE beta coefficient for Motion Mapping
+  scalar beta_;
+
+  //- ALE T period coefficient for Mot Map
+  scalar T_;
+
   //- ALE pressure wave speed
   //dimensionedScalar aleUp_;
   pointScalarField aleUp_;
@@ -223,7 +229,7 @@ public:
     return aleRho_;
   }
 
-  //- Momentum
+  //- Momentum // TO REMOVE
   pointVectorField aleP()
   {
     return aleRho_ * w_;

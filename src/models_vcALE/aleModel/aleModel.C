@@ -119,6 +119,12 @@ aleModel::aleModel
     ),
 
     fictitiousMotionType_(dict.lookup("fictitiousMotionType")),
+
+    beta_( 0.0 ),
+    T_( 0.0 ),
+    //T_(dict.lookup("T"))
+    //const scalar& cfl = readScalar(controlDict.lookup("cfl"));
+  
     
     // to remove
     aleUp_
@@ -130,8 +136,13 @@ aleModel::aleModel
     (
      jacobian()
     )
-    
 {
+  //beta_ = const_cast<scalar>(readScalar(dict.lookup("beta")));
+  //T_ = const_cast<scalar>(readScalar(dict.lookup("T")));
+
+  //beta_ = readScalar(dict.lookup("beta"));
+  dict.lookup("beta") >> beta_;
+  dict.lookup("T") >> T_;
   // The structure of the solidModel is kept so far.
   // The new wave speeds are initialized here.
 
@@ -149,8 +160,57 @@ aleModel::~aleModel()
 
 void aleModel::correct()
 {
-  
+  /*
+    To update:
+      - motMap_
+      - w_
+      - defGrad_
+      - J_
+      - invJ_
+   */
   if (fictitiousMotionType() == "sinusoid")
+  {
+    // XE = xe +       beta * sin(2*pi*xe/1.) * sin(2*pi*ye/6.) * sin(pi*t/T)
+    // YE = ye + 5.0 * beta * sin(2*pi*xe/1.) * sin(2*pi*ye/6.) * sin(2*pi*t/T)
+    scalar t = mesh_.time().value();
+    scalar pi = Foam::constant::mathematical::pi;
+
+    forAll(motMap_, p)
+    {
+      //Info << "correcting ALE Motion Mapping\n";
+      scalar X = mesh_.points()[p][0];
+      scalar Y = mesh_.points()[p][1];
+      scalar Z = mesh_.points()[p][2];
+      motMap_[p][0] =
+	X + beta_ * Foam::sin(2*pi*X) * Foam::sin(pi*Y/3.0) * Foam::sin(pi*t/T_);
+      motMap_[p][1] =
+	Y + 5 * beta_ * Foam::sin(2*pi*X) * Foam::sin(pi*Y/3.0) * Foam::sin(2*pi*t/T_);
+      motMap_[p][2] = Z;
+      //Info << "correcting ALE Velocity\n";
+      w_[p][0] =
+	beta_*pi/T_ * Foam::sin(2*pi*X) * Foam::sin(pi*Y/3.0) * Foam::cos(pi*t/T_);
+      w_[p][1] =
+	10.0*beta_*pi/T_ * Foam::sin(2*pi*X) * Foam::sin(pi*Y/3.0) * Foam::cos(2*pi*t/T_);
+      w_[p][2] = 0.0;
+      //Info << "correcting ALE defGrad\n";
+      defGrad_[p] = tensor
+	(
+	 1 + 2*beta_*pi * Foam::cos(2*pi*X) * Foam::sin(pi*Y/3.0) * Foam::sin(pi*t/T_),
+	   beta_*pi/3.0 * Foam::sin(2*pi*X) * Foam::cos(pi*Y/3.0) * Foam::sin(pi*t/T_),
+	 0,//
+	  10.0*beta_*pi * Foam::cos(2*pi*X) * Foam::sin(pi*Y/3.0) * Foam::sin(2*pi*t/T_),
+	 1 + 5.0*beta_*pi/3.0 * Foam::sin(2*pi*X) * Foam::cos(pi*Y/3.0) * Foam::sin(2*pi*t/T_),
+	 0,//
+	 0,
+	 0,
+	 1//
+	);
+      J_[p] = det(defGrad_[p]);
+      invJ_[p] = 1.0 / J_[p];
+    }   
+  }
+  
+  if (fictitiousMotionType() == "sinusoidOLD")
   {
  //XE = xe + 1./20. * 2.0 * sin(2*pi*xe/1.) * sin(2*pi*ye/6.) * sin(2*pi*t/T)
  //YE = ye + 3./5. * 1.5 * sin(2*pi*xe/1.) * sin(2*pi*ye/6.) * sin(4*pi*t/T)
@@ -213,6 +273,8 @@ void aleModel::printMaterialProperties()
 {
   Info << "aleModel: " << model_ << nl;
   Info << "fictitious Motion Type: " << fictitiousMotionType() << nl;
+  Info << "beta: " << beta_ << nl;
+  Info << "T: " << T_ << nl;
 }
 
 
