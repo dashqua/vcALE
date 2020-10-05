@@ -1,6 +1,6 @@
 // Compute interior terms for right hand sides
 rhsLm.primitiveFieldRef() = op.surfaceSum(tC*magSf);
-rhsF.primitiveFieldRef() = op.surfaceSum((vC)*Sf);
+rhsF.primitiveFieldRef() = op.surfaceSum(vC*Sf);
 
 if (angularMomentumConservation == "yes")
 {

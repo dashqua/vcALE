@@ -336,7 +336,7 @@ pointVectorField v_
 	pMesh,
 	dimensionedVector("v_", dimensionSet(0,1,-1,0,0,0,0), vector::zero)
 );
-v_ = lm/rho;
+v_ = aleInvJ * lm/rho;
 
 //- ALE:  vHat
 pointVectorField vHat
@@ -345,12 +345,12 @@ pointVectorField vHat
 	pMesh,
 	dimensionedVector("vHat", dimensionSet(0,1,-1,0,0,0,0), vector::zero)
 );
-vHat = (aleInvJ * v_) + ((F & aleFinv) & w_);
+vHat = v_ + ((F & aleFinv) & w_);
 
 
 
 // Edge linear momentum
-vectorList vC = inter.pointToEdge(v_);
+vectorList vC = inter.pointToEdge(vHat);
 
 // Edge traction
 vectorField tC = (inter.pointToEdge(PHat) & N) + (0.5*mech.SmatrixMod(aleUp___, aleUs___) & (lmP-lmM));

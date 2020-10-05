@@ -24,7 +24,6 @@ grad.reconstruct(lm, lmGrad, lmM, lmP);
 v_ = aleInvJ * lm/rho;
 vHat = v_ + ((F & aleFinv) & w_);
 vC = inter.pointToEdge(vHat); 
-// ask for confirmation: has to be vHat OK
 
 //tC = (inter.pointToEdge((P + aleInvJ * (p_ * w_)) & aleH ) & N) + (0.5*mech.Smatrix(aleUp, aleUs) & (lmP - lmM));/////////
 scalarField aleUp___ = inter.pointToEdge(aleInvJ) *
