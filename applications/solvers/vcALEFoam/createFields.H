@@ -398,6 +398,7 @@ pointVectorField uw
 );
 
 u.write();
+uw.write();
 X -= u;
 
 
