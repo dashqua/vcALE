@@ -200,20 +200,16 @@ pointScalarField Us
 ////////////////////////////////////////////////////////////
 //- ALE: Declaration and initialization of ALE Objects
 Info << "Creating ALE objects ..." << nl;
-aleModel aleModel_(mechanicalProperties, mesh, pMesh, N);
+aleModel aleModel_(mechanicalProperties, mesh, pMesh);
 aleModel_.correct();
-pointVectorField w_    = aleModel_.w();
-pointTensorField aleF = aleModel_.defGrad(); 
-pointScalarField aleJ = aleModel_.jacobian();
-pointTensorField aleH = aleModel_.coFactor();
-
-pointTensorField aleFinv = aleModel_.invDefGrad();
-pointScalarField aleInvJ = aleModel_.invJacobian();
-pointTensorField aleFinvT = aleModel_.defGradinvT();
+pointVectorField& w_    = aleModel_.w();
+pointTensorField& aleF = aleModel_.defGrad(); 
+pointScalarField& aleJ = aleModel_.jacobian();
+pointTensorField& aleH = aleModel_.coFactor();
 
 //- ALE: Initialization of trueF and Piola Hat
-trueF = F & aleFinv;
-PHat = (P + ((aleInvJ * lm) * w_) ) & aleH;
+trueF = F & op.inverse(aleF);
+PHat = (P + ((op.inverseScalar(aleJ) * lm) * w_) ) & aleH;
 
 //- ALE: Initialization of new wave speeds 
 // Note : that part is not useful anymore ?
@@ -234,60 +230,21 @@ pointScalarField aleUs
 );
 
 //- ALE: initialization of wave speeds
-scalarField lambdaH = sqrt((inter.pointToEdge(aleFinvT) & N) & (inter.pointToEdge(aleFinvT) & N));
-scalarField aleUp___ = inter.pointToEdge(aleInvJ) * 
+scalarField lambdaH = sqrt((inter.pointToEdge(  op.invT(aleF)  ) & N) & (inter.pointToEdge(   op.invT(aleF)  ) & N));
+scalarField aleUp___ = inter.pointToEdge( op.inverseScalar(aleJ) ) * 
        (
          (lambdaH * inter.pointToEdge(Up)) 
        - (inter.pointToEdge(w_) & (inter.pointToEdge(aleH) & N))
        );
 
-scalarField aleUs___ = inter.pointToEdge(aleInvJ) * 
+scalarField aleUs___ = inter.pointToEdge( op.inverseScalar(aleJ) ) * 
        (
          (lambdaH * inter.pointToEdge(Us)) 
        - (inter.pointToEdge(w_) & (inter.pointToEdge(aleH) & N))
        );
 
 
-/*
-pointScalarField aleJ = aleModel_.jacobian();  Info << "aleJ created\n;";
-pointScalarField aleInvJ = aleModel_.invJacobian(); Info << "aleInvJ created\n;";
-pointTensorField aleFinvT = aleModel_.defGradinvT();//inv(aleModel_.defGrad().T());
-Info << "aleFinvT created\n;";
-pointTensorField aleF = aleModel_.defGrad(); Info << "aleF created\n;";
-pointTensorField aleH = aleModel_.coFactor(); Info << "aleH created\n;";
-scalarField lambdaH = sqrt((inter.pointToEdge(aleFinvT) & N) & (inter.pointToEdge(aleFinvT) & N)); Info << "lambdaH created\n;";
-pointScalarField lambdaH_(IOobject("lambdaH_", mesh), pMesh, 0.0); Info << "lambdaH_ created\n;";
-lambdaH_.primitiveFieldRef() = lambdaH; 
-pointVectorField w_    = aleModel_.w(); Info << "w_ created\n;";
-pointVectorField p_    = aleModel_.aleP(); Info << "p_ created\n;";
 
-pointScalarField aleUp = aleInvJ; Info << "aleUp created\n;";
-pointScalarField aleUs = aleInvJ; Info << "aleUs created\n;";
-forAll(aleUp, pt)
-{
-  aleUp[pt] *= (lambdaH_[pt] * Up[pt]) - (w_[pt] & (aleF[pt] & N[pt] ));
-  aleUs[pt] *= (lambdaH_[pt] * Us[pt]) - (w_[pt] & (aleF[pt] & N[pt] ));
-}
-Info << "aleUs and aleUp initialized\n;";
-*/
-
-
-/*
-pointVectorField aleRecLM
-(
- IOobject("aleRecLM", mesh, IOobject::NO_READ, IOobject::AUTO_WRITE),
- pMesh,
- dimensionedVector("aleRecLM", dimensionSet(1,-2,-1,0,0,0,0), vector::zero)
- 
- //     This odd dimension is required because "lm" has the same one
-  
-);
-Info << aleRecLM.dimensions() << nl;
-Info << lm.dimensions() << nl;
-Info << aleJ.dimensions() <<nl;
-aleRecLM = lm * aleJ;
-Info << "reconstructed Linear Momentum initialized\n";
-*/
 
 
 
@@ -336,7 +293,7 @@ pointVectorField v_
 	pMesh,
 	dimensionedVector("v_", dimensionSet(0,1,-1,0,0,0,0), vector::zero)
 );
-v_ = aleInvJ * lm/rho;
+v_ = op.inverseScalar(aleJ) * lm/rho;
 
 //- ALE:  vHat
 pointVectorField vHat
@@ -345,7 +302,7 @@ pointVectorField vHat
 	pMesh,
 	dimensionedVector("vHat", dimensionSet(0,1,-1,0,0,0,0), vector::zero)
 );
-vHat = v_ + ((F & aleFinv) & w_);
+vHat = v_ + ((F & op.inverse(aleF)) & w_);
 
 
 

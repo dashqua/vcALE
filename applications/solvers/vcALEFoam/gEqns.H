@@ -89,10 +89,11 @@ if (angularMomentumConservation == "yes")
     am.AMconservation(rhsLm, rhsLm1, rhsAm, i, V);
 }
 
+
+
 // Compute node coordinates
-//x += deltaT*(aleInvJ * lm/rho);
-v_ = aleInvJ * lm/rho;
-vHat = v_ + ((F & aleFinv) & w_);
+v_ = op.inverseScalar(aleJ) * lm/rho;
+vHat = v_ + ((F & op.inverse(aleF)) & w_);
 x += deltaT * vHat;
 
 // same for xw

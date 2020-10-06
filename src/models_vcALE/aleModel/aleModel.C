@@ -41,26 +41,13 @@ aleModel::aleModel
 (
     const dictionary& dict,
     const fvMesh& vm,
-    pointMesh& pMesh,
-    const vectorList& N
+    pointMesh& pMesh
 )
 :
     mesh_(vm),
     pMesh_(pMesh),
 
     model_(dict.lookup("aleModel")),
-
-    rho_(dict.lookup("rho")),
-    E_(dict.lookup("E")),
-    nu_(dict.lookup("nu")),
-    mu_(E_/(2.0*(1.0 + nu_))),
-    lambda_(nu_*E_/((1.0 + nu_)*(1.0 - 2.0*nu_))),
-    kappa_(lambda_ + (2.0/3.0)*mu_),
-
-    Up_(sqrt((lambda_+2.0*mu_)/rho_)),
-    Us_(sqrt(mu_/rho_)),
-
-    N_(N),
     
     motMap_
     (
@@ -104,50 +91,23 @@ aleModel::aleModel
      1
     ),
 
-    invJ_
+    H_
     (
-     IOobject("invJ", mesh_),
+     IOobject("H", mesh_),
      pMesh_,
-     1     
-    ),
-    
-    aleRho_
-    (
-     IOobject("aleRho", mesh_),
-     pMesh_,
-     dimensionedScalar("aleRho", dimensionSet(1,-3,0,0,0,0,0), 1.0)
+     Foam::tensor::I
     ),
 
     fictitiousMotionType_(dict.lookup("fictitiousMotionType")),
 
     beta_( 0.0 ),
-    T_( 0.0 ),
+    T_( 0.0 )
     //T_(dict.lookup("T"))
     //const scalar& cfl = readScalar(controlDict.lookup("cfl"));
   
-    
-    // to remove
-    aleUp_
-    (
-     jacobian()
-    ),
-
-    aleUs_
-    (
-     jacobian()
-    )
 {
-  //beta_ = const_cast<scalar>(readScalar(dict.lookup("beta")));
-  //T_ = const_cast<scalar>(readScalar(dict.lookup("T")));
-
-  //beta_ = readScalar(dict.lookup("beta"));
   dict.lookup("beta") >> beta_;
   dict.lookup("T") >> T_;
-  // The structure of the solidModel is kept so far.
-  // The new wave speeds are initialized here.
-
-  //aleUp_ = inv(this->jacobian(pMesh_.points()));
-  //aleUs_ = aleUp_;
 }
 
 
@@ -160,13 +120,14 @@ aleModel::~aleModel()
 
 void aleModel::correct()
 {
+    //Info << fictitiousMotionType() << " .. t=" << mesh_.time().value() << nl;
   /*
     To update:
       - motMap_
       - w_
-      - defGrad_
+      - F (defGrad_)
       - J_
-      - invJ_
+      - H_
    */
   if (fictitiousMotionType() == "sinusoid")
   {
@@ -174,7 +135,6 @@ void aleModel::correct()
     // YE = ye + 5.0 * beta * sin(2*pi*xe/1.) * sin(2*pi*ye/6.) * sin(2*pi*t/T)
     scalar t = mesh_.time().value();
     scalar pi = Foam::constant::mathematical::pi;
-
     forAll(motMap_, p)
     {
       //Info << "correcting ALE Motion Mapping\n";
@@ -182,9 +142,9 @@ void aleModel::correct()
       scalar Y = mesh_.points()[p][1];
       scalar Z = mesh_.points()[p][2];
       motMap_[p][0] =
-	X + beta_ * Foam::sin(2*pi*X) * Foam::sin(pi*Y/3.0) * Foam::sin(pi*t/T_);
+	X +   beta_ * Foam::sin(2*pi*X) * Foam::sin(pi*Y/3.0) * Foam::sin(pi*t/T_);
       motMap_[p][1] =
-	Y + 5 * beta_ * Foam::sin(2*pi*X) * Foam::sin(pi*Y/3.0) * Foam::sin(2*pi*t/T_);
+	Y + 5*beta_ * Foam::sin(2*pi*X) * Foam::sin(pi*Y/3.0) * Foam::sin(2*pi*t/T_);
       motMap_[p][2] = Z;
       //Info << "correcting ALE Velocity\n";
       w_[p][0] =
@@ -206,11 +166,21 @@ void aleModel::correct()
 	 1//
 	);
       J_[p] = det(defGrad_[p]);
-      invJ_[p] = 1.0 / J_[p];
+      H_[p] = J_[p] * inv(defGrad_[p]).T();
+      //Info << "yes1: " << 5.0*beta_*pi/3.0 << nl;
+      //Info << "yes2: " << Foam::sin(2*pi*X) << nl; //pbm: this is 0
+      //Info << "yes2bis: " << 2*pi*X << nl;
+      //Info << "yes2ter: " << Foam::sin(X) << nl;
+      //Info << "yes3: " << Foam::cos(pi*Y/3.0) << nl;
+      //Info << "yes4: " << Foam::sin(2*pi*t/T_) << nl;
+      /*
+      if (5.0*beta_*pi/3.0 * Foam::sin(2*pi*X) * Foam::cos(pi*Y/3.0) * Foam::sin(2*pi*t/T_) <= 0 ){ Info << " actually 0 " << nl; }
+      else { Info << "not 0 " << nl; }
+      */
     }   
   }
   
-  if (fictitiousMotionType() == "sinusoidOLD")
+  if (fictitiousMotionType() == "sinusoidOLD") //DEPRECATED
   {
  //XE = xe + 1./20. * 2.0 * sin(2*pi*xe/1.) * sin(2*pi*ye/6.) * sin(2*pi*t/T)
  //YE = ye + 3./5. * 1.5 * sin(2*pi*xe/1.) * sin(2*pi*ye/6.) * sin(4*pi*t/T)
@@ -260,7 +230,7 @@ void aleModel::correct()
       J_[p] = det(defGrad_[p]);
       //Info << "J[p] = " << J_[p] << nl;
       //Info << "correcting ALE invJacobian\n";
-      invJ_[p] = 1.0 / J_[p];
+      //invJ_[p] = 1.0 / J_[p];
     }   
   }
   //Info << "ALE correction done\n";

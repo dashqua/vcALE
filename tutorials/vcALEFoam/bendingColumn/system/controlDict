@@ -23,11 +23,11 @@ startTime 0;
 
 stopAt endTime;
 
-endTime 0.5;
+endTime 2.0;
 
 timeStepping variable;
 
-cfl 0.4;
+cfl 0.3; // 0.4;
 
 deltaT 0;
 

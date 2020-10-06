@@ -85,6 +85,63 @@ dimensionedScalar operations::minimumEdgeLength()
 }
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+  
+pointScalarField operations::inverseScalar
+(
+    const GeometricField<scalar, pointPatchField, pointMesh>& J
+) const
+{
+
+    tmp<GeometricField<scalar, pointPatchField, pointMesh> > tsf
+    (
+        new GeometricField<scalar, pointPatchField, pointMesh>
+        (
+            IOobject("inv", mesh_),
+            J.mesh(),
+            dimensioned<scalar>("inv", J.dimensions(), pTraits<scalar>::one)
+        )
+    );
+
+    GeometricField<scalar, pointPatchField, pointMesh> inv = tsf();
+
+    forAll(inv, pt)
+      {
+	inv[pt] = 1.0/J[pt];
+      }
+    //inv = 1.0/J; //Foam::inv(J);
+
+    tsf.clear();
+
+    return inv;
+}
+  
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+pointTensorField operations::inverse
+(
+    const GeometricField<tensor, pointPatchField, pointMesh>& T
+) const
+{
+
+    tmp<GeometricField<tensor, pointPatchField, pointMesh> > tsf
+    (
+        new GeometricField<tensor, pointPatchField, pointMesh>
+        (
+            IOobject("inv", mesh_),
+            T.mesh(),
+            dimensioned<tensor>("inv", T.dimensions(), pTraits<tensor>::one)
+        )
+    );
+
+    GeometricField<tensor, pointPatchField, pointMesh> inv = tsf();
+
+    inv = Foam::inv(T);
+
+    tsf.clear();
+
+    return inv;
+}
+
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 pointTensorField operations::invT
 (
     const GeometricField<tensor, pointPatchField, pointMesh>& T

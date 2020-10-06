@@ -10,29 +10,32 @@ forAll(mesh.points(), node)
 }
 
 // Constitutive model
-trueF = F & aleFinv;
+Info << "aleF sample: " << aleF[20] << nl;
+trueF = F & op.inverse(aleF);
 trueJ = det(trueF);
 trueH = trueJ * op.invT(trueF);
 model.correct(trueF, trueH, trueJ);
+aleModel_.correct();
 P = model.piola(); // 'trueP' obtained from true F, H and J
-PHat = ( P + (aleInvJ*(lm * w_)) ) & aleH;
+PHat = ( P + (  op.inverseScalar(aleJ) *(lm * w_)) ) & aleH;
 
 // Linear reconstruction
 lmGrad = grad.gradient(lm);
 grad.reconstruct(lm, lmGrad, lmM, lmP);
 
-v_ = aleInvJ * lm/rho;
-vHat = v_ + ((F & aleFinv) & w_);
+v_ = op.inverseScalar(aleJ) * lm/rho;
+vHat = v_ + ((F & op.inverse(aleF)) & w_);
 vC = inter.pointToEdge(vHat); 
 
-//tC = (inter.pointToEdge((P + aleInvJ * (p_ * w_)) & aleH ) & N) + (0.5*mech.Smatrix(aleUp, aleUs) & (lmP - lmM));/////////
-scalarField aleUp___ = inter.pointToEdge(aleInvJ) *
+//alefinvt and lambdah are updated but we need to update aleF too.....
+lambdaH = sqrt((inter.pointToEdge(  op.invT(aleF) ) & N) & (inter.pointToEdge(   op.invT(aleF)  ) & N));
+scalarField aleUp___ = inter.pointToEdge( op.inverseScalar(aleJ) ) *
        (
          (lambdaH * inter.pointToEdge(Up))
        - (inter.pointToEdge(w_) & (inter.pointToEdge(aleH) & N))
        );
 
-scalarField aleUs___ = inter.pointToEdge(aleInvJ) *
+scalarField aleUs___ = inter.pointToEdge( op.inverseScalar(aleJ) ) *
        (
          (lambdaH * inter.pointToEdge(Us))
        - (inter.pointToEdge(w_) & (inter.pointToEdge(aleH) & N))

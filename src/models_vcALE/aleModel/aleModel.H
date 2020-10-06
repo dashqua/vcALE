@@ -58,33 +58,6 @@ class aleModel
         //- Constitutive model
         word model_;
 
-        //- Density
-        dimensionedScalar rho_;
-
-        //- Young's modulus of Elasticity
-        dimensionedScalar E_;
-
-        //- Poisson's ratio
-        dimensionedScalar nu_;
-
-        //- Lame coefficient
-        dimensionedScalar mu_;
-
-        //- Lame coefficient
-        dimensionedScalar lambda_;
-
-        //- Bulk modulus
-        dimensionedScalar kappa_;
-
-        //- Pressure wave speed
-        dimensionedScalar Up_;
-
-        //- Shear wave speed
-        dimensionedScalar Us_;
-
-  //- (for ALE) material normals
-  const vectorList N_;
-  
   //- ALE Motion Mapping
   pointVectorField motMap_;
 
@@ -97,12 +70,9 @@ class aleModel
   //- ALE Jacobian
   pointScalarField J_;
 
-  //- ALE inverse Jacobian
-  pointScalarField invJ_;
+  //- ALE coFactor
+  pointTensorField H_;
   
-  //- ALE density
-  pointScalarField aleRho_;
-
   //- ALE motion type
   word fictitiousMotionType_;
   
@@ -112,13 +82,6 @@ class aleModel
   //- ALE T period coefficient for Mot Map
   scalar T_;
 
-  //- ALE pressure wave speed
-  //dimensionedScalar aleUp_;
-  pointScalarField aleUp_;
-  
-  //- ALE Shear wave speed
-  //dimensionedScalar aleUs_;
-  pointScalarField aleUs_;  
   
 private:
 
@@ -141,9 +104,8 @@ public:
   (
    const dictionary&,
    const fvMesh&,
-   pointMesh&,
-   const vectorList&
-   );
+   pointMesh&
+  );
 
   //- Destructor
   virtual ~aleModel();
@@ -153,115 +115,50 @@ public:
 
   // Access
 
-  const dimensionedScalar& Up() const
-  {
-    return Up_;
-  }
-
-  const dimensionedScalar& Us() const
-  {
-    return Us_;
-  }
-
   // ALE mappings
 
   //- Motion Mapping
-  pointVectorField motMap()
+  pointVectorField& motMap()
   {
     return motMap_;
   }
 
   //- Time derivative of motMap
-  pointVectorField w()
+  pointVectorField& w()
   {
     return w_;
   }
   
   //- Deformation Gradient
-  pointTensorField defGrad()
+  pointTensorField& defGrad()
   {
     return defGrad_;
   }
 
   //- Jacobian
-  pointScalarField jacobian()
+  pointScalarField& jacobian()
   {
     return J_; 
   }
-
-  //- inverse Jacobian
-  pointScalarField invJacobian()
-  {
-    return invJ_;
-  }
-
-  //- inverse of the def Grad
-  pointTensorField invDefGrad()
-  {
-    pointTensorField idg = defGrad();
-    forAll(idg, pt)
-      {
-	idg[pt] = inv(defGrad_[pt]);
-      }
-    return idg;
-  }
-  
-  //- inverse transpose of the def Grad
-  pointTensorField defGradinvT()
-  {
-    pointTensorField dgit = defGrad();
-    forAll(dgit, pt)
-      {
-	dgit[pt] = inv(defGrad_[pt].T());
-      }
-    return dgit;
-  }
   
   //- CoFactor
-  pointTensorField coFactor()
+  pointTensorField& coFactor()
   {
-    return jacobian() * inv(defGrad_.T());
+    pointScalarField& jac = jacobian();
+    pointTensorField& dg  = defGrad();
+    pointTensorField& cof = defGrad();
+    forAll(cof, pt)
+    {
+   	cof[pt] = jac[pt] * inv( dg[pt].T() );
+    }
+    return cof; // jac * inv( dg.T() );
   }
 
-  //- Density
-  pointScalarField aleRho()
-  {
-    return aleRho_;
-  }
-
-  //- Momentum // TO REMOVE
-  pointVectorField aleP()
-  {
-    return aleRho_ * w_;
-  }
-  
   word fictitiousMotionType()
   {
     return fictitiousMotionType_;
   }
-    
-
-
-  //- Lambda coefficient
-  /*
-  pointScalarField lambdaCoeff()
-  {
-  //return (defGrad() & mesh_.magSf()/mesh_.Sf()) & (defGrad() & mesh_.magSf()/mesh_.Sf());
-    interpolationSchemes inter(mesh_);
-    vectorField han = (inter.pointToEdge(coFactor()) & N_);
-    scalarField ent = han & han;
-    pointScalarField hanhan(ent);
-    
-    return aleUp_;//(inter.pointToEdge(coFactor()) & N_) & (inter.pointToEdge(coFactor()) & N_);
-
-    // problem with H * N
-    // because N cannot be reached somehow
-
-    // solution: H would have to be interpolated
-    // see updateVariables.H
-  }
-  */
-  
+      
   // Edit
 
   //- Correct material model

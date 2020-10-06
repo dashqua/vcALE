@@ -106,6 +106,19 @@ public:
         // Minimum edge length
         dimensionedScalar minimumEdgeLength();
 
+        // Inverse of a pointScalarField
+  
+        pointScalarField inverseScalar
+        (
+            const GeometricField<scalar, pointPatchField, pointMesh>& J
+        ) const;
+  
+        // Inverse of a pointTensorField
+        pointTensorField inverse
+        (
+            const GeometricField<tensor, pointPatchField, pointMesh>& T
+        ) const;
+        
 
         // Inverse transpose of a pointTensorField
         pointTensorField invT
