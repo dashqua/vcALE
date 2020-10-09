@@ -104,11 +104,6 @@ int main(int argc, char *argv[])
 
             p = model.pressure();
             p.write();
-
-	    //intW.write();
-	    ////ALE postProcessing
-            //#include "postProALE.H"
-	
   	}
 
         Info<< " Simulation completed = "

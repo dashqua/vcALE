@@ -11,20 +11,26 @@ forAll(mesh.points(), node)
 
 // Constitutive model
 Info << "aleF sample: " << aleF[20] << nl;
+
+aleModel_.correct();
 trueF = F & op.inverse(aleF);
 trueJ = det(trueF);
 trueH = trueJ * op.invT(trueF);
 model.correct(trueF, trueH, trueJ);
-aleModel_.correct();
 P = model.piola(); // 'trueP' obtained from true F, H and J
-PHat = ( P + (  op.inverseScalar(aleJ) *(lm * w_)) ) & aleH;
+//PHat = ( P + (  op.inverseScalar(aleJ) *(lm * w_)) ) & aleH;
+v_ = op.inverseScalar(aleJ) * lm/rho;
+vHat = v_ + ((F & op.inverse(aleF)) & w_);
+PHat = (P + ((v_*rho) * w_)) & aleH;
 
 // Linear reconstruction
 lmGrad = grad.gradient(lm);
 grad.reconstruct(lm, lmGrad, lmM, lmP);
-
-v_ = op.inverseScalar(aleJ) * lm/rho;
-vHat = v_ + ((F & op.inverse(aleF)) & w_);
+// /!\ this computation of left and right terms lmM and lmP 
+//     has to be replaced by the spatial equivalent 
+//     (see formula).
+//     -> Since this lm is now the spatial one, there is no 
+//     problem :ok:
 vC = inter.pointToEdge(vHat); 
 
 //alefinvt and lambdah are updated but we need to update aleF too.....

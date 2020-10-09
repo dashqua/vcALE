@@ -209,7 +209,7 @@ pointTensorField& aleH = aleModel_.coFactor();
 
 //- ALE: Initialization of trueF and Piola Hat
 trueF = F & op.inverse(aleF);
-PHat = (P + ((op.inverseScalar(aleJ) * lm) * w_) ) & aleH;
+//PHat = (P + ((op.inverseScalar(aleJ) * lm) * w_) ) & aleH;
 
 //- ALE: Initialization of new wave speeds 
 // Note : that part is not useful anymore ?
@@ -304,7 +304,8 @@ pointVectorField vHat
 );
 vHat = v_ + ((F & op.inverse(aleF)) & w_);
 
-
+// PHat definition using v_
+PHat = (P + ((v_*rho) * w_) ) & aleH;
 
 // Edge linear momentum
 vectorList vC = inter.pointToEdge(vHat);

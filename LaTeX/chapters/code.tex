@@ -1,0 +1,79 @@
+\begin{algorithm}[H]
+	\KwData{$c^{p}_{R}, c^{s}_{R}$.} % referential wave speeds
+	\KwResult{\textbf{rhsLm}, \textbf{rhsF}. }
+	%initialization\;
+	Update of $\vect{w}, \mat{F}_{\psi}, \J_{\psi}, \mat{H}_{\psi}$ \\
+	$\mat{F} = \mat{F}_{\phi}\mat{F}_{\psi}^{-1}$ \\
+	$\mat{P} = \mat{P}(\mat{F})$ \\
+	$\vect{v} = \J_{\psi}^{-1} \vect{p}_{\x}/\rho$ \\
+	$\hat{\vect{v}} = \vect{v} + \left[ \left( \mat{F}_{\phi}\mat{F}_{\psi}^{-1}\right)\cdot\vect{w} \right]$ \\
+	$\hat{\mat{P}} = \left[ \mat{P} + \left( (\vect{v}\rho)\otimes \vect{w}   \right) \right]$ \\
+	$\vect{vC}$, point to edge interpolation of $\hat{\vect{v}}$ \\
+	$\Lambda_{\mat{H}_\phi}^2 = \left( \mat{H}_{\psi}^{Ave} \N_{\x} \right) \cdot \left( \mat{H}_{\psi}^{Ave} \N_{\x} \right)$ \\
+	$c^{p}_{\x} = \J_{\psi}^{-1} \left[ \Lambda_{\mat{H}_\phi}c^{p}_{R} - \vect{w}\cdot\left( \mat{H}_{\psi}\N_{\x} \right) \right]$ \\
+	$c^{s}_{\x} = \J_{\psi}^{-1} \left[ \Lambda_{\mat{H}_\phi}c^{s}_{R} - \vect{w}\cdot\left( \mat{H}_{\psi}\N_{\x} \right) \right]$  \\
+	$\mat{tC} = \hat{\mat{P}}^{Ave} \N_{\x} + \frac{1}{2} Smat(c^{p}_{\x},c^{s}_{\x}) \left( \vect{p}_{\x}^{+}-\vect{p}_{\x}^{-}\right)$ \\
+	$\vect{rhsLm} =  \sum\limits_{b\in\Lambda_a} \left( \vect{tC} \; ||C^{\x}_{ab}|| \right)$ \\
+	$\mat{rhsF} =  \sum\limits_{b\in\Lambda_a} \left( \vect{vC} \otimes \vect{C}^{\x}_{ab} \right)$ \\
+	\caption{Computation of Right Hand Sides.}
+\end{algorithm}
+
+\begin{algorithm}[H]
+	\KwData{\textbf{rhsLm}, \textbf{rhsF}. } % referential wave speeds
+	\KwResult{$\vect{p}_{\x}^n, \mat{F}_{\phi}^n, \vect{u}^{n}, \vect{u}_{\vect{w}}^{n}$}
+	%initialization\;
+	$\vect{v} = \J_{\psi}^{-1} \vect{p}_{\x}/\rho$ \\
+	$\hat{\vect{v}} = \vect{v} + \left[ \left( \mat{F}_{\phi}\mat{F}_{\psi}^{-1}\right)\cdot\vect{w} \right]$ \\
+	$\x \mathrel{{+}{=}} \Delta t \; \hat{\vect{v}}$ \\
+	$\x_{\vect{w}} \mathrel{{+}{=}} \Delta t \; \hat{\vect{w}}$ \\
+	$\vect{p}_{\x} \mathrel{{+}{=}} \Delta t \; \vect{rhsLm}$ \\
+	$\mat{F} \mathrel{{+}{=}} \Delta t \; \mat{rhsF}$ \\
+	$\vect{p}_{\x}^n = \frac{1}{2}\left( \vect{p}_{\x}^{n-1} + \vect{p}_{\x}^n \right)$ \\
+	$\mat{F}_{\phi}^n = \frac{1}{2}\left( \mat{F}_{\phi}^{n-1} + \mat{F}_{\phi}^n \right)$ \\
+	$\x^n = \frac{1}{2}\left( \x^{n-1} + \x^n \right)$ \\
+	$\x_{\vect{w}}^n = \frac{1}{2}\left( \x_{\vect{w}}^{n-1} + \x_{\vect{w}}^n \right)$ \\
+	$\vect{u}^{n} = \x^n - \X$ \\
+	$\vect{u}_{\vect{w}}^{n} = \x_{\vect{w}}^n - \X$
+	\caption{Use of Right Hand Sides.}
+\end{algorithm}
+
+\bigbreak
+
+%\SetKwInput{KwInput}{Input}
+%\SetKwInput{KwOutput}{Output}
+%\begin{algorithm}[H]
+%	\DontPrintSemicolon
+%
+%	\KwInput{Your Input}
+%	\KwOutput{Your output}
+%	\KwData{Testing set $x$}
+%	$\sum_{i=1}^{\infty} := 0$ \tcp*{this is a comment}
+%	\tcc{Now this is an if...else conditional loop}
+%	\If{Condition 1}
+%	{
+%		Do something    \tcp*{this is another comment}
+%		\If{sub-Condition}
+%		{Do a lot}
+%	}
+%	\ElseIf{Condition 2}
+%	{
+%		Do Otherwise \;
+%		\tcc{Now this is a for loop}
+%		\For{sequence}
+%		{
+%			loop instructions
+%		}
+%	}
+%	\Else
+%	{
+%		Do the rest
+%	}
+%
+%	\tcc{Now this is a While loop}
+%	\While{Condition}
+%	{
+%		Do something\;
+%	}
+%
+%	\caption{Example code}
+%\end{algorithm}
