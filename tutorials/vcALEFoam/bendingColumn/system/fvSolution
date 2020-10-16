@@ -15,7 +15,7 @@ FoamFile
 }
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-angularMomentumConservation 	yes;
+angularMomentumConservation 	no; //yes;
 incompressiblilityCoefficient	1.0;
 
 // ************************************************************************* //

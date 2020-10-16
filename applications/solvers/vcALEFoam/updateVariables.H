@@ -1,6 +1,4 @@
 // Strain measures
-//H = det(F)*op.invT(F);
-//J = det(F);
 stretch = mech.stretch();
 
 // Wave speeds
@@ -18,7 +16,6 @@ trueJ = det(trueF);
 trueH = trueJ * op.invT(trueF);
 model.correct(trueF, trueH, trueJ);
 P = model.piola(); // 'trueP' obtained from true F, H and J
-//PHat = ( P + (  op.inverseScalar(aleJ) *(lm * w_)) ) & aleH;
 v_ = op.inverseScalar(aleJ) * lm/rho;
 vHat = v_ + ((F & op.inverse(aleF)) & w_);
 PHat = (P + ((v_*rho) * w_)) & aleH;
@@ -33,8 +30,7 @@ grad.reconstruct(lm, lmGrad, lmM, lmP);
 //     problem :ok:
 vC = inter.pointToEdge(vHat); 
 
-//alefinvt and lambdah are updated but we need to update aleF too.....
-lambdaH = sqrt((inter.pointToEdge(  op.invT(aleF) ) & N) & (inter.pointToEdge(   op.invT(aleF)  ) & N));
+lambdaH = sqrt((inter.pointToEdge(aleH) & N) & (inter.pointToEdge(aleH) & N));
 scalarField aleUp___ = inter.pointToEdge( op.inverseScalar(aleJ) ) *
        (
          (lambdaH * inter.pointToEdge(Up))

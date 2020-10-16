@@ -104,6 +104,8 @@ int main(int argc, char *argv[])
 
             p = model.pressure();
             p.write();
+
+	    lm.write();
   	}
 
         Info<< " Simulation completed = "

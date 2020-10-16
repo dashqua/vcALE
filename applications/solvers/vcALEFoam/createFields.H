@@ -104,20 +104,6 @@ pointTensorField rhsF
     dimensionedTensor("rhsF",F.dimensions()/dimTime,tensor::zero)
 );
 
-// Cofactor of deformation
-pointTensorField H
-(
-    IOobject ("H", mesh),
-    det(F)*op.invT(F)
-);
-
-// Jacobian of deformation
-pointScalarField J
-(
-    IOobject("J", mesh),
-    det(F)
-);
-
 //Deformation gradient tensor for P material model
 pointTensorField trueF
 (
@@ -230,7 +216,7 @@ pointScalarField aleUs
 );
 
 //- ALE: initialization of wave speeds
-scalarField lambdaH = sqrt((inter.pointToEdge(  op.invT(aleF)  ) & N) & (inter.pointToEdge(   op.invT(aleF)  ) & N));
+scalarField lambdaH = sqrt((inter.pointToEdge(aleH) & N) & (inter.pointToEdge(aleH) & N));
 scalarField aleUp___ = inter.pointToEdge( op.inverseScalar(aleJ) ) * 
        (
          (lambdaH * inter.pointToEdge(Up)) 

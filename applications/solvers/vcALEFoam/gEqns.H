@@ -61,7 +61,8 @@ forAll(mesh.boundary(), patch)
                 t2 = traction;
                 t3 = traction;
             }
-
+            // test with the det(F) *
+	    // index of F has to be obtained from [patch][face][node] indexing
             vector tC = 0.125*(6.0*t1 + t2 + t3);
             vector lmClocal = 0.125*(6.0*lm1 + lm2 + lm3);
 
