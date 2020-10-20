@@ -21,14 +21,11 @@ vHat = v_ + ((F & op.inverse(aleF)) & w_);
 PHat = (P + ((v_*rho) * w_)) & aleH;
 
 // Linear reconstruction
-lmGrad = grad.gradient(lm);
-grad.reconstruct(lm, lmGrad, lmM, lmP);
-// /!\ this computation of left and right terms lmM and lmP 
-//     has to be replaced by the spatial equivalent 
-//     (see formula).
-//     -> Since this lm is now the spatial one, there is no 
-//     problem :ok:
-vC = inter.pointToEdge(vHat); 
+lmGrad = grad.gradient(v_);
+grad.reconstruct(v_, lmGrad, lmM, lmP);
+
+vC = inter.pointToEdge(vHat);
+wC = inter.pointToEdge(w_);
 
 lambdaH = sqrt((inter.pointToEdge(aleH) & N) & (inter.pointToEdge(aleH) & N));
 scalarField aleUp___ = inter.pointToEdge( op.inverseScalar(aleJ) ) *
@@ -43,4 +40,4 @@ scalarField aleUs___ = inter.pointToEdge( op.inverseScalar(aleJ) ) *
        - (inter.pointToEdge(w_) & (inter.pointToEdge(aleH) & N))
        );
 
-tC = (inter.pointToEdge(PHat) & N)  + (0.5*mech.SmatrixMod(aleUp___, aleUs___) & (lmP - lmM));
+tC = (inter.pointToEdge(PHat) & N) + inter.pointToEdge(aleJ*rho)*(0.5*mech.SmatrixMod(aleUp___, aleUs___) & (lmP - lmM));

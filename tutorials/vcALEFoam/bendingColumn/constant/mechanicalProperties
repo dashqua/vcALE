@@ -18,7 +18,7 @@ FoamFile
 solidModel neoHookean;
 aleModel neoHookean;
 
-fictitiousMotionType sinusoid;
+fictitiousMotionType sinusoid_order2; //sinusoid;
 beta 0.00001; //0.01;
 T 2.0;
 

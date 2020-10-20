@@ -299,6 +299,38 @@ vectorList vC = inter.pointToEdge(vHat);
 // Edge traction
 vectorField tC = (inter.pointToEdge(PHat) & N) + (0.5*mech.SmatrixMod(aleUp___, aleUs___) & (lmP-lmM));
 
+// Edge material velocity
+vectorList wC = inter.pointToEdge(w_);
+
+// ALE - Material J (to be solved)
+pointScalarField matJ
+(
+	IOobject ("matJ", runTime.timeName(), mesh, IOobject::NO_READ, IOobject::AUTO_WRITE),
+	pMesh,
+	dimensionedScalar("matJ", dimensionSet(0,0,0,0,0,0,0), 1)
+);
+matJ.write();
+
+// ALE - RHS of jacobian equation
+pointScalarField rhsJ
+(
+	IOobject("rhsJ", mesh),
+	pMesh,
+	dimensionedScalar("rhsJ", dimensionSet(0,0,-1,0,0,0,0), 0)
+);
+
+// ALE - comparJ: the following field is used to 
+// - matJ, that is RK integrated,
+// - aleJ, that is given analytically
+pointScalarField comparJ
+(
+	IOobject ("comparJ", runTime.timeName(), mesh, IOobject::NO_READ, IOobject::AUTO_WRITE), //IOobject("comparJ", mesh),
+	pMesh,
+	dimensionedScalar("comparJ", dimensionSet(0,0,0,0,0,0,0), 0.0)
+);
+comparJ = mag(matJ - aleJ);
+comparJ.write();
+
 Info << "Creating fields for angular momentum ..." << endl;
 
 // Angular momentum class

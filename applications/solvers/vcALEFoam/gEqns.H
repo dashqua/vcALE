@@ -1,6 +1,7 @@
 // Compute interior terms for right hand sides
 rhsLm.primitiveFieldRef() = op.surfaceSum(tC*magSf);
 rhsF.primitiveFieldRef() = op.surfaceSum(vC*Sf);
+rhsJ.primitiveFieldRef() = aleH && op.surfaceSum(wC*Sf);
 
 if (angularMomentumConservation == "yes")
 {
@@ -43,7 +44,7 @@ forAll(mesh.boundary(), patch)
 
             vector lm1 = lm[node];
             vector lm2 = lm[nodeB];
-            vector lm3 = lm[nodeC];
+            vector lm3 = lm[nodeC]; //   /!\ use to compute vhat
 
             vector x1 = x[node];
             vector x2 = x[nodeB];
@@ -64,7 +65,7 @@ forAll(mesh.boundary(), patch)
             // test with the det(F) *
 	    // index of F has to be obtained from [patch][face][node] indexing
             vector tC = 0.125*(6.0*t1 + t2 + t3);
-            vector lmClocal = 0.125*(6.0*lm1 + lm2 + lm3);
+            vector lmClocal = 0.125*(6.0*lm1 + lm2 + lm3);  // compute instead vHatClocal
 
             rhsLm[node] += tC*(magSf_p.boundaryField()[patch][facei]/3.0);
             rhsF[node] +=
@@ -82,6 +83,7 @@ forAll(mesh.boundary(), patch)
 // Compute right hand sides
 op.volumeIntegrate(rhsLm, V);
 op.volumeIntegrate(rhsF, V);
+op.volumeIntegrate(rhsJ, V);
 
 // Conservation of angular momentum
 if (angularMomentumConservation == "yes")
@@ -89,7 +91,6 @@ if (angularMomentumConservation == "yes")
     op.volumeIntegrate(rhsAm, V);
     am.AMconservation(rhsLm, rhsLm1, rhsAm, i, V);
 }
-
 
 
 // Compute node coordinates
@@ -106,3 +107,6 @@ lm.correctBoundaryConditions();
 
 // Compute deformation gradient tensor
 F += deltaT*rhsF;
+
+// Compute material Jacobian
+matJ += deltaT*rhsJ;
