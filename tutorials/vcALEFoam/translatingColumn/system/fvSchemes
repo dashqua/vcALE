@@ -10,20 +10,29 @@ FoamFile
     version     2.0;
     format      ascii;
     class       dictionary;
-    location    "constant";
-    object      mechanicalProperties;
+    location    "system";
+    object      fvSchemes;
 }
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-solidModel neoHookean;
-aleModel neoHookean;
+gradSchemes
+{
+	default         leastSquares;
+}
 
-fictitiousMotionType sinusoid; // sinusoid_order2; //sinusoid;
-beta 0.01; //0.01;  0.00000
-T 2.0;
+divSchemes
+{
+    default         none;
+}
 
-rho 	rho [1 -3 0 0 0 0 0]  1100;
-E 		E 	[1 -1 -2 0 0 0 0] 17e6;
-nu 		nu  [0 0 0 0 0 0 0]   0.45;
+laplacianSchemes
+{
+    default         none;
+}
+
+interpolationSchemes
+{
+    default         linear;
+}
 
 // ************************************************************************* //

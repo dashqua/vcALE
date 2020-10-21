@@ -1,7 +1,7 @@
 // Number of nodes
-c = 4;      // 625 nodes
+//c = 4;      // 625 nodes
 //c = 8;      // 3969 nodes
-//c = 16;     // 28033 cells
+c = 16;     // 28033 cells
 
 // Lengths
 lx = 1;
@@ -30,7 +30,7 @@ Extrude {0,0,lz} {
 
 // Definition of surfaces for boundary conditions
 Physical Surface("free") = {5,27,26,18};
-Physical Surface("fixed") = {14};
+Physical Surface("bottom") = {14};
 Physical Surface("traction") = {22};
 
 // Definition of a volume

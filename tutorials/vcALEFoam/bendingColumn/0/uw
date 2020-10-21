@@ -25,7 +25,7 @@ boundaryField
     {
         type            calculated;
     }
-    bottom
+    fixed
     {
         type            calculated;
     }

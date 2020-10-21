@@ -38,19 +38,22 @@ forAll(mesh.boundary(), patch)
                 nodeC = mesh.faces()[face][1];
             }
 
-            vector t1 = P[node] & N_p.boundaryField()[patch][facei];
-            vector t2 = P[nodeB] & N_p.boundaryField()[patch][facei];
-            vector t3 = P[nodeC] & N_p.boundaryField()[patch][facei];
+            //vector lm1 = lm[node];
+            //vector lm2 = lm[nodeB];
+            //vector lm3 = lm[nodeC]; //   /!\ use to compute vhat
 
-            vector lm1 = lm[node];
-            vector lm2 = lm[nodeB];
-            vector lm3 = lm[nodeC]; //   /!\ use to compute vhat
+	    vector vH1 = vHat[node];
+	    vector vH2 = vHat[nodeB];
+	    vector vH3 = vHat[nodeC];
 
             vector x1 = x[node];
             vector x2 = x[nodeB];
             vector x3 = x[nodeC];
 
-            if (patch == freePatchID)
+	    vector t1(vector::zero), 
+		   t2(vector::zero), 
+		   t3(vector::zero);
+	    if (patch == freePatchID)
             {
                 t1 = vector::zero;
                 t2 = vector::zero;
@@ -62,14 +65,26 @@ forAll(mesh.boundary(), patch)
                 t2 = traction;
                 t3 = traction;
             }
-            // test with the det(F) *
-	    // index of F has to be obtained from [patch][face][node] indexing
+	    else if (patch == fixedPatchID)
+	    {
+		    // /!\ multiply by H, although H should be Id with this motion
+		t1 = (P[node]  & inter.pointToEdge(aleH)[node])  & N_p.boundaryField()[patch][facei];    // PHat instead
+	        t2 = (P[nodeB] & inter.pointToEdge(aleH)[nodeB]) & N_p.boundaryField()[patch][facei];
+		t3 = (P[nodeC] & inter.pointToEdge(aleH)[nodeC]) & N_p.boundaryField()[patch][facei]; //   /!\ multiply by H
+		// make sure vC is 0
+	    }
+	    else
+	    {	    
+		Info << "Error: A boundary is not properly defined for tC" << nl;
+		return 0;
+	    }
+			//
             vector tC = 0.125*(6.0*t1 + t2 + t3);
-            vector lmClocal = 0.125*(6.0*lm1 + lm2 + lm3);  // compute instead vHatClocal
+      	    vector vHatClocal = 0.125*(6.0*vH1 + vH2 + vH3);
 
             rhsLm[node] += tC*(magSf_p.boundaryField()[patch][facei]/3.0);
             rhsF[node] +=
-                (lmClocal/rho.value())*(Sf_p.boundaryField()[patch][facei]/3.0);
+                vHatClocal*(Sf_p.boundaryField()[patch][facei]/3.0);
 
             if (angularMomentumConservation == "yes")
             {

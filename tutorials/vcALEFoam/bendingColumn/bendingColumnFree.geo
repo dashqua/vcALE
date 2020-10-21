@@ -29,9 +29,9 @@ Extrude {0,0,lz} {
 }
 
 // Definition of surfaces for boundary conditions
-Physical Surface("free") = {5,27,26,18};
-Physical Surface("fixed") = {14};
-Physical Surface("traction") = {22};
+Physical Surface("free") = {5,27,26,18, 14, 22};
+//Physical Surface("bottom") = {14};
+//Physical Surface("traction") = {22};
 
 // Definition of a volume
 Physical Volume("volume") = {1};

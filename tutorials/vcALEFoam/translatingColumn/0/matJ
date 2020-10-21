@@ -9,21 +9,23 @@ FoamFile
 {
     version     2.0;
     format      ascii;
-    class       dictionary;
-    location    "constant";
-    object      mechanicalProperties;
+    class       pointScalarField;
+    location    "0";
+    object      matJ;
 }
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-solidModel neoHookean;
-aleModel neoHookean;
+dimensions      [0 0 0 0 0 0 0];
 
-fictitiousMotionType sinusoid; // sinusoid_order2; //sinusoid;
-beta 0.01; //0.01;  0.00000
-T 2.0;
+internalField   uniform 1;
 
-rho 	rho [1 -3 0 0 0 0 0]  1100;
-E 		E 	[1 -1 -2 0 0 0 0] 17e6;
-nu 		nu  [0 0 0 0 0 0 0]   0.45;
+boundaryField
+{
+    free
+    {
+        type            calculated;
+    }
+}
+
 
 // ************************************************************************* //
