@@ -38,9 +38,9 @@ const dimensionedScalar& h = op.minimumEdgeLength();
 
 // Boundary patches
 const polyBoundaryMesh& bm = mesh.boundaryMesh();
-const label& freePatchID = bm.findPatchID("free");
-const label& tractionPatchID = bm.findPatchID("traction");
-const label& fixedPatchID = bm.findPatchID("fixed");
+//const label& freePatchID = bm.findPatchID("free");
+//const label& tractionPatchID = bm.findPatchID("traction");
+//const label& fixedPatchID = bm.findPatchID("fixed");
 
 Info << "Creating mesh coordinate fields ..." << endl;
 

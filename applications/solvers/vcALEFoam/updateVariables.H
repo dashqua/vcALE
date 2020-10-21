@@ -8,8 +8,6 @@ forAll(mesh.points(), node)
 }
 
 // Constitutive model
-Info << "aleF sample: " << aleF[20] << nl;
-
 aleModel_.correct();
 trueF = F & op.inverse(aleF);
 trueJ = det(trueF);

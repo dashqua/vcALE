@@ -53,24 +53,28 @@ forAll(mesh.boundary(), patch)
 	    vector t1(vector::zero), 
 		   t2(vector::zero), 
 		   t3(vector::zero);
-	    if (patch == freePatchID)
+	    //Info << mesh.boundary()[patch].name() << endl;  //const fvPatch& curPatch = patches[patchi];
+	    //if (patch == freePatchID) //str.find(str2) != string::npos
+	    const fvPatch& patx = mesh.boundary()[patch];
+	    if (patx.name().find("free") != string::npos)
             {
                 t1 = vector::zero;
                 t2 = vector::zero;
                 t3 = vector::zero;
             }
-            else if (patch == tractionPatchID)
+            else if (patx.name().find("traction") != string::npos)//(patch == tractionPatchID)
             {
                 t1 = traction;
                 t2 = traction;
                 t3 = traction;
             }
-	    else if (patch == fixedPatchID)
+	    else if (patx.name().find("fixed") != string::npos)  //patch == fixedPatchID)
 	    {
 		    // /!\ multiply by H, although H should be Id with this motion
-		t1 = (P[node]  & inter.pointToEdge(aleH)[node])  & N_p.boundaryField()[patch][facei];    // PHat instead
-	        t2 = (P[nodeB] & inter.pointToEdge(aleH)[nodeB]) & N_p.boundaryField()[patch][facei];
-		t3 = (P[nodeC] & inter.pointToEdge(aleH)[nodeC]) & N_p.boundaryField()[patch][facei]; //   /!\ multiply by H
+		//t1 = (P[node]  & inter.pointToEdge(aleH)[node])  & N_p.boundaryField()[patch][facei];    // PHat instead
+		t1 = PHat[node]  & N_p.boundaryField()[patch][facei];    // PHat instead
+	        t2 = PHat[nodeB] & N_p.boundaryField()[patch][facei];
+		t3 = PHat[nodeC] & N_p.boundaryField()[patch][facei]; //   /!\ multiply by H
 		// make sure vC is 0
 	    }
 	    else
