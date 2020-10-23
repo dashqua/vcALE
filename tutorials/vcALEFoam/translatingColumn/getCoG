@@ -1,0 +1,12 @@
+grep log.vcALEFoam -e "CoG" > cog1.txt;  
+awk '{gsub("CoG: ", "");print}' cog1.txt > cog.txt
+rm cog1.txt
+# awk '{gSub("(", ""};print}' cog.txt
+#
+gnuplot -e  "
+set terminal jpeg;
+set output 'CoG.jpeg';
+p 'cog.txt' u ($2)
+"
+
+rm cog.txt

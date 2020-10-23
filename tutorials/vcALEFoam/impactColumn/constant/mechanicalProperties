@@ -1,0 +1,29 @@
+/*--------------------------------*- C++ -*----------------------------------*\
+  =========                 |
+  \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
+   \\    /   O peration     | Website:  https://openfoam.org
+    \\  /    A nd           | Version:  6
+     \\/     M anipulation  |
+\*---------------------------------------------------------------------------*/
+FoamFile
+{
+    version     2.0;
+    format      ascii;
+    class       dictionary;
+    location    "constant";
+    object      mechanicalProperties;
+}
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+solidModel neoHookean;
+aleModel neoHookean;
+
+fictitiousMotionType sinusoid; // sinusoid_order2; //sinusoid;
+beta 0.01; //0.01;  0.00000
+T 2.0;
+
+rho 	        rho [1 -3 0 0 0 0 0]  8930;
+E 		E 	[1 -1 -2 0 0 0 0] 117e6;   //6;
+nu 		nu  [0 0 0 0 0 0 0]   0.35;
+
+// ************************************************************************* //
