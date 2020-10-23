@@ -15,7 +15,7 @@ FoamFile
 }
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-application solidVertexFoam;
+application vcALEFoam; 
 
 startFrom latestTime;
 

@@ -37,7 +37,7 @@ const vectorList N = Sf/mag(Sf);
 const dimensionedScalar& h = op.minimumEdgeLength();
 
 // Boundary patches
-const polyBoundaryMesh& bm = mesh.boundaryMesh();
+//const polyBoundaryMesh& bm = mesh.boundaryMesh();
 //const label& freePatchID = bm.findPatchID("free");
 //const label& tractionPatchID = bm.findPatchID("traction");
 //const label& fixedPatchID = bm.findPatchID("fixed");
@@ -162,6 +162,23 @@ pointTensorField PHat
     dimensionedTensor("PHat", dimensionSet(1,-1,-2,0,0,0,0), tensor::zero)
 );
 
+// ALE - Material J (to be solved)
+pointScalarField matJ
+(
+	IOobject ("matJ", runTime.timeName(), mesh, IOobject::NO_READ, IOobject::AUTO_WRITE),
+	pMesh,
+	dimensionedScalar("matJ", dimensionSet(0,0,0,0,0,0,0), 1)
+);
+matJ.write();
+
+// ALE - Material F (to be solved)
+pointTensorField matF
+(
+        IOobject("matF", runTime.timeName(), mesh, IOobject::NO_READ, IOobject::AUTO_WRITE),
+	pMesh,
+	dimensionedTensor("mat", F.dimensions(), Foam::tensor::I)
+);
+
 Info << "Creating fields for wave speeds ..." << endl;
 
 // Continuum mechanics class
@@ -194,7 +211,7 @@ pointScalarField& aleJ = aleModel_.jacobian();
 pointTensorField& aleH = aleModel_.coFactor();
 
 //- ALE: Initialization of trueF and Piola Hat
-trueF = F & op.inverse(aleF);
+trueF = F & op.inverse(matF);               // NOTE : this aleF has to be ideally replaced by matF
 //PHat = (P + ((op.inverseScalar(aleJ) * lm) * w_) ) & aleH;
 
 //- ALE: Initialization of new wave speeds 
@@ -256,20 +273,6 @@ pointScalarField Up_time
 Up_time = Up_time/stretch;
 
 
-Info << "Creating fields for gradient ..." << endl;
-
-// Gradient class
-gradientSchemes grad(mesh, Sf, V);
-
-// Gradient of nodal linear momentum
-tensorField lmGrad = grad.gradient(lm);
-
-// Reconstruction of nodal linear momentum
-vectorField lmM(mesh.edges().size());
-vectorField lmP(mesh.edges().size());
-grad.reconstruct(lm, lmGrad, lmM, lmP);
-
-
 Info << "Creating fields for fluxes ..." << endl;
 
 //- ALE: v
@@ -288,10 +291,26 @@ pointVectorField vHat
 	pMesh,
 	dimensionedVector("vHat", dimensionSet(0,1,-1,0,0,0,0), vector::zero)
 );
-vHat = v_ + ((F & op.inverse(aleF)) & w_);
+//vHat = v_ + ((F & op.inverse(matF)) & w_);
+vHat = v_ + (trueF & w_);
 
 // PHat definition using v_
 PHat = (P + ((v_*rho) * w_) ) & aleH;
+
+
+
+Info << "Creating fields for gradient ..." << endl;
+
+// Gradient class
+gradientSchemes grad(mesh, Sf, V);
+
+// Gradient of nodal linear momentum
+tensorField lmGrad = grad.gradient(v_);
+
+// Reconstruction of nodal linear momentum
+vectorField lmM(mesh.edges().size());
+vectorField lmP(mesh.edges().size());
+grad.reconstruct(v_, lmGrad, lmM, lmP);
 
 // Edge linear momentum
 vectorList vC = inter.pointToEdge(vHat);
@@ -301,15 +320,6 @@ vectorField tC = (inter.pointToEdge(PHat) & N) + (0.5*mech.SmatrixMod(aleUp___, 
 
 // Edge material velocity
 vectorList wC = inter.pointToEdge(w_);
-
-// ALE - Material J (to be solved)
-pointScalarField matJ
-(
-	IOobject ("matJ", runTime.timeName(), mesh, IOobject::NO_READ, IOobject::AUTO_WRITE),
-	pMesh,
-	dimensionedScalar("matJ", dimensionSet(0,0,0,0,0,0,0), 1)
-);
-matJ.write();
 
 // ALE - RHS of jacobian equation
 pointScalarField rhsJ
@@ -331,6 +341,18 @@ pointScalarField comparJ
 comparJ = mag(matJ - aleJ);
 comparJ.write();
 
+// ALE - comparF: the following field is used
+// - matF, that is RK integrated,
+// - aleF, that s given analytically
+pointScalarField comparF
+(
+	IOobject ("comparF", runTime.timeName(), mesh, IOobject::NO_READ, IOobject::AUTO_WRITE), //IOobject("comparJ", mesh),
+	pMesh,
+	dimensionedScalar("comparF", dimensionSet(0,0,0,0,0,0,0), 0.0)
+);
+comparF = mag(matF - aleF);
+comparF.write();
+
 Info << "Creating fields for angular momentum ..." << endl;
 
 // Angular momentum class
@@ -342,6 +364,14 @@ pointVectorField rhsLm
     IOobject ("rhsLm", mesh),
     pMesh,
     dimensionedVector("rhsLm", dimensionSet(1,-2,-2,0,0,0,0), vector::zero)
+);
+
+// ALE - RHS of material deformation gradient equation
+pointTensorField rhsMatF
+(
+    IOobject("rhsMatF", mesh),
+    pMesh,
+    dimensionedTensor("rhsMatF", F.dimensions()/dimTime, tensor::zero)
 );
 
 // RHS of linear momentum equation (stage 1)

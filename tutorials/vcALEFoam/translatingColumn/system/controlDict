@@ -51,4 +51,18 @@ graphFormat raw;
 
 runTimeModifiable false;
 
+//libs
+//(
+//  "libutilityFunctionObjects.so" 
+//  "libmeshTools.so"
+//  "libfiniteVolume.so"
+//  "libsampling.so" 
+//);
+
+//functions
+//{
+//    #include "CoGcomputation"
+//};
+
+
 // ************************************************************************* //

@@ -94,6 +94,15 @@ int main(int argc, char *argv[])
         dimensionedVector("lm", dimensionSet(1,-2,-1,0,0,0,0), vector::zero)
     );
 
+    if (tutorial == "bendingColumnLM")
+    {
+    	forAll(mesh.points(), node)
+	{
+		vector res(1,0,0);	
+		lm[node] = rho.value() * X[node].y()*res;
+	}
+    }
+
     // Non uniform angular velocity initialsed testcases
     if (tutorial == "twistingColumn" || tutorial == "spinningCube")
     {

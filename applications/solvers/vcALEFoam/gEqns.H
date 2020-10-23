@@ -2,6 +2,7 @@
 rhsLm.primitiveFieldRef() = op.surfaceSum(tC*magSf);
 rhsF.primitiveFieldRef() = op.surfaceSum(vC*Sf);
 rhsJ.primitiveFieldRef() = aleH && op.surfaceSum(wC*Sf);
+rhsMatF.primitiveFieldRef() =  op.surfaceSum(wC*Sf);
 
 if (angularMomentumConservation == "yes")
 {
@@ -38,13 +39,13 @@ forAll(mesh.boundary(), patch)
                 nodeC = mesh.faces()[face][1];
             }
 
-            //vector lm1 = lm[node];
-            //vector lm2 = lm[nodeB];
-            //vector lm3 = lm[nodeC]; //   /!\ use to compute vhat
-
 	    vector vH1 = vHat[node];
 	    vector vH2 = vHat[nodeB];
 	    vector vH3 = vHat[nodeC];
+ 
+	    vector w1 = w_[node];
+	    vector w2 = w_[nodeB];
+	    vector w3 = w_[nodeC];
 
             vector x1 = x[node];
             vector x2 = x[nodeB];
@@ -52,9 +53,11 @@ forAll(mesh.boundary(), patch)
 
 	    vector t1(vector::zero), 
 		   t2(vector::zero), 
-		   t3(vector::zero);
-	    //Info << mesh.boundary()[patch].name() << endl;  //const fvPatch& curPatch = patches[patchi];
-	    //if (patch == freePatchID) //str.find(str2) != string::npos
+		   t3(vector::zero),
+		   vHatClocal(vector::zero),
+		   wClocal(vector::zero),
+		   tC(vector::zero);
+	    	
 	    const fvPatch& patx = mesh.boundary()[patch];
 	    if (patx.name().find("free") != string::npos)
             {
@@ -62,20 +65,19 @@ forAll(mesh.boundary(), patch)
                 t2 = vector::zero;
                 t3 = vector::zero;
             }
-            else if (patx.name().find("traction") != string::npos)//(patch == tractionPatchID)
+            else if (patx.name().find("traction") != string::npos)
             {
                 t1 = traction;
                 t2 = traction;
                 t3 = traction;
             }
-	    else if (patx.name().find("fixed") != string::npos)  //patch == fixedPatchID)
+	    else if (patx.name().find("fixed") != string::npos) 
 	    {
-		    // /!\ multiply by H, although H should be Id with this motion
-		//t1 = (P[node]  & inter.pointToEdge(aleH)[node])  & N_p.boundaryField()[patch][facei];    // PHat instead
-		t1 = PHat[node]  & N_p.boundaryField()[patch][facei];    // PHat instead
+		t1 = PHat[node]  & N_p.boundaryField()[patch][facei];   
 	        t2 = PHat[nodeB] & N_p.boundaryField()[patch][facei];
-		t3 = PHat[nodeC] & N_p.boundaryField()[patch][facei]; //   /!\ multiply by H
+		t3 = PHat[nodeC] & N_p.boundaryField()[patch][facei];
 		// make sure vC is 0
+		vHatClocal = vector::zero;
 	    }
 	    else
 	    {	    
@@ -83,12 +85,15 @@ forAll(mesh.boundary(), patch)
 		return 0;
 	    }
 			//
-            vector tC = 0.125*(6.0*t1 + t2 + t3);
-      	    vector vHatClocal = 0.125*(6.0*vH1 + vH2 + vH3);
+            tC = 0.125*(6.0*t1 + t2 + t3);
+      	    vHatClocal = 0.125*(6.0*vH1 + vH2 + vH3);
+	    wClocal = 0.125*(6.0*w1 + w2 + w3);
 
             rhsLm[node] += tC*(magSf_p.boundaryField()[patch][facei]/3.0);
             rhsF[node] +=
                 vHatClocal*(Sf_p.boundaryField()[patch][facei]/3.0);
+	    rhsMatF[node] +=
+		 wClocal*(Sf_p.boundaryField()[patch][facei]/3.0);
 
             if (angularMomentumConservation == "yes")
             {
@@ -103,6 +108,7 @@ forAll(mesh.boundary(), patch)
 op.volumeIntegrate(rhsLm, V);
 op.volumeIntegrate(rhsF, V);
 op.volumeIntegrate(rhsJ, V);
+op.volumeIntegrate(rhsMatF, V);
 
 // Conservation of angular momentum
 if (angularMomentumConservation == "yes")
@@ -113,8 +119,8 @@ if (angularMomentumConservation == "yes")
 
 
 // Compute node coordinates
-v_ = op.inverseScalar(aleJ) * lm/rho;
-vHat = v_ + ((F & op.inverse(aleF)) & w_);
+//v_ = op.inverseScalar(aleJ) * lm/rho;
+//vHat = v_ + ((F & op.inverse(matF)) & w_);
 x += deltaT * vHat;
 
 // same for xw
@@ -129,3 +135,6 @@ F += deltaT*rhsF;
 
 // Compute material Jacobian
 matJ += deltaT*rhsJ;
+
+//Compute material deformation gradient
+matF += deltaT*rhsMatF;

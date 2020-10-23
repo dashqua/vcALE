@@ -10,7 +10,7 @@ meshFile=$(grep '^meshFile.*;$' constant/runParameters | sed -e 's/meshFile\(.*\
 gmshToFoam $meshFile
 
 # Specify initial conditions
-initialConditions_vc
+initialConditions_vcALE
 	
 # Run solver
 $solver > log.$solver &

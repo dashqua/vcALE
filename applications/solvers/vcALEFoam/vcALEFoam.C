@@ -71,6 +71,8 @@ int main(int argc, char *argv[])
         lm.oldTime();
         F.oldTime();
         x.oldTime();
+	matJ.oldTime();
+	matF.oldTime();
 
         forAll(RKstage, i)
         {
@@ -85,6 +87,7 @@ int main(int argc, char *argv[])
         lm = 0.5*(lm.oldTime() + lm);
         F = 0.5*(F.oldTime() + F);
 	matJ = 0.5*(matJ.oldTime() + matJ);
+	matF = 0.5*(matF.oldTime() + matF);
 
         x = 0.5*(x.oldTime() + x);
 	xw = 0.5*(xw.oldTime() + xw);
@@ -112,6 +115,11 @@ int main(int argc, char *argv[])
 
 	    comparJ = mag(matJ - aleJ);
             comparJ.write();
+
+            comparF = mag(matF - aleF);
+	    comparF.write();
+
+            #include "postPro.H"
   	}
 
         Info<< " Simulation completed = "

@@ -9,13 +9,31 @@ forAll(mesh.points(), node)
 
 // Constitutive model
 aleModel_.correct();
-trueF = F & op.inverse(aleF);
+trueF = F & op.inverse(matF);
+
+//forAll(trueF, n)
+//{
+//	trueF[n] = Foam::tensor::I;
+//}
+//
+//trueF = F & op.inverse(aleF);
 trueJ = det(trueF);
 trueH = trueJ * op.invT(trueF);
 model.correct(trueF, trueH, trueJ);
-P = model.piola(); // 'trueP' obtained from true F, H and J
+P = model.piola();
+
 v_ = op.inverseScalar(aleJ) * lm/rho;
-vHat = v_ + ((F & op.inverse(aleF)) & w_);
+//forAll(v_, n)
+//{
+//	v_[n][0] = 1000./1100.;
+//	v_[n][1] = 1000./1100.;
+//	v_[n][2] = 0;
+//}
+
+vHat = v_ + (trueF & w_);
+//vHat = v_ + ((F & op.inverse(matF)) & w_);
+//vHat = v_ + w_;
+//vHat = v_ + ((F & op.inverse(aleF)) & w_);
 PHat = (P + ((v_*rho) * w_)) & aleH;
 
 // Linear reconstruction
