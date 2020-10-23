@@ -1,0 +1,31 @@
+
+    CoGcomputation
+    {
+        libs ("libutilityFunctionObjects.so" "libmeshTools.so" "libfiniteVolume.so" "libsampling.so" "libdynamicFvMesh.so");
+        name CoG;
+        type coded;
+        writeInterval 0.01;
+        codeExecute
+        #{
+	      Info << "...................................." << nl;
+
+              //const pointVectorField& u_ = mesh().lookupObject<pointVectorField>("u");
+              const pointVectorField& U = mesh().lookupObject<pointVectorField>("u");
+
+              //pointVectorField& u_ = const_cast<pointVectorField&>(  mesh().lookupObject<pointVectorField>("u")  );
+
+
+
+              //const pointVectorField& u = mesh().lookupObject<pointVectorField>("u");
+              //const scalarField& v = mesh().V();
+
+	      //vector sum = vector::zero;
+	      //Info << u << endl;
+              //forAll(u, node)
+              //{
+              //      sum += u[node];
+              //}
+              //scalar n = 0; // sizeof(mesh().points()) / sizeof(mesh().points()[0]);
+              //Info << "CoG: " << sum/n << nl << nl << nl;
+        #};
+    }
