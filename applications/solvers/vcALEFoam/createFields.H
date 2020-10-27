@@ -63,11 +63,7 @@ pointVectorField xw
 xw.primitiveFieldRef() = mesh.points();
 
 // Referential (previously Material) nodal coordinate
-pointVectorField X
-(
-    IOobject ("X", mesh),
-    x
-);
+pointVectorField X( IOobject("X", mesh), x);
 
 // Material edge centre coordinate
 const vectorList& Xe = dual.edgeCentre();
@@ -84,7 +80,6 @@ pointVectorField lm
     IOobject ("lm", runTime.timeName(), mesh, IOobject::MUST_READ, IOobject::AUTO_WRITE),
     pMesh
 );
-
 
 Info << "Creating strain measure fields ..." << endl;
 
@@ -162,6 +157,7 @@ pointTensorField PHat
     dimensionedTensor("PHat", dimensionSet(1,-1,-2,0,0,0,0), tensor::zero)
 );
 
+
 // ALE - Material J (to be solved)
 pointScalarField matJ
 (
@@ -212,25 +208,7 @@ pointTensorField& aleH = aleModel_.coFactor();
 
 //- ALE: Initialization of trueF and Piola Hat
 trueF = F & op.inverse(matF);               // NOTE : this aleF has to be ideally replaced by matF
-//PHat = (P + ((op.inverseScalar(aleJ) * lm) * w_) ) & aleH;
 
-//- ALE: Initialization of new wave speeds 
-// Note : that part is not useful anymore ?
-//- ALE: Longitudinal wave speed
-pointScalarField aleUp
-(
-    IOobject("aleUp", mesh),
-    pMesh,
-    model.Up()/beta
-);
-
-//- ALE: Shear wave speed
-pointScalarField aleUs
-(
-    IOobject("Us", mesh),
-    pMesh,
-    model.Us()*beta
-);
 
 //- ALE: initialization of wave speeds
 scalarField lambdaH = sqrt((inter.pointToEdge(aleH) & N) & (inter.pointToEdge(aleH) & N));
@@ -258,22 +236,39 @@ scalarField aleUs___ = inter.pointToEdge( op.inverseScalar(aleJ) ) *
 
 
 
-
-
 // Stretch
 pointScalarField stretch = mech.stretch();
 
 // Wave speed for time increment
 pointScalarField Up_time
 (
-    IOobject("Up_time", mesh),
-    pMesh,
-    model.Up()
+    IOobject("Up_time", mesh), pMesh, model.Up()
 );
 Up_time = Up_time/stretch;
 
 
 Info << "Creating fields for fluxes ..." << endl;
+
+
+// ALE: pR and pTilde, step quantities for rhsLM
+pointVectorField pR
+(
+    IOobject ("pR", runTime.timeName(), mesh, IOobject::NO_READ, IOobject::AUTO_WRITE),
+    pMesh,
+    dimensionedVector("pR", dimensionSet(1,-2,-1,0,0,0,0), vector::zero)
+);
+pR = op.inverseScalar(aleJ) * lm;
+pR.write();
+
+pointVectorField pTilde
+(
+    IOobject ("pTilde", runTime.timeName(), mesh, IOobject::NO_READ, IOobject::AUTO_WRITE),
+    pMesh,
+    dimensionedVector("pTilde", dimensionSet(1,-2,-1,0,0,0,0), vector::zero)
+);
+pTilde = matJ * pR;
+pTilde.write(); 
+
 
 //- ALE: v
 pointVectorField v_
@@ -282,7 +277,7 @@ pointVectorField v_
 	pMesh,
 	dimensionedVector("v_", dimensionSet(0,1,-1,0,0,0,0), vector::zero)
 );
-v_ = op.inverseScalar(aleJ) * lm/rho;
+v_ = pR/rho;; //op.inverseScalar(aleJ) * lm/rho;
 
 //- ALE:  vHat
 pointVectorField vHat
@@ -291,11 +286,10 @@ pointVectorField vHat
 	pMesh,
 	dimensionedVector("vHat", dimensionSet(0,1,-1,0,0,0,0), vector::zero)
 );
-//vHat = v_ + ((F & op.inverse(matF)) & w_);
 vHat = v_ + (trueF & w_);
 
-// PHat definition using v_
-PHat = (P + ((v_*rho) * w_) ) & aleH;
+// ALE: PHat
+PHat = P & aleH ;
 
 
 
@@ -305,21 +299,42 @@ Info << "Creating fields for gradient ..." << endl;
 gradientSchemes grad(mesh, Sf, V);
 
 // Gradient of nodal linear momentum
-tensorField lmGrad = grad.gradient(v_);
+tensorField vGrad = grad.gradient(v_);
 
 // Reconstruction of nodal linear momentum
-vectorField lmM(mesh.edges().size());
-vectorField lmP(mesh.edges().size());
-grad.reconstruct(v_, lmGrad, lmM, lmP);
+vectorField vM(mesh.edges().size());
+vectorField vP(mesh.edges().size());
+grad.reconstruct(v_, vGrad, vM, vP);
 
-// Edge linear momentum
-vectorList vC = inter.pointToEdge(vHat);
+
 
 // Edge traction
-vectorField tC = (inter.pointToEdge(PHat) & N) + (0.5*mech.SmatrixMod(aleUp___, aleUs___) & (lmP-lmM));
-
+vectorField tC = (inter.pointToEdge(PHat) & N )
+	+ inter.pointToEdge(aleJ*rho)*(0.5*mech.SmatrixMod(aleUp___, aleUs___) & (vP - vM));
+// Edge linear momentum
+tensorField vC = inter.pointToEdge(vHat) * N;
+// Edge traction two
+tensorField tC2 = inter.pointToEdge( pR ) * N;
 // Edge material velocity
-vectorList wC = inter.pointToEdge(w_);
+tensorField wC = inter.pointToEdge( w_ )  * N;
+// Edge alternative jacobian term
+scalarField HTwC = inter.pointToEdge(aleH.T()&w_) & N;
+// ALE - The GCL technique distinction (commented code below) could
+// be done, but for the sake of simplicity, initial values for both
+// cases are declared anyway.
+// It is also about not cluttering the code with IFs verifications.
+/*
+if (GCLtechnique == "withInvolution") {
+    tC2 = inter.pointToEdge( pR )   * N;
+} else if (GCLtechnique == "withoutInvolution") {
+    HTwC = inter.pointToEdge( aleH.T()&w_ ) & N;
+} else {
+    FatalErrorIn("updateVariables.H") << "GCL technique is not properly defined." << abort(FatalError);
+}
+*/
+
+
+
 
 // ALE - RHS of jacobian equation
 pointScalarField rhsJ
@@ -329,29 +344,6 @@ pointScalarField rhsJ
 	dimensionedScalar("rhsJ", dimensionSet(0,0,-1,0,0,0,0), 0)
 );
 
-// ALE - comparJ: the following field is used to 
-// - matJ, that is RK integrated,
-// - aleJ, that is given analytically
-pointScalarField comparJ
-(
-	IOobject ("comparJ", runTime.timeName(), mesh, IOobject::NO_READ, IOobject::AUTO_WRITE), //IOobject("comparJ", mesh),
-	pMesh,
-	dimensionedScalar("comparJ", dimensionSet(0,0,0,0,0,0,0), 0.0)
-);
-comparJ = mag(matJ - aleJ);
-comparJ.write();
-
-// ALE - comparF: the following field is used
-// - matF, that is RK integrated,
-// - aleF, that s given analytically
-pointScalarField comparF
-(
-	IOobject ("comparF", runTime.timeName(), mesh, IOobject::NO_READ, IOobject::AUTO_WRITE), //IOobject("comparJ", mesh),
-	pMesh,
-	dimensionedScalar("comparF", dimensionSet(0,0,0,0,0,0,0), 0.0)
-);
-comparF = mag(matF - aleF);
-comparF.write();
 
 Info << "Creating fields for angular momentum ..." << endl;
 
@@ -365,6 +357,39 @@ pointVectorField rhsLm
     pMesh,
     dimensionedVector("rhsLm", dimensionSet(1,-2,-2,0,0,0,0), vector::zero)
 );
+pointVectorField rhsLm1
+(
+    IOobject ("rhsLm1", mesh),
+    pMesh,
+    dimensionedVector("rhsLm1", dimensionSet(1,-2,-2,0,0,0,0), vector::zero)
+);
+pointVectorField rhsLm2
+(
+    IOobject ("rhsLm2", mesh),
+    pMesh,
+    dimensionedVector("rhsLm2", dimensionSet(1,-2,-2,0,0,0,0), vector::zero)
+);
+pointVectorField rhsLm3
+(
+    IOobject ("rhsLm3", mesh),
+    pMesh,
+    dimensionedVector("rhsLm3", dimensionSet(1,-2,-2,0,0,0,0), vector::zero)
+);
+
+// ALE - Here: "IF statement" like in gEqns.H to attribute value to rhsLm*
+rhsLm1.primitiveFieldRef() = op.surfaceSum(tC*magSf);
+if (GCLtechnique == "withInvolution") {
+    rhsJ.primitiveFieldRef() = aleH && op.surfaceSum(wC*magSf);
+    rhsLm2.primitiveFieldRef() = op.surfaceSum(tC2*magSf) & (aleH.T() & w_);
+    rhsLm3.primitiveFieldRef() = pR * (aleH && (op.surfaceSum(wC*magSf)));
+    rhsLm.primitiveFieldRef() = rhsLm1 + rhsLm2  + rhsLm3;
+} else if (GCLtechnique == "withoutInvolution") {
+    rhsJ.primitiveFieldRef() = op.surfaceSum(HTwC*magSf);
+    rhsLm2.primitiveFieldRef() = pR.primitiveFieldRef() * rhsJ.primitiveFieldRef();
+    rhsLm.primitiveFieldRef() = rhsLm1 + rhsLm2;
+} else {
+    FatalErrorIn("createFields.H") << "GCL technique is not properly defined." << abort(FatalError);
+}
 
 // ALE - RHS of material deformation gradient equation
 pointTensorField rhsMatF
@@ -375,7 +400,7 @@ pointTensorField rhsMatF
 );
 
 // RHS of linear momentum equation (stage 1)
-pointVectorField rhsLm1 = rhsLm;
+//pointVectorField rhsLmBis = rhsLm;
 
 // RHS of angular momentum equation
 pointVectorField rhsAm
@@ -402,7 +427,6 @@ pointVectorField uw
     pMesh,
     dimensionedVector("uw", dimLength, vector::zero)
 );
-
 u.write();
 uw.write();
 X -= u;

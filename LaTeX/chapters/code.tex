@@ -1,6 +1,6 @@
-Material Motion:
+Material Motion $n^\circ 1$:
 \begin{equation}
-	\psi = \psi_\beta(\cchi,t) = 
+	\vect{\psi} = \psi_\beta(\cchi,t) = 
 	\begin{pmatrix}
 		\chi_1 + \beta \sin(2\pi\chi_1) \sin(\pi\chi_2/3)\sin(\pi t/T) \\
 		
@@ -11,83 +11,191 @@ Material Motion:
 \end{equation}
 with $T=2$ and $\beta$ an amplitude parameter defined for each simulation.
 
+Material Motion $n^\circ 2$:
+\begin{equation}
+	\vect{\psi} = \psi_\beta(\cchi,t) = 
+	\begin{pmatrix}
+		\chi_1 + \beta \sin^2(2\pi\chi_1) \sin^2(\pi\chi_2/3)\sin(\pi t/T) \\
+		
+		\chi_2 + 5\beta \sin^2(2\pi\chi_1) \sin^2(\pi\chi_2/3)\sin(2\pi t/T) \\
+		
+		\chi_3
+	\end{pmatrix},
+\end{equation}
+\begin{equation}
+      \vect{w} = 
+      \begin{pmatrix}
+          \frac{\beta\pi}{T}  \sin^2(2\pi \chi_1)  \sin^2(2\pi \chi_1)   \cos(\pi t/T) \\
+           \frac{10.0\beta\pi}{T}  \sin^2(2\pi \chi_1)  \sin^2(\pi Y/3.0)  \cos(2\pi t/T) \\
+           0.0
+\end{pmatrix},
+\end{equation}
+\begin{equation}
+\mat{F}_{\psi} = 
+\begin{pmatrix}
+1 + 4\beta\pi  \sin(2\pi X)  \cos(2\pi X)  \sin(\pi Y/3.0)   \sin(\pi Y/3.0)   \sin(\pi t/T ) &
+2 \beta  \pi/3.0   \sin(2 \pi X)   \sin(2 \pi X)   \cos(\pi Y/3.0)   \sin(\pi Y/3.0)   \sin(\pi t/T ) &
+0 \\
+20.0 \beta  \pi  \cos(2 \pi X)   \sin(2 \pi X)   \sin(\pi Y/3.0)   \sin(\pi Y/3.0)   \sin(2 \pi t/T ) &
+1 + 10.0 \beta  \pi/3.0   \sin(2 \pi X)   \sin(2 \pi X)   \cos(\pi Y/3.0)   \sin(\pi Y/3.0)   \sin(2 \pi t/T ) &
+0,\\
+0 &
+0 &
+1
+);
+\end{pmatrix}
+\end{equation}
 
+\newpage
+\section{Conservation Laws}
+%\subsection{Relations}
+\subsection{Neo Hookean model}
+\begin{equation}
+	p = \kappa \left( det(\mat{trueF}) - 1 \right), \quad \textrm{with } \mat{trueF} = \mat{F} \mat{F}_{\psi}^{-1}
+\end{equation}
+\subsection{Set of conservation laws}
+\begin{subequations}
+\begin{align}
+	\frac{\partial \mat{F}}{\partial t} &= \DIV_{\cchi}\left( \hat{\vect{v}} \otimes \mat{I} \right) \\ 
+	\frac{\partial \J}{\partial t} &= \mat{H}_{\psi} \bm{:} \GRAD_{\cchi}\left( \vect{w} \right) \\
+	\frac{\partial \mat{F}_{\psi}}{} &= \DIV_{\cchi}\left( \vect{w} \otimes \mat{I} \right) \\
+	\frac{\partial \tilde{\vect{p}}}{\partial t} &= \DIV_{\cchi}\left( \mat{P}\mat{H}_{\psi}\right) {~}+{~} \GRAD_{\cchi} \left(  \vect{p}_R \right) \left( \mat{H}_{\psi}^{T}\vect{w} \right)  {~}+{~} \vect{p}_R \left[] \mat{H}_{\psi} \bm{:} \GRAD_{\cchi}\left( \vect{w} \right) \right]
+\end{align}
+\end{subequations}
+
+%\section{Time discretization}
+%\subsection{Runge-Kutta 2 stage time discretization}
+
+\section{Finite Volume Method spatial discretization}
+%\subsection{Discretised Gradient}
+%\begin{equation}
+%	\GRAD_{\cchi} \vect{B}_{\cchi}\rvert_{a} = \frac{1}{\Omega_{\cchi}^a} \left[ \sum\limits_{b\in\Lambda_a} \vect{B}^{Ave} \otimes \vect{C}_{\cchi}^{ab} {~}+{~} \sum\limits_{\gamma\in\Lambda_a^B} \vect{B}_{a}^{\gamma} \otimes \vect{C}_{\cchi}^{\gamma} \right] 
+%\end{equation}
+%
+\subsection{Discretised set of conservation laws}
+\begin{subequations}
+\begin{align}
+	\Omega_{\cchi}^a \frac{\partial \mat{F}^a}{\partial t} &= \sum\limits_{b\in\Lambda_a} \hat{\vect{v}}^{Ave} \otimes \vect{C}_{\cchi}^{ab} {~}+{~} \sum\limits_{\gamma\in\Lambda_a^B} \hat{\vect{v}}_{a}^\gamma \otimes \vect{C}_{\cchi}^{\gamma} \\
+	%
+	\Omega_{\cchi}^a \frac{\partial \J^a}{\partial t} &= \mat{H}_{\psi} \bm{:} \left( \sum\limits_{b\in\Lambda_a} \vect{w}^{Ave} \otimes \vect{C}_{\cchi}^{ab} \right) \\
+	%
+	\Omega_{\cchi}^a \frac{\partial \mat{F}_{\psi}^a}{\partial t} &= \sum\limits_{b\in\Lambda_a} \vect{w}^{Ave} \otimes \vect{C}_{\cchi}^{ab} {~}+{~} \sum\limits_{\gamma\in\Lambda_a^B} \vect{w}_{a}^{\gamma} \otimes \vect{C}_{\cchi}^{\gamma} \\
+	%
+	\Omega_{\cchi}^a \frac{\partial \tilde{\vect{p}}^a}{\partial t} &= \sum\limits_{b\in\Lambda_a} \left( \mat{PH_{\psi}} \right)^{Ave} \vect{C}_{\cchi}^{ab} {~}+{~} \sum\limits_{\gamma\in\Lambda_a^B} \vect{t}_{\cchi,a}^\gamma  \norm{\vect{C}_{\cchi}^{\gamma}}    +\sum\limits_{b\in\Lambda_a} \vect{D}_{\cchi,ab} \nonumber\\
+	%
+	&+{~} \left( \sum\limits_{b\in\Lambda_a} \vect{p}_R^{Ave} \otimes \vect{C}_{\cchi}^{ab} \right) \mat{H}_{\psi}^{T} \vect{w} {~}+{~} \left( \sum\limits_{\gamma\in\Lambda_a} \vect{p}_{R,\gamma} \otimes \vect{C}_{\cchi}^{\gamma} \right) \mat{H}_{\psi}^{T} \vect{w} \nonumber\\
+	%
+	&+{~}  \vect{p}_R \left[ \mat{H}_{\psi} \bm{:} \left( \sum\limits_{b\in\Lambda_a} \vect{w}^{Ave} \otimes \vect{C}_{\cchi}^{ab} \right) \right] {~}+{~} \vect{p}_R \left[ \mat{H}_{\psi} \bm{:} \left( \sum\limits_{\gamma\in\Lambda_a^B} \vect{w}_a^{\gamma} \otimes \vect{C}_{\cchi}^{\gamma} \right) \right]
+\end{align}
+\end{subequations}
+
+\subsection{Algorithms}
 \begin{algorithm}[H]
-	\KwData{$c^{p}_{R}, c^{s}_{R}$.} % referential wave speeds
+	%\KwData{$c^{p}_{R}, c^{s}_{R}$.} 
 	\KwResult{\textbf{rhsLm}, \textbf{rhsF}. }
-	%initialization\;
-	Update of $\vect{w}, \mat{F}_{\psi}, \J_{\psi}, \mat{H}_{\psi}$ \\
-	$\mat{F} = \mat{F}_{\phi}\mat{F}_{\psi}^{-1}$ \\
-	$\mat{P} = \mat{P}(\mat{F})$ \\
-	$\vect{v} = \J_{\psi}^{-1} \vect{p}_{\x}/\rho$ \\
-	$\hat{\vect{v}} = \vect{v} + \left[ \left( \mat{F}_{\phi}\mat{F}_{\psi}^{-1}\right) \vect{w} \right]$ \\
-	$\hat{\mat{P}} = \left[ \mat{P} + \left( (\J_{\psi}^{-1} \vect{p}_{\x})\otimes \vect{w}   \right) \right]\mat{H}_{\psi} $ \\
-	$\vect{vC}$, point to edge interpolation of $\hat{\vect{v}}$ \\
-	$\Lambda_{\mat{H}_\phi}^2 = \left( \mat{H}_{\psi}^{Ave} \N_{\cchi} \right) \cdot \left( \mat{H}_{\psi}^{Ave} \N_{\cchi} \right)$ \\
-	$c^{p}_{\x} = \J_{\psi}^{-1} \left[ \Lambda_{\mat{H}_\phi}c^{p}_{R} - \vect{w}\cdot\left( \mat{H}_{\psi}\N_{\cchi} \right) \right]$ \\
-	$c^{s}_{\x} = \J_{\psi}^{-1} \left[ \Lambda_{\mat{H}_\phi}c^{s}_{R} - \vect{w}\cdot\left( \mat{H}_{\psi}\N_{\cchi} \right) \right]$  \\
-	$\mat{tC} = \hat{\mat{P}}^{Ave} \N_{\x} + \frac{1}{2} Smat(c^{p}_{\x},c^{s}_{\x}) \left( \vect{p}_{\x}^{+}-\vect{p}_{\x}^{-}\right)$ \\
-	$\vect{rhsLm} =  \sum\limits_{b\in\Lambda_a} \left( \vect{tC} \; ||C^{\x}_{ab}|| \right)$ \\
-	$\mat{rhsF} =  \sum\limits_{b\in\Lambda_a} \left( \vect{vC} \otimes \vect{C}^{\x}_{ab} \right)$ \\
-	\caption{Computation of Right Hand Sides.}
+	$\vect{p}_R^n = \J_{\psi}^{-1} \vect{p}_{\cchi}^n$ \\
+	\bigbreak 
+	$\vect{rhsLm}_{a}^{*} = \left( \sum\limits_{b\in\Lambda_a} \vect{tC}_b^{n} ||\vect{C}_{\cchi}^{ab}|| \right) + \left( \sum\limits_{b\in\Lambda_a} \vect{tC2}_b^{n} ||\vect{C}_{\cchi}^{ab}|| \right) \mat{H}_{\psi}^T \vect{w} + \vect{p}^n_R \left(\mat{H}_{\psi}\bm{:} \left[ \sum\limits_{b\in\Lambda_a} \vect{tC3}_b^{n} ||\vect{C}_{\cchi}^{ab}|| \right]\right) $ \\
+	\bigbreak
+	Boundary value of the first RHS term.
+	$\vect{tC}_{loc}^\gamma = LocalAverage(\hat{\mat{P}} \vect{N}_{\cchi}^\gamma)$ or apply the prescribed traction boundary condition. The nodal value is updated as $\vect{rhsLm}_\gamma^{*} = \vect{rhsLm}_\gamma^{n} + \vect{tC}_{loc}^\gamma ||\vect{C}_{\cchi}^\gamma||$. \\
+	\bigbreak
+	Boundary value of the second RHS term.
+	$\vect{tC2}_{loc}^\gamma = LocalAverage(\vect{p}_R \vect{N}_{\cchi}^\gamma)$. The nodal value is updated as $\vect{rhsLm}_\gamma^{*} = \vect{rhsLm}_\gamma^{n} + \left(\vect{tC2}_{loc}^\gamma ||\vect{C}_{\cchi}^\gamma||\right) \mat{H}_{\psi,\gamma}^T \vect{w}_\gamma$. \\
+	\bigbreak
+	Boundary value of the third RHS term.
+	$\vect{tC3}_{loc}^\gamma = LocalAverage(\vect{w} \vect{N}_{\cchi}^\gamma)$. The nodal value is updated as $\vect{rhsLm}_\gamma^{*} = \vect{rhsLm}_\gamma^{n} + \vect{p}_{R, \gamma}\left( \mat{H}_{\psi,\gamma} \bm{:} (\vect{tC3}_{loc}^\gamma ||\vect{C}_{\cchi}^\gamma||)\right)$. \\
+	\bigbreak
+	Volume integration: $\vect{rhsLm}_a^{*} = \vect{rhsLm}_a^{*} / \Omega_a$. \\
+	\bigbreak
+	Update of displacements $\vect{x}^{*} = \vect{x}^{n} + \Delta t \hat{\vect{v}}^n$ and linear momentum $\vect{p}_{\cchi}^{*} = \vect{p}_{\cchi}^{n} + \J_{\psi}\J^{-1} \Delta t ~\vect{rhsLm}^{*}$.
+	\bigbreak
+	Application of boundary conditions for the linear momentum. \\
+	\bigbreak
+	Update of variables: 
+	\begin{align*}
+		\mat{trueF}^{*} &= \mat{F}^{*} \mat{F}_{\psi}^{-1,*} \\
+		\mat{P}^{*} &= \mat{P}^{*}(\mat{trueF^{*}}) \\
+		\vect{p}_{R}^{*} &= \J_{\psi}^{-1} \vect{p}^{*} \\
+		\vect{v}^{*} &= \vect{p}_{R}^{*} / \rho \\
+		\hat{\vect{v}}^{*} &= \vect{v}^{*} + \mat{trueF}^{*} \vect{w}^{n} \\
+		\hat{\mat{P}}^{*} &= \mat{P}^{*} \mat{H}_{\psi}
+	\end{align*}\\
+	\bigbreak
+	Computation of coefficient $\Lambda_H^n$ and update of $U_p^{n}$ and $U_s^{n}$. \\
+	\bigbreak
+	Update of the averaged values for computing the right hand sides 
+	\begin{align*}
+		\vect{tC}^{*} &= \hat{\mat{P}}^{Ave,*} \vect{N} + 0.5 S^{*} [\vect{v}^{*}] \\
+		\vect{tC2}^{*} &= \vect{p}_{R}^{Ave,*} \otimes \vect{N} \\
+		\vect{tC3}^{*} &= \vect{w}^{,Ave,n} \otimes \vect{N}
+	\end{align*}
+	
+	
+%	Update of $\vect{w}, \mat{F}_{\psi}, \J_{\psi}, \mat{H}_{\psi}$ \\	
+%	$\mat{F} = \mat{F}_{\phi}\mat{F}_{\psi}^{-1}$ \\
+%	$\mat{P} = \mat{P}(\mat{F})$ \\
+%	$\vect{v} = \J_{\psi}^{-1} \vect{p}_{\x}/\rho$ \\
+%	$\hat{\vect{v}} = \vect{v} + \left[ \left( \mat{F}_{\phi}\mat{F}_{\psi}^{-1}\right) \vect{w} \right]$ \\
+%	$\hat{\mat{P}} = \left[ \mat{P} + \left( (\J_{\psi}^{-1} \vect{p}_{\x})\otimes \vect{w}   \right) \right]\mat{H}_{\psi} $ \\
+%	$\vect{vC}$, point to edge interpolation of $\hat{\vect{v}}$ \\
+%	$\Lambda_{\mat{H}_\phi}^2 = \left( \mat{H}_{\psi}^{Ave} \N_{\cchi} \right) \cdot \left( \mat{H}_{\psi}^{Ave} \N_{\cchi} \right)$ \\
+%	$c^{p}_{\x} = \J_{\psi}^{-1} \left[ \Lambda_{\mat{H}_\phi}c^{p}_{R} - \vect{w}\cdot\left( \mat{H}_{\psi}\N_{\cchi} \right) \right]$ \\
+%	$c^{s}_{\x} = \J_{\psi}^{-1} \left[ \Lambda_{\mat{H}_\phi}c^{s}_{R} - \vect{w}\cdot\left( \mat{H}_{\psi}\N_{\cchi} \right) \right]$  \\
+%	$\mat{tC} = \hat{\mat{P}}^{Ave} \N_{\x} + \frac{1}{2} Smat(c^{p}_{\x},c^{s}_{\x}) \left( \vect{p}_{\x}^{+}-\vect{p}_{\x}^{-}\right)$ \\
+%	$\vect{rhsLm} =  \sum\limits_{b\in\Lambda_a} \left( \vect{tC} \; ||C^{\x}_{ab}|| \right)$ \\
+%	$\mat{rhsF} =  \sum\limits_{b\in\Lambda_a} \left( \vect{vC} \otimes \vect{C}^{\x}_{ab} \right)$ \\
+	\caption{Computation of the right hand side of the linear momentum conservation law for the first Runge-Kutta stage.}
 \end{algorithm}
 
-\begin{algorithm}[H]
-	\KwData{\textbf{rhsLm}, \textbf{rhsF}. } % referential wave speeds
-	\KwResult{$\vect{p}_{\x}^n, \mat{F}_{\phi}^n, \vect{u}^{n}, \vect{u}_{\vect{w}}^{n}$}
-	%initialization\;
-	$\vect{v} = \J_{\psi}^{-1} \vect{p}_{\x}/\rho$ \\
-	$\hat{\vect{v}} = \vect{v} + \left[ \left( \mat{F}_{\phi}\mat{F}_{\psi}^{-1}\right)\cdot\vect{w} \right]$ \\
-	$\x \mathrel{{+}{=}} \Delta t \; \hat{\vect{v}}$ \\
-	$\x_{\vect{w}} \mathrel{{+}{=}} \Delta t \; \vect{w}$ \\
-	$\vect{p}_{\x} \mathrel{{+}{=}} \Delta t \; \vect{rhsLm}$ \\
-	$\mat{F} \mathrel{{+}{=}} \Delta t \; \mat{rhsF}$ \\
-	$\vect{p}_{\x}^n = \frac{1}{2}\left( \vect{p}_{\x}^{n-1} + \vect{p}_{\x}^n \right)$ \\
-	$\mat{F}_{\phi}^n = \frac{1}{2}\left( \mat{F}_{\phi}^{n-1} + \mat{F}_{\phi}^n \right)$ \\
-	$\x^n = \frac{1}{2}\left( \x^{n-1} + \x^n \right)$ \\
-	$\x_{\vect{w}}^n = \frac{1}{2}\left( \x_{\vect{w}}^{n-1} + \x_{\vect{w}}^n \right)$ \\
-	$\vect{u}^{n} = \x^n - \X$ \\
-	$\vect{u}_{\vect{w}}^{n} = \x_{\vect{w}}^n - \X$
-	\caption{Use of Right Hand Sides.}
-\end{algorithm}
 
-\bigbreak
-
-%\SetKwInput{KwInput}{Input}
-%\SetKwInput{KwOutput}{Output}
+%
+%
+%\newpage
+%\newpage
+%\bigbreak
+%\bigbreak
+%\bigbreak
+%\bigbreak
+%\newpage
+%
 %\begin{algorithm}[H]
-%	\DontPrintSemicolon
-%
-%	\KwInput{Your Input}
-%	\KwOutput{Your output}
-%	\KwData{Testing set $x$}
-%	$\sum_{i=1}^{\infty} := 0$ \tcp*{this is a comment}
-%	\tcc{Now this is an if...else conditional loop}
-%	\If{Condition 1}
-%	{
-%		Do something    \tcp*{this is another comment}
-%		\If{sub-Condition}
-%		{Do a lot}
-%	}
-%	\ElseIf{Condition 2}
-%	{
-%		Do Otherwise \;
-%		\tcc{Now this is a for loop}
-%		\For{sequence}
-%		{
-%			loop instructions
-%		}
-%	}
-%	\Else
-%	{
-%		Do the rest
-%	}
-%
-%	\tcc{Now this is a While loop}
-%	\While{Condition}
-%	{
-%		Do something\;
-%	}
-%
-%	\caption{Example code}
+%	\KwData{$c^{p}_{R}, c^{s}_{R}$.} % referential wave speeds
+%	\KwResult{\textbf{rhsLm}, \textbf{rhsF}. }
+%	%initialization\;
+%	Update of $\vect{w}, \mat{F}_{\psi}, \J_{\psi}, \mat{H}_{\psi}$ \\
+%	$\mat{F} = \mat{F}_{\phi}\mat{F}_{\psi}^{-1}$ \\
+%	$\mat{P} = \mat{P}(\mat{F})$ \\
+%	$\vect{v} = \J_{\psi}^{-1} \vect{p}_{\x}/\rho$ \\
+%	$\hat{\vect{v}} = \vect{v} + \left[ \left( \mat{F}_{\phi}\mat{F}_{\psi}^{-1}\right) \vect{w} \right]$ \\
+%	$\hat{\mat{P}} = \left[ \mat{P} + \left( (\J_{\psi}^{-1} \vect{p}_{\x})\otimes \vect{w}   \right) \right]\mat{H}_{\psi} $ \\
+%	$\vect{vC}$, point to edge interpolation of $\hat{\vect{v}}$ \\
+%	$\Lambda_{\mat{H}_\phi}^2 = \left( \mat{H}_{\psi}^{Ave} \N_{\cchi} \right) \cdot \left( \mat{H}_{\psi}^{Ave} \N_{\cchi} \right)$ \\
+%	$c^{p}_{\x} = \J_{\psi}^{-1} \left[ \Lambda_{\mat{H}_\phi}c^{p}_{R} - \vect{w}\cdot\left( \mat{H}_{\psi}\N_{\cchi} \right) \right]$ \\
+%	$c^{s}_{\x} = \J_{\psi}^{-1} \left[ \Lambda_{\mat{H}_\phi}c^{s}_{R} - \vect{w}\cdot\left( \mat{H}_{\psi}\N_{\cchi} \right) \right]$  \\
+%	$\mat{tC} = \hat{\mat{P}}^{Ave} \N_{\x} + \frac{1}{2} Smat(c^{p}_{\x},c^{s}_{\x}) \left( \vect{p}_{\x}^{+}-\vect{p}_{\x}^{-}\right)$ \\
+%	$\vect{rhsLm} =  \sum\limits_{b\in\Lambda_a} \left( \vect{tC} \; ||C^{\x}_{ab}|| \right)$ \\
+%	$\mat{rhsF} =  \sum\limits_{b\in\Lambda_a} \left( \vect{vC} \otimes \vect{C}^{\x}_{ab} \right)$ \\
+%	\caption{Computation of Right Hand Sides.}
 %\end{algorithm}
+%
+%\begin{algorithm}[H]
+%	\KwData{\textbf{rhsLm}, \textbf{rhsF}. } % referential wave speeds
+%	\KwResult{$\vect{p}_{\x}^n, \mat{F}_{\phi}^n, \vect{u}^{n}, \vect{u}_{\vect{w}}^{n}$}
+%	%initialization\;
+%	$\vect{v} = \J_{\psi}^{-1} \vect{p}_{\x}/\rho$ \\
+%	$\hat{\vect{v}} = \vect{v} + \left[ \left( \mat{F}_{\phi}\mat{F}_{\psi}^{-1}\right)\cdot\vect{w} \right]$ \\
+%	$\x \mathrel{{+}{=}} \Delta t \; \hat{\vect{v}}$ \\
+%	$\x_{\vect{w}} \mathrel{{+}{=}} \Delta t \; \vect{w}$ \\
+%	$\vect{p}_{\x} \mathrel{{+}{=}} \Delta t \; \vect{rhsLm}$ \\
+%	$\mat{F} \mathrel{{+}{=}} \Delta t \; \mat{rhsF}$ \\
+%	$\vect{p}_{\x}^n = \frac{1}{2}\left( \vect{p}_{\x}^{n-1} + \vect{p}_{\x}^n \right)$ \\
+%	$\mat{F}_{\phi}^n = \frac{1}{2}\left( \mat{F}_{\phi}^{n-1} + \mat{F}_{\phi}^n \right)$ \\
+%	$\x^n = \frac{1}{2}\left( \x^{n-1} + \x^n \right)$ \\
+%	$\x_{\vect{w}}^n = \frac{1}{2}\left( \x_{\vect{w}}^{n-1} + \x_{\vect{w}}^n \right)$ \\
+%	$\vect{u}^{n} = \x^n - \X$ \\
+%	$\vect{u}_{\vect{w}}^{n} = \x_{\vect{w}}^n - \X$
+%	\caption{Use of Right Hand Sides.}
+%\end{algorithm}
+%
+%\bigbreak

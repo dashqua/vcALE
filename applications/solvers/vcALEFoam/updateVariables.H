@@ -10,50 +10,65 @@ forAll(mesh.points(), node)
 // Constitutive model
 aleModel_.correct();
 trueF = F & op.inverse(matF);
-
-//forAll(trueF, n)
-//{
-//	trueF[n] = Foam::tensor::I;
-//}
-//
-//trueF = F & op.inverse(aleF);
+/*
+forAll(trueF, n)
+{
+	trueF[n] = Foam::tensor::I;
+}
+*/
 trueJ = det(trueF);
 trueH = trueJ * op.invT(trueF);
 model.correct(trueF, trueH, trueJ);
 P = model.piola();
 
-v_ = op.inverseScalar(aleJ) * lm/rho;
-//forAll(v_, n)
-//{
-//	v_[n][0] = 1000./1100.;
-//	v_[n][1] = 1000./1100.;
-//	v_[n][2] = 0;
-//}
-
+pR = op.inverseScalar(matJ) * lm;//op.inverseScalar(aleJ) * lm;
+/*
+forAll(pR, n) {
+  pR[n][0] = 1000;
+  pR[n][1] = 1000;
+  pR[n][2] = 0;
+}
+*/
+v_ = pR/rho;  //op.inverseScalar(aleJ) * l.m/rho;
+/*
+forAll(v_, n)
+{
+	v_[n][0] = 1000./1100.;
+	v_[n][1] = 1000./1100.;
+	v_[n][2] = 0;
+}
+*/
 vHat = v_ + (trueF & w_);
-//vHat = v_ + ((F & op.inverse(matF)) & w_);
-//vHat = v_ + w_;
-//vHat = v_ + ((F & op.inverse(aleF)) & w_);
-PHat = (P + ((v_*rho) * w_)) & aleH;
+PHat = P & aleH;
 
 // Linear reconstruction
-lmGrad = grad.gradient(v_);
-grad.reconstruct(v_, lmGrad, lmM, lmP);
+vGrad = grad.gradient(v_);
+grad.reconstruct(v_, vGrad, vM, vP);
 
-vC = inter.pointToEdge(vHat);
-wC = inter.pointToEdge(w_);
-
-lambdaH = sqrt((inter.pointToEdge(aleH) & N) & (inter.pointToEdge(aleH) & N));
-scalarField aleUp___ = inter.pointToEdge( op.inverseScalar(aleJ) ) *
+lambdaH = sqrt((inter.pointToEdge(aleH) & N) & (inter.pointToEdge(aleH) & N)); 
+scalarField aleUp___ = inter.pointToEdge( op.inverseScalar(matJ) ) *//aleJ
        (
          (lambdaH * inter.pointToEdge(Up))
        - (inter.pointToEdge(w_) & (inter.pointToEdge(aleH) & N))
        );
 
-scalarField aleUs___ = inter.pointToEdge( op.inverseScalar(aleJ) ) *
+scalarField aleUs___ = inter.pointToEdge( op.inverseScalar(matJ) ) *
        (
          (lambdaH * inter.pointToEdge(Us))
        - (inter.pointToEdge(w_) & (inter.pointToEdge(aleH) & N))
        );
 
-tC = (inter.pointToEdge(PHat) & N) + inter.pointToEdge(aleJ*rho)*(0.5*mech.SmatrixMod(aleUp___, aleUs___) & (lmP - lmM));
+// Average terms
+tC = (inter.pointToEdge(PHat) & N)
+  + inter.pointToEdge(matJ*rho)*(0.5*mech.SmatrixMod(aleUp___, aleUs___) & (vP - vM));
+if (GCLtechnique == "withInvolution") {
+    tC2 = inter.pointToEdge( pR )   * N;
+} else if (GCLtechnique == "withoutInvolution") {
+  HTwC = inter.pointToEdge( aleH.T()&w_ ) & N;
+} else {
+  FatalErrorIn("updateVariables.H") << "GCL technique is not properly defined." << abort(FatalError);
+}
+
+vC  = inter.pointToEdge( vHat ) * N;
+wC  = inter.pointToEdge( w_ )   * N;
+

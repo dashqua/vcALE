@@ -60,6 +60,22 @@ const vector& traction =
     runParameters.lookupOrDefault<vector>("traction", vector::zero);
 
 
+// ALE - GCL Gradient method
+//const word& GCLgradientMethod = controlDict.lookup("GCLgradientMethod");
+
+//if (GCLgradientMethod != "gradientScheme" && GCLgradientMethod != "gradientEvaluation")
+//{
+//    FatalErrorIn("readControls.H")
+//        << "Valid type entries are 'gradientScheme' or 'gradientEvaluation' for GCLgradientMethod"
+//        << abort(FatalError);
+//}
+
+// ALE - GCL technique:
+// 1. "withInvolution" = Full GCL coverage with involution
+// 2. "withoutInvolution" = GCL coverage without involution
+const word& GCLtechnique = mechanicalProperties.lookupOrDefault<word>("GCLtechnique", "withInvolution");
+Info << "GCL technique: " << GCLtechnique << nl;
+
 // Type of time stepping
 const word& timeStepping = controlDict.lookup("timeStepping");
 

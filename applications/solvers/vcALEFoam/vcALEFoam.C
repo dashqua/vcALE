@@ -54,7 +54,8 @@ int main(int argc, char *argv[])
     #include "createMesh.H"
     #include "readControls.H"
     #include "createFields.H"
-
+    #include "postPro.H"
+  
     while (runTime.loop())
     {
         if (timeStepping == "variable")
@@ -68,13 +69,16 @@ int main(int argc, char *argv[])
         Info << "\nTime Step =" << tstep << "\n deltaT = " << deltaT.value() << " s"
              << "\n Time = " << t.value() << " s" << endl;
 
-        lm.oldTime();
+
+        lm.oldTime(); pTilde.oldTime(); pR.oldTime();
         F.oldTime();
-        x.oldTime();
 	matJ.oldTime();
 	matF.oldTime();
+        
+	x.oldTime();
+	xw.oldTime();
 
-        forAll(RKstage, i)
+	forAll(RKstage, i)
         {
             #include "gEqns.H"
 
@@ -84,41 +88,22 @@ int main(int argc, char *argv[])
             }
         }
 
-        lm = 0.5*(lm.oldTime() + lm);
-        F = 0.5*(F.oldTime() + F);
+	F = 0.5*(F.oldTime() + F);
 	matJ = 0.5*(matJ.oldTime() + matJ);
 	matF = 0.5*(matF.oldTime() + matF);
 
-        x = 0.5*(x.oldTime() + x);
+	//pTilde +=0.5*(pTilde.oldTime() + pTilde);
+	//lm = ( aleJ * (op.inverseScalar(matJ)*pTilde));
+        lm = 0.5*(lm.oldTime() + lm );
+	//l.m = l.m * (aleJ * op.inverseScalar(matJ)) ;
+        
+	x = 0.5*(x.oldTime() + x);
 	xw = 0.5*(xw.oldTime() + xw);
 
         #include "updateVariables.H"
 
-        if (angularMomentumConservation == "yes")
-        {
-            am.printGlobalMomentum(lm,x,V);
-        }
-
         if (runTime.outputTime())
         {
-            u = x - X;
-            u.write();
-
-	    uw = xw - X;
-	    uw.write();
-
-            p = model.pressure();
-            p.write();
-
-	    lm.write();
-	    matJ.write();
-
-	    comparJ = mag(matJ - aleJ);
-            comparJ.write();
-
-            comparF = mag(matF - aleF);
-	    comparF.write();
-
             #include "postPro.H"
   	}
 
