@@ -9,6 +9,7 @@ forAll(mesh.points(), node)
 
 // Constitutive model
 aleModel_.correct();
+aleH = matJ * op.invT(matF); 
 trueF = F & op.inverse(matF);
 /*
 forAll(trueF, n)

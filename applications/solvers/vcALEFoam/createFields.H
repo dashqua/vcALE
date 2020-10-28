@@ -202,9 +202,9 @@ Info << "Creating ALE objects ..." << nl;
 aleModel aleModel_(mechanicalProperties, mesh, pMesh);
 aleModel_.correct();
 pointVectorField& w_    = aleModel_.w();
-//pointTensorField& aleF = aleModel_.defGrad(); 
-//pointScalarField& aleJ = aleModel_.jacobian();
-pointTensorField& aleH = aleModel_.coFactor();
+
+
+pointTensorField aleH = matJ * op.invT(matF); //aleModel_.coFactor();
 
 //- ALE: Initialization of trueF and Piola Hat
 trueF = F & op.inverse(matF);               // NOTE : this aleF has to be ideally replaced by matF
