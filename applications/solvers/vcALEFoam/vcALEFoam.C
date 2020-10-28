@@ -92,10 +92,7 @@ int main(int argc, char *argv[])
 	matJ = 0.5*(matJ.oldTime() + matJ);
 	matF = 0.5*(matF.oldTime() + matF);
 
-	//pTilde +=0.5*(pTilde.oldTime() + pTilde);
-	//lm = ( aleJ * (op.inverseScalar(matJ)*pTilde));
         lm = 0.5*(lm.oldTime() + lm );
-	//l.m = l.m * (aleJ * op.inverseScalar(matJ)) ;
         
 	x = 0.5*(x.oldTime() + x);
 	xw = 0.5*(xw.oldTime() + xw);

@@ -202,8 +202,8 @@ Info << "Creating ALE objects ..." << nl;
 aleModel aleModel_(mechanicalProperties, mesh, pMesh);
 aleModel_.correct();
 pointVectorField& w_    = aleModel_.w();
-pointTensorField& aleF = aleModel_.defGrad(); 
-pointScalarField& aleJ = aleModel_.jacobian();
+//pointTensorField& aleF = aleModel_.defGrad(); 
+//pointScalarField& aleJ = aleModel_.jacobian();
 pointTensorField& aleH = aleModel_.coFactor();
 
 //- ALE: Initialization of trueF and Piola Hat
@@ -212,13 +212,13 @@ trueF = F & op.inverse(matF);               // NOTE : this aleF has to be ideall
 
 //- ALE: initialization of wave speeds
 scalarField lambdaH = sqrt((inter.pointToEdge(aleH) & N) & (inter.pointToEdge(aleH) & N));
-scalarField aleUp___ = inter.pointToEdge( op.inverseScalar(aleJ) ) * 
+scalarField aleUp___ = inter.pointToEdge( op.inverseScalar(matJ) ) * 
        (
          (lambdaH * inter.pointToEdge(Up)) 
        - (inter.pointToEdge(w_) & (inter.pointToEdge(aleH) & N))
        );
 
-scalarField aleUs___ = inter.pointToEdge( op.inverseScalar(aleJ) ) * 
+scalarField aleUs___ = inter.pointToEdge( op.inverseScalar(matJ) ) * 
        (
          (lambdaH * inter.pointToEdge(Us)) 
        - (inter.pointToEdge(w_) & (inter.pointToEdge(aleH) & N))
@@ -257,7 +257,7 @@ pointVectorField pR
     pMesh,
     dimensionedVector("pR", dimensionSet(1,-2,-1,0,0,0,0), vector::zero)
 );
-pR = op.inverseScalar(aleJ) * lm;
+pR = op.inverseScalar(matJ) * lm;
 pR.write();
 
 pointVectorField pTilde
@@ -277,7 +277,7 @@ pointVectorField v_
 	pMesh,
 	dimensionedVector("v_", dimensionSet(0,1,-1,0,0,0,0), vector::zero)
 );
-v_ = pR/rho;; //op.inverseScalar(aleJ) * lm/rho;
+v_ = pR/rho;
 
 //- ALE:  vHat
 pointVectorField vHat
@@ -310,7 +310,7 @@ grad.reconstruct(v_, vGrad, vM, vP);
 
 // Edge traction
 vectorField tC = (inter.pointToEdge(PHat) & N )
-	+ inter.pointToEdge(aleJ*rho)*(0.5*mech.SmatrixMod(aleUp___, aleUs___) & (vP - vM));
+	+ inter.pointToEdge(matJ*rho)*(0.5*mech.SmatrixMod(aleUp___, aleUs___) & (vP - vM));
 // Edge linear momentum
 tensorField vC = inter.pointToEdge(vHat) * N;
 // Edge traction two

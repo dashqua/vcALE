@@ -23,7 +23,7 @@ startTime 0;
 
 stopAt endTime;
 
-endTime 3.0;
+endTime 10.0;
 
 timeStepping variable;
 

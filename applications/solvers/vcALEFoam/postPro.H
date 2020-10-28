@@ -6,7 +6,6 @@ uw = xw - X;
 uw.write();
 
 p = model.pressure();
-//forAll(p, n) { p[n] /= aleJ[n]; }
 p.write();
 
 
@@ -18,34 +17,10 @@ v_.write();
 
 
 
-// ALE - comparJ: the following field is used to 
-// - matJ, that is RK integrated,
-// - aleJ, that is given analytically
-pointScalarField comparJ
-(
-	IOobject ("comparJ", runTime.timeName(), mesh, IOobject::NO_READ, IOobject::AUTO_WRITE), //IOobject("comparJ", mesh),
-	pMesh,
-	dimensionedScalar("comparJ", dimensionSet(0,0,0,0,0,0,0), 0.0)
-);
-comparJ = mag(matJ - aleJ);
-comparJ.write();
-
-// ALE - comparF: the following field is used
-// - matF, that is RK integrated,
-// - aleF, that s given analytically
-pointScalarField comparF
-(
-	IOobject ("comparF", runTime.timeName(), mesh, IOobject::NO_READ, IOobject::AUTO_WRITE), //IOobject("comparJ", mesh),
-	pMesh,
-	dimensionedScalar("comparF", dimensionSet(0,0,0,0,0,0,0), 0.0)
-);
-comparF = mag(matF - aleF);
-comparF.write();
 
 
-
+// ALE - CoG
 vector sum = vector::zero;
-
 forAll(u, node)
 {
 	sum += u[node];
@@ -54,27 +29,10 @@ forAll(u, node)
 scalar n = sizeof( u ) / sizeof(u[0]);
 Info << "CoG: " << (sum/n)[0] << " " << (sum/n)[1] << " " << (sum/n)[2] << nl;
 
-pointScalarField normF
-(
- IOobject("normF", runTime.timeName(), mesh, IOobject::NO_READ, IOobject::AUTO_WRITE),
- pMesh,
- dimensionedScalar("normF", dimensionSet(0,0,0,0,0,0,0), 0.0)
- );
-normF = mag(F);
-normF.write();
-
-pointScalarField normMatFandF = mag(matF - F);
-normMatFandF.write();
 
 
-pointScalarField normRHSF   
-(
-	IOobject("normRHSF", runTime.timeName(), mesh, IOobject::NO_READ, IOobject::AUTO_WRITE),
-	pMesh,
-	dimensionedScalar("normRHSF", rhsF.dimensions(), 0.0)
-);
-normRHSF = mag(rhsF - rhsMatF);
-normRHSF.write();
+
+
 
 
 

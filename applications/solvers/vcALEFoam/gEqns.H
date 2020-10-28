@@ -8,8 +8,8 @@ rhsLm1.primitiveFieldRef() = op.surfaceSum(tC*magSf);
 if (GCLtechnique == "withInvolution") {
     rhsJ.primitiveFieldRef() = aleH && op.surfaceSum(wC*magSf);
     rhsLm2.primitiveFieldRef() = op.surfaceSum(tC2*magSf) & (aleH.T() & w_);
-    rhsLm3.primitiveFieldRef() = pR * (aleH && (op.surfaceSum(wC*magSf)));  // use rhsJ to be faster
-    rhsLm.primitiveFieldRef() = rhsLm1 + rhsLm2 + rhsLm3; //rhsLm1 + rhsLm2 + rhsLm3;
+    rhsLm3.primitiveFieldRef() = pR * rhsJ.primitiveField() ;//* (aleH && (op.surfaceSum(wC*magSf)));
+    rhsLm.primitiveFieldRef() = rhsLm1 + rhsLm2 + rhsLm3;
 } else if (GCLtechnique == "withoutInvolution") {
     rhsJ.primitiveFieldRef() = op.surfaceSum(HTwC*magSf);
     rhsLm2.primitiveFieldRef() = pR.primitiveFieldRef() * rhsJ.primitiveFieldRef();
@@ -140,23 +140,12 @@ matJ += deltaT*rhsJ;
 matF += deltaT*rhsMatF;
 
 // Compute linear momentum
-// lm += deltaT*rhsLm;
-
-// pTilde receives rhs, then passes to lm
-//pTilde += deltaT*rhsLm;
-//pR = op.inverseScalar(matJ) * pTilde;
-//lm = aleJ * pR;
-pointScalarField coef = matJ ; //aleJ;
+lm += deltaT*rhsLm;
+/*
+pointScalarField coef = matJ ;
 coef *= op.inverseScalar(matJ);
 coef *= deltaT;
 pointVectorField ooo = coef * rhsLm;
 lm += ooo ;
-lm.correctBoundaryConditions();
-  //
-
- /*
-pTilde += deltaT*rhsLm;
-lm = (aleJ * ( op.inverseScalar(matJ)*pTilde ) ); 
-lm.correctBoundaryConditions();
-pTilde = op.inverseScalar(aleJ) * ( matJ*lm );
 */
+lm.correctBoundaryConditions();

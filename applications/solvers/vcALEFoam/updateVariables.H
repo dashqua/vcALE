@@ -21,7 +21,7 @@ trueH = trueJ * op.invT(trueF);
 model.correct(trueF, trueH, trueJ);
 P = model.piola();
 
-pR = op.inverseScalar(matJ) * lm;//op.inverseScalar(aleJ) * lm;
+pR = op.inverseScalar(matJ) * lm;
 /*
 forAll(pR, n) {
   pR[n][0] = 1000;
@@ -29,15 +29,7 @@ forAll(pR, n) {
   pR[n][2] = 0;
 }
 */
-v_ = pR/rho;  //op.inverseScalar(aleJ) * l.m/rho;
-/*
-forAll(v_, n)
-{
-	v_[n][0] = 1000./1100.;
-	v_[n][1] = 1000./1100.;
-	v_[n][2] = 0;
-}
-*/
+v_ = pR/rho; 
 vHat = v_ + (trueF & w_);
 PHat = P & aleH;
 
@@ -46,7 +38,7 @@ vGrad = grad.gradient(v_);
 grad.reconstruct(v_, vGrad, vM, vP);
 
 lambdaH = sqrt((inter.pointToEdge(aleH) & N) & (inter.pointToEdge(aleH) & N)); 
-scalarField aleUp___ = inter.pointToEdge( op.inverseScalar(matJ) ) *//aleJ
+scalarField aleUp___ = inter.pointToEdge( op.inverseScalar(matJ) ) *
        (
          (lambdaH * inter.pointToEdge(Up))
        - (inter.pointToEdge(w_) & (inter.pointToEdge(aleH) & N))
