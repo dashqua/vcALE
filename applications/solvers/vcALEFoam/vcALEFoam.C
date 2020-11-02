@@ -54,8 +54,9 @@ int main(int argc, char *argv[])
     #include "createMesh.H"
     #include "readControls.H"
     #include "createFields.H"
-    #include "postPro.H"
-  
+    #include "postPro.H" 
+	
+
     while (runTime.loop())
     {
         if (timeStepping == "variable")
@@ -70,13 +71,14 @@ int main(int argc, char *argv[])
              << "\n Time = " << t.value() << " s" << endl;
 
 
-        lm.oldTime(); pTilde.oldTime(); pR.oldTime();
         F.oldTime();
 	matJ.oldTime();
 	matF.oldTime();
-        
+        lm.oldTime(); pTilde.oldTime(); pR.oldTime();
+	solvedW.oldTime();//
 	x.oldTime();
 	xw.oldTime();
+	xsolvedW.oldTime();
 
 	forAll(RKstage, i)
         {
@@ -88,15 +90,15 @@ int main(int argc, char *argv[])
             }
         }
 
-	F = 0.5*(F.oldTime() + F);
-	matJ = 0.5*(matJ.oldTime() + matJ);
-	matF = 0.5*(matF.oldTime() + matF);
-
-        lm = 0.5*(lm.oldTime() + lm );
-        
-	x = 0.5*(x.oldTime() + x);
-	xw = 0.5*(xw.oldTime() + xw);
-
+	F        = 0.5*(F.oldTime()    + F);
+	matJ     = 0.5*(matJ.oldTime() + matJ);
+	matF     = 0.5*(matF.oldTime() + matF);
+        lm       = 0.5*(lm.oldTime()   + lm);
+	solvedW  = 0.5*(solvedW.oldTime() + solvedW);//
+	x        = 0.5*(x.oldTime() + x);
+	xw       = 0.5*(xw.oldTime() + xw);
+	xsolvedW = 0.5*(xsolvedW.oldTime() + xsolvedW);
+	
         #include "updateVariables.H"
 
         if (runTime.outputTime())

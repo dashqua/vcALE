@@ -38,9 +38,6 @@ const dimensionedScalar& h = op.minimumEdgeLength();
 
 // Boundary patches
 //const polyBoundaryMesh& bm = mesh.boundaryMesh();
-//const label& freePatchID = bm.findPatchID("free");
-//const label& tractionPatchID = bm.findPatchID("traction");
-//const label& fixedPatchID = bm.findPatchID("fixed");
 
 Info << "Creating mesh coordinate fields ..." << endl;
 
@@ -61,6 +58,15 @@ pointVectorField xw
     dimensionedVector("xw", dimensionSet(0,1,0,0,0,0,0), vector::zero)
 );
 xw.primitiveFieldRef() = mesh.points();
+
+//test
+pointVectorField xsolvedW
+(
+	IOobject("xsolvedW", mesh),
+	pMesh,
+	dimensionedVector("xsolvedW", dimensionSet(0,1,0,0,0,0,0), vector::zero)
+);
+xsolvedW.primitiveFieldRef() = mesh.points();
 
 // Referential (previously Material) nodal coordinate
 pointVectorField X( IOobject("X", mesh), x);
@@ -172,10 +178,21 @@ pointTensorField matF
 (
         IOobject("matF", runTime.timeName(), mesh, IOobject::NO_READ, IOobject::AUTO_WRITE),
 	pMesh,
-	dimensionedTensor("mat", F.dimensions(), Foam::tensor::I)
+	dimensionedTensor("matF", F.dimensions(), Foam::tensor::I)
 );
 
 Info << "Creating fields for wave speeds ..." << endl;
+
+// ALE - Material H (computed from solved quantities)
+/*
+pointTensorField matH
+(
+	IOobject("matH", runTime.timeName(), mesh, IOobject::NO_READ, IOobject::AUTO_WRITE),
+	pMesh,
+	dimensionedTensor("matH", F.dimensions(), Foam::tensor::I)
+);
+matH = matJ * op.invT(matF);
+*/
 
 // Continuum mechanics class
 mechanics mech(mesh, Sf);
@@ -200,28 +217,46 @@ pointScalarField Us
 //- ALE: Declaration and initialization of ALE Objects
 Info << "Creating ALE objects ..." << nl;
 aleModel aleModel_(mechanicalProperties, mesh, pMesh);
+
+
 aleModel_.correct();
+
+
 pointVectorField& w_    = aleModel_.w();
+pointVectorField& wDot_ = aleModel_.wDot();
 
+// ALE - W velocity solved using rhsW
+pointVectorField solvedW(
+  IOobject("solvedW",runTime.timeName(),mesh,IOobject::NO_READ,IOobject::AUTO_WRITE),
+  pMesh,
+  dimensionedVector("solvedW", dimensionSet(0,1,-1,0,0,0,0), vector::zero)
+);
+// Depending on tim mapping, we have to provide with good Init Cond
+//solvedW.primitiveFieldRef() = w_.primitiveFieldRef();
 
+// ALE - CoFactor computed from solved quantities 
 pointTensorField aleH = matJ * op.invT(matF); //aleModel_.coFactor();
 
-//- ALE: Initialization of trueF and Piola Hat
-trueF = F & op.inverse(matF);               // NOTE : this aleF has to be ideally replaced by matF
+// ALE - Initialization of trueF and Piola Hat // NOTE : trueJ and trueH are not necessary here
+trueF = F & op.inverse(matF);
+trueJ = det(trueF);
+trueH = trueJ * op.invT(trueF);
 
+// get Material Piola
+pointTensorField matP = aleModel_.getMaterialPiola(matF, aleH, matJ);
 
-//- ALE: initialization of wave speeds
+// ALE - initialization of wave speeds
 scalarField lambdaH = sqrt((inter.pointToEdge(aleH) & N) & (inter.pointToEdge(aleH) & N));
 scalarField aleUp___ = inter.pointToEdge( op.inverseScalar(matJ) ) * 
        (
          (lambdaH * inter.pointToEdge(Up)) 
-       - (inter.pointToEdge(w_) & (inter.pointToEdge(aleH) & N))
+       - (inter.pointToEdge(solvedW) & (inter.pointToEdge(aleH) & N))
        );
 
 scalarField aleUs___ = inter.pointToEdge( op.inverseScalar(matJ) ) * 
        (
          (lambdaH * inter.pointToEdge(Us)) 
-       - (inter.pointToEdge(w_) & (inter.pointToEdge(aleH) & N))
+       - (inter.pointToEdge(solvedW) & (inter.pointToEdge(aleH) & N))
        );
 
 
@@ -286,7 +321,7 @@ pointVectorField vHat
 	pMesh,
 	dimensionedVector("vHat", dimensionSet(0,1,-1,0,0,0,0), vector::zero)
 );
-vHat = v_ + (trueF & w_);
+vHat = v_ + (trueF & solvedW);
 
 // ALE: PHat
 PHat = P & aleH ;
@@ -316,9 +351,9 @@ tensorField vC = inter.pointToEdge(vHat) * N;
 // Edge traction two
 tensorField tC2 = inter.pointToEdge( pR ) * N;
 // Edge material velocity
-tensorField wC = inter.pointToEdge( w_ )  * N;
+tensorField wC = inter.pointToEdge( solvedW )  * N;
 // Edge alternative jacobian term
-scalarField HTwC = inter.pointToEdge(aleH.T()&w_) & N;
+scalarField HTwC = inter.pointToEdge( aleH.T() & solvedW ) & N;
 // ALE - The GCL technique distinction (commented code below) could
 // be done, but for the sake of simplicity, initial values for both
 // cases are declared anyway.
@@ -332,9 +367,9 @@ if (GCLtechnique == "withInvolution") {
     FatalErrorIn("updateVariables.H") << "GCL technique is not properly defined." << abort(FatalError);
 }
 */
-
-
-
+vectorField PmatHC = inter.pointToEdge( matP & aleH ) & N;
+// alternative p rhsLm2 term
+vectorField pRwHC = inter.pointToEdge( (pR*solvedW) & aleH ) & N;
 
 // ALE - RHS of jacobian equation
 pointScalarField rhsJ
@@ -380,12 +415,12 @@ pointVectorField rhsLm3
 rhsLm1.primitiveFieldRef() = op.surfaceSum(tC*magSf);
 if (GCLtechnique == "withInvolution") {
     rhsJ.primitiveFieldRef() = aleH && op.surfaceSum(wC*magSf);
-    rhsLm2.primitiveFieldRef() = op.surfaceSum(tC2*magSf) & (aleH.T() & w_);
+    rhsLm2.primitiveFieldRef() = op.surfaceSum(tC2*magSf) & (aleH.T() & solvedW);
     rhsLm3.primitiveFieldRef() = pR * (aleH && (op.surfaceSum(wC*magSf)));
     rhsLm.primitiveFieldRef() = rhsLm1 + rhsLm2  + rhsLm3;
 } else if (GCLtechnique == "withoutInvolution") {
     rhsJ.primitiveFieldRef() = op.surfaceSum(HTwC*magSf);
-    rhsLm2.primitiveFieldRef() = pR.primitiveFieldRef() * rhsJ.primitiveFieldRef();
+    rhsLm2.primitiveFieldRef() = op.surfaceSum(pRwHC*magSf);//pR.primitiveFieldRef() * rhsJ.primitiveFieldRef();
     rhsLm.primitiveFieldRef() = rhsLm1 + rhsLm2;
 } else {
     FatalErrorIn("createFields.H") << "GCL technique is not properly defined." << abort(FatalError);
@@ -399,8 +434,19 @@ pointTensorField rhsMatF
     dimensionedTensor("rhsMatF", F.dimensions()/dimTime, tensor::zero)
 );
 
-// RHS of linear momentum equation (stage 1)
-//pointVectorField rhsLmBis = rhsLm;
+// ALE - RHS of solvedW velocity
+pointVectorField rhsW(
+  IOobject ("rhsW", mesh),
+  pMesh,
+  dimensionedVector("rhsW", dimensionSet(0,1,-2,0,0,0,0), vector::zero)
+);
+
+//ALE - body Forces for rhsW
+pointVectorField bodyForcesW(
+  IOobject ("bodyForcesW", mesh),
+  pMesh,
+  dimensionedVector("bodyForcesW", dimensionSet(0,1,-2,0,0,0,0), vector::zero)
+);
 
 // RHS of angular momentum equation
 pointVectorField rhsAm
@@ -431,6 +477,15 @@ u.write();
 uw.write();
 X -= u;
 
+
+// test
+pointVectorField usolvedW
+(
+	IOobject("usolvedW", runTime.timeName(), mesh, IOobject::NO_READ, IOobject::AUTO_WRITE),
+	pMesh,
+	dimensionedVector("usolvedW", dimLength, vector::zero)
+);
+usolvedW.write();
 
 Info << "Creating variables for time ..." << endl;
 

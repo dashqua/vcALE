@@ -75,6 +75,11 @@ const vector& traction =
 // 2. "withoutInvolution" = GCL coverage without involution
 const word& GCLtechnique = mechanicalProperties.lookupOrDefault<word>("GCLtechnique", "withInvolution");
 Info << "GCL technique: " << GCLtechnique << nl;
+// Here : add the same IF check present in the rest of the code
+
+// Addition of an option to do postProcessing:
+const word& doPostPro = mechanicalProperties.lookupOrDefault<word>("doPostPro", "activated");
+Info << "Post Processing: " << doPostPro << nl;
 
 // Type of time stepping
 const word& timeStepping = controlDict.lookup("timeStepping");

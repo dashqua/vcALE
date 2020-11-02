@@ -58,7 +58,7 @@ Material Motion $n^\circ 2$:
 \begin{align}
 	\frac{\partial \mat{F}}{\partial t} &= \DIV_{\cchi}\left( \hat{\vect{v}} \otimes \mat{I} \right) \\ 
 	\frac{\partial \J}{\partial t} &= \mat{H}_{\psi} \bm{:} \GRAD_{\cchi}\left( \vect{w} \right) \\
-	\frac{\partial \mat{F}_{\psi}}{} &= \DIV_{\cchi}\left( \vect{w} \otimes \mat{I} \right) \\
+	\frac{\partial \mat{F}_{\psi}}{\partial t} &= \DIV_{\cchi}\left( \vect{w} \otimes \mat{I} \right) \\
 	\frac{\partial \tilde{\vect{p}}}{\partial t} &= \DIV_{\cchi}\left( \mat{P}\mat{H}_{\psi}\right) {~}+{~} \GRAD_{\cchi} \left(  \vect{p}_R \right) \left( \mat{H}_{\psi}^{T}\vect{w} \right)  {~}+{~} \vect{p}_R \left[\mat{H}_{\psi} \bm{:} \GRAD_{\cchi}\left( \vect{w} \right) \right]
 \end{align}
 \end{subequations}
@@ -89,6 +89,23 @@ Material Motion $n^\circ 2$:
 \end{align}
 \end{subequations}
 
+\newpage
+
+\begin{subequations}
+\begin{equation}
+	\mat{P}_{mat} = \mat{P}_{mat} \left( \mat{F}_{mat} \right)
+\end{equation}
+\begin{equation}
+	\vect{F}_{b,\vect{w}} = \rho_R \dot{\vect{w}} - \DIV \left( \mat{P}_{mat}\mat{H}_{\psi} \right)
+\end{equation}
+\begin{equation}
+	\vect{w}^{n+1} = \vect{w}^n + \Delta t \left[ \DIV \left( \mat{P}_{mat}\mat{H}_{\psi} \right) + \vect{F}_{b,\vect{w}} \right]; 
+\end{equation}
+
+\end{subequations}
+
+
+\newpage
 \subsection{Algorithms}
 \begin{algorithm}[H]
 	%\KwData{$c^{p}_{R}, c^{s}_{R}$.} 

@@ -10,58 +10,49 @@ forAll(mesh.points(), node)
 // Constitutive model
 aleModel_.correct();
 aleH = matJ * op.invT(matF); 
+matP = aleModel_.getMaterialPiola(matF, aleH, matJ);
 trueF = F & op.inverse(matF);
-/*
-forAll(trueF, n)
-{
-	trueF[n] = Foam::tensor::I;
-}
-*/
 trueJ = det(trueF);
 trueH = trueJ * op.invT(trueF);
 model.correct(trueF, trueH, trueJ);
 P = model.piola();
 
 pR = op.inverseScalar(matJ) * lm;
-/*
-forAll(pR, n) {
-  pR[n][0] = 1000;
-  pR[n][1] = 1000;
-  pR[n][2] = 0;
-}
-*/
 v_ = pR/rho; 
-vHat = v_ + (trueF & w_);
+vHat = v_ + (trueF & solvedW);
 PHat = P & aleH;
 
 // Linear reconstruction
 vGrad = grad.gradient(v_);
 grad.reconstruct(v_, vGrad, vM, vP);
 
+// Wave speeds
 lambdaH = sqrt((inter.pointToEdge(aleH) & N) & (inter.pointToEdge(aleH) & N)); 
 scalarField aleUp___ = inter.pointToEdge( op.inverseScalar(matJ) ) *
        (
          (lambdaH * inter.pointToEdge(Up))
-       - (inter.pointToEdge(w_) & (inter.pointToEdge(aleH) & N))
+       - (inter.pointToEdge(solvedW) & (inter.pointToEdge(aleH) & N))
        );
 
 scalarField aleUs___ = inter.pointToEdge( op.inverseScalar(matJ) ) *
        (
          (lambdaH * inter.pointToEdge(Us))
-       - (inter.pointToEdge(w_) & (inter.pointToEdge(aleH) & N))
+       - (inter.pointToEdge(solvedW) & (inter.pointToEdge(aleH) & N))
        );
 
 // Average terms
 tC = (inter.pointToEdge(PHat) & N)
   + inter.pointToEdge(matJ*rho)*(0.5*mech.SmatrixMod(aleUp___, aleUs___) & (vP - vM));
 if (GCLtechnique == "withInvolution") {
-    tC2 = inter.pointToEdge( pR )   * N;
+    tC2   = inter.pointToEdge( pR )   * N;
 } else if (GCLtechnique == "withoutInvolution") {
-  HTwC = inter.pointToEdge( aleH.T()&w_ ) & N;
+    HTwC  = inter.pointToEdge( aleH.T() & solvedW ) & N;
+    pRwHC = inter.pointToEdge( (pR*solvedW) & aleH ) & N;					      
 } else {
-  FatalErrorIn("updateVariables.H") << "GCL technique is not properly defined." << abort(FatalError);
+    FatalErrorIn("updateVariables.H") << "GCL technique is not properly defined." << abort(FatalError);
 }
 
 vC  = inter.pointToEdge( vHat ) * N;
-wC  = inter.pointToEdge( w_ )   * N;
+wC  = inter.pointToEdge( solvedW )   * N;
 
+PmatHC = inter.pointToEdge( matP & aleH ) & N;

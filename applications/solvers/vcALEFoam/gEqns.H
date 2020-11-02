@@ -7,16 +7,22 @@ rhsMatF.primitiveFieldRef() = op.surfaceSum(wC*magSf);
 rhsLm1.primitiveFieldRef() = op.surfaceSum(tC*magSf);
 if (GCLtechnique == "withInvolution") {
     rhsJ.primitiveFieldRef() = aleH && op.surfaceSum(wC*magSf);
-    rhsLm2.primitiveFieldRef() = op.surfaceSum(tC2*magSf) & (aleH.T() & w_);
-    rhsLm3.primitiveFieldRef() = pR * rhsJ.primitiveField() ;//* (aleH && (op.surfaceSum(wC*magSf)));
+    rhsLm2.primitiveFieldRef() = op.surfaceSum(tC2*magSf) & (aleH.T() & solvedW);
+    rhsLm3.primitiveFieldRef() = pR * rhsJ.primitiveField();
     rhsLm.primitiveFieldRef() = rhsLm1 + rhsLm2 + rhsLm3;
 } else if (GCLtechnique == "withoutInvolution") {
     rhsJ.primitiveFieldRef() = op.surfaceSum(HTwC*magSf);
-    rhsLm2.primitiveFieldRef() = pR.primitiveFieldRef() * rhsJ.primitiveFieldRef();
+    rhsLm2.primitiveFieldRef() = op.surfaceSum(pRwHC*magSf); //pR.primitiveFieldRef() * rhsJ.primitiveFieldRef();
     rhsLm.primitiveFieldRef() = rhsLm1 + rhsLm2;
 } else {
     FatalErrorIn("gEqns.H") << "GCL technique is not properly defined." << abort(FatalError);
 }
+//aleModel_.correct();
+rhsW.primitiveFieldRef() = wDot_.primitiveFieldRef();//aleModel_.wDot().primitiveFieldRef();
+//rhsW.primitiveFieldRef() = op.surfaceSum(PmatHC*magSf) 
+//	+ (aleModel_.wDot().primitiveFieldRef() - op.surfaceSum(PmatHC*magSf)); //rho.value()
+
+
 
 // Compute boundary terms for right hand sides
 forAll(mesh.boundary(), patch)
@@ -46,9 +52,13 @@ forAll(mesh.boundary(), patch)
 	    vector vH2 = vHat[nodeB];
 	    vector vH3 = vHat[nodeC];
  
-	    vector w1 = w_[node];
-	    vector w2 = w_[nodeB];
-	    vector w3 = w_[nodeC];
+	    vector w1 = solvedW[node];
+	    vector w2 = solvedW[nodeB];
+	    vector w3 = solvedW[nodeC];
+
+            tensor PH1 = matP[node]  & aleH[node];
+	    tensor PH2 = matP[nodeB] & aleH[nodeB];
+	    tensor PH3 = matP[nodeC] & aleH[nodeC];
 
             scalar jC_1(0.0),
 	           jC_2(0.0),
@@ -66,8 +76,9 @@ forAll(mesh.boundary(), patch)
 	           tC2_3(tensor::zero),
 	           tC3_1(tensor::zero), 
 		   tC3_2(tensor::zero), 
-	           tC3_3(tensor::zero);
-	    
+	           tC3_3(tensor::zero), 
+		   PmatHClocal(tensor::zero);
+
 	    pointTensorField HT = aleH.T();
 
 	    	
@@ -84,12 +95,15 @@ forAll(mesh.boundary(), patch)
 		tC_1 = PHat[node]  & N_p.boundaryField()[patch][facei];   
 	        tC_2 = PHat[nodeB] & N_p.boundaryField()[patch][facei];
 		tC_3 = PHat[nodeC] & N_p.boundaryField()[patch][facei];
+            } else if (patx.name().find("procBoundary") != string::npos) {
+                // this case is for parallel simulation : do nothing
 	    } else {	    
 		FatalErrorIn("gEqns.H") << "A boundary is not properly defined for tC" << abort(FatalError);
 	    }
 	    
-      	    vHatClocal   = 0.125*(6.0*vH1 + vH2 + vH3);
-	    wClocal      = 0.125*(6.0*w1 + w2 + w3);
+      	    vHatClocal   = 0.125*(6*vH1 + vH2 + vH3);
+	    wClocal      = 0.125*(6*w1 + w2 + w3);
+	    PmatHClocal  = 0.125*(6*PH1 + PH2 + PH3);
 
             rhsLmSum = 0.125*(6*tC_1 + tC_2 + tC_3);
 	    if (GCLtechnique == "withInvolution") {
@@ -101,7 +115,7 @@ forAll(mesh.boundary(), patch)
 	        tC3_2 = w2 * N_p.boundaryField()[patch][facei];
 	        tC3_3 = w3 * N_p.boundaryField()[patch][facei];
 	        //
-	        rhsLmSum += 0.125*( (6*tC2_1 + tC2_2 + tC2_3 ) & (HT[node] & w_[node]) );
+	        rhsLmSum += 0.125*( (6*tC2_1 + tC2_2 + tC2_3 ) & (HT[node] & solvedW[node]) );
 	        //rhsLmSum += 0.125*( pR[node] * (aleH[node] && (6*tC3_1 + tC3_2 + tC3_3)));  //always
 	    } else if (GCLtechnique == "withoutInvolution") {
    	        jC_1 = (HT[node]  & w1) & N_p.boundaryField()[patch][facei];
@@ -111,41 +125,45 @@ forAll(mesh.boundary(), patch)
 	    } else {
 	        FatalErrorIn("gEqns.H") << "GCL technique is not properly defined." << abort(FatalError);
 	    }
-	    rhsLm[node] += rhsLmSum * (magSf_p.boundaryField()[patch][facei]/3.0);
-            rhsF[node] +=  vHatClocal*(Sf_p.boundaryField()[patch][facei]/3.0);
+	    rhsLm[node]   += rhsLmSum * (magSf_p.boundaryField()[patch][facei]/3.0);
+            rhsF[node]    += vHatClocal*(Sf_p.boundaryField()[patch][facei]/3.0);
 	    rhsMatF[node] += wClocal*(Sf_p.boundaryField()[patch][facei]/3.0);
+	    //rhsW[node]    += PmatHClocal & (Sf_p.boundaryField()[patch][facei]/3.0);
+	    //rhsW[node] = vector::zero;  // At the moment: fix BCs to 0 for w
         }
     }
 }
 
 // Compute right hand sides
-op.volumeIntegrate(rhsLm, V);
-op.volumeIntegrate(rhsF, V);
-op.volumeIntegrate(rhsJ, V);
+op.volumeIntegrate(rhsLm,   V);
+op.volumeIntegrate(rhsF,    V);
+op.volumeIntegrate(rhsJ,    V);
 op.volumeIntegrate(rhsMatF, V);
+//op.volumeIntegrate(rhsW,    V);
+
+
+// Compute solvedW
+solvedW += deltaT * rhsW;//wDot_;  //rhsW;
+
 
 // Compute node coordinates
 x += deltaT * vHat;
 
 // same for xw
-xw += deltaT * w_;
+xw += deltaT * solvedW;
 
 // Compute deformation gradient tensor
-F += deltaT*rhsF;
+F += deltaT * rhsF;
 
 // Compute material Jacobian
-matJ += deltaT*rhsJ;
+matJ += deltaT * rhsJ;
 
 //Compute material deformation gradient
-matF += deltaT*rhsMatF;
+matF += deltaT * rhsMatF;
 
 // Compute linear momentum
-lm += deltaT*rhsLm;
-/*
-pointScalarField coef = matJ ;
-coef *= op.inverseScalar(matJ);
-coef *= deltaT;
-pointVectorField ooo = coef * rhsLm;
-lm += ooo ;
-*/
+lm += deltaT * rhsLm;
 lm.correctBoundaryConditions();
+
+// Comnpute node coordinates from solvedW
+xsolvedW += deltaT * solvedW;

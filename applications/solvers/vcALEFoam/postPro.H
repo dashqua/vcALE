@@ -5,9 +5,14 @@ u.write();
 uw = xw - X;
 uw.write();
 
+usolvedW = xsolvedW - X;
+usolvedW.write();
+
 p = model.pressure();
 p.write();
 
+
+if (doPostPro == "activated") {
 
 // Additionnal output quantities
 lm.write();
@@ -17,6 +22,25 @@ v_.write();
 
 
 
+// test
+pointScalarField comparW(
+	IOobject("comparW", runTime.timeName(), mesh, IOobject::NO_READ, IOobject::AUTO_WRITE),
+	pMesh,
+	dimensionedScalar("comparW", dimensionSet(0,1,-1,0,0,0,0), 0.0)
+);
+comparW = mag(solvedW - w_);
+comparW.write();
+ 
+
+
+pointScalarField comparUSolvedW(
+	IOobject("comparUSolvedW", runTime.timeName(), mesh, IOobject::NO_READ, IOobject::AUTO_WRITE),
+	pMesh,
+	dimensionedScalar("comparUSolvedW", dimensionSet(0,1,0,0,0,0,0), 0.0)
+);
+comparUSolvedW = mag(usolvedW - uw);
+comparUSolvedW.write(); 
+//
 
 
 // ALE - CoG
@@ -76,10 +100,22 @@ normRHSLM3.write();
 pR.write();
 pTilde.write();
 
-Info << "sample lm      : " << lm[500]  << nl << nl;
-Info << "sample pR      : " << pR[500]  << nl << nl;
-Info << "sample tC2     : " << tC2[500] << nl << nl;
-Info << "sample wC      : " << wC[500] << nl << nl;
-Info << "sample lambdaH : " << lambdaH[500] << nl;
-Info << "sample rhsLm2  : " << rhsLm2[500] << nl;
-Info << "sample rhsLm3  : " << rhsLm3[500] << nl;
+
+
+scalar index = 129;
+scalar t = runTime.value();
+
+Info << "time           : " << t << nl;
+Info << "sample solvedW : " << solvedW[index] << nl;
+Info << "sample w_      : " << w_[index] << nl;
+Info << "sample comparW : " << comparW[index] << nl;
+Info << "sample lm      : " << lm[index]  << nl;
+Info << "sample pR      : " << pR[index]  << nl;
+Info << "sample tC2     : " << tC2[index] << nl;
+Info << "sample wC      : " << wC[index] << nl;
+Info << "sample lambdaH : " << lambdaH[index] << nl;
+Info << "sample rhsLm2  : " << rhsLm2[index] << nl;
+Info << "sample rhsLm3  : " << rhsLm3[index] << nl;
+Info << "sample rhsW    : " << rhsW[index] << nl;
+
+}

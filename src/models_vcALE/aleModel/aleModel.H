@@ -39,6 +39,7 @@ SourceFiles
 #include "pointFields.H"
 #include "vectorList.H"
 #include "interpolationSchemes.H"
+#include "operations.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -47,16 +48,14 @@ namespace Foam
 
 class aleModel
 {
-    // Private data
-
-        // Mesh
-         const fvMesh& mesh_;
+  // Mesh
+  const fvMesh& mesh_;
 
   // pointMesh
   const pointMesh& pMesh_;
   
-        //- Constitutive model
-        word model_;
+  //- Constitutive model
+  word model_;
 
   //- ALE Motion Mapping
   pointVectorField motMap_;
@@ -72,6 +71,9 @@ class aleModel
 
   //- ALE coFactor
   pointTensorField H_;
+
+  //- ALE wDot;
+  pointVectorField wDot_;
   
   //- ALE motion type
   word fictitiousMotionType_;
@@ -81,6 +83,30 @@ class aleModel
 
   //- ALE T period coefficient for Mot Map
   scalar T_;
+
+  ////////////////////////////////////////////
+  // Take quantities for solidModel for this fictitious model
+  //- Density
+  dimensionedScalar rho_;
+
+  //- Young's modulus of Elasticity
+  dimensionedScalar E_;
+
+  //- Poisson's ratio
+  dimensionedScalar nu_;
+
+  //- Lame coefficient
+  dimensionedScalar mu_;
+
+  //- Lame coefficient
+  dimensionedScalar lambda_;
+
+  //- Bulk modulus
+  dimensionedScalar kappa_;
+
+  /////////////////////////////
+  // Operations definition
+  operations op;
 
   
 private:
@@ -151,7 +177,7 @@ public:
     {
    	cof[pt] = jac[pt] * inv( dg[pt].T() );
     }
-    return cof; // jac * inv( dg.T() );
+    return cof;
   }
 
   word fictitiousMotionType()
@@ -159,16 +185,23 @@ public:
     return fictitiousMotionType_;
   }
       
-  // Edit
-
   //- Correct material model
   virtual void correct();
-
-  // Print
 
   //- Print material properties
   void printMaterialProperties();
 
+  // get P_{Mat} from F_{Mat}, according to the chosen model
+  pointTensorField getMaterialPiola (pointTensorField&, pointTensorField&, pointScalarField&);
+
+  // Compute manufactured body forces vector (DEPRECATED)
+  pointVectorField bodyForces ();
+
+  // Compute wDot
+  pointVectorField& wDot(){
+    return wDot_;
+  }
+  
 };
 
 
