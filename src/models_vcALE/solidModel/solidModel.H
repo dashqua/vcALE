@@ -37,6 +37,7 @@ SourceFiles
 
 #include "fvMesh.H"
 #include "pointFields.H"
+#include "operations.H"
 // #include "volFields.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
@@ -49,11 +50,17 @@ class solidModel
     // Private data
 
         // Mesh
-         const fvMesh& mesh_;
-
+        const fvMesh& mesh_;   
+  
         //- First Piola Kirchhoff stress tensor
         pointTensorField P_;
 
+        //- right Cauchy stress tensor
+        pointTensorField inverseC_;
+
+        //- epsilon criterion
+        dimensionedScalar epsilon_;
+  
         //- First Piola Kirchhoff stress tensor
         pointScalarField one_;
 
@@ -63,7 +70,7 @@ class solidModel
         //- Energy of algorithm
         pointScalarField energyAlgorithm_;
 
-       //- Constitutive model
+        //- Constitutive model
         word model_;
 
         //- Density
@@ -90,6 +97,9 @@ class solidModel
         //- Shear wave speed
         dimensionedScalar Us_;
 
+        // operations
+        operations op;
+  
 private:
 
     // Private Member Functions
@@ -125,55 +135,29 @@ public:
 
         // Access
 
-            const pointTensorField& piola() const
-            {
-                return P_;
-            }
+            const pointTensorField& piola() const { return P_; }
 
-            const pointScalarField& pressure() const
-            {
-                return p_;
-            }
+            const pointTensorField& inverseC() const { return inverseC_; }
 
-           const pointScalarField& energyAlgorithm() const
-            {
-                return energyAlgorithm_;
-            }
+            const dimensionedScalar& epsilon() const { return epsilon_; }
+  
+            const pointScalarField& pressure() const { return p_; }
 
-            const dimensionedScalar& density() const
-            {
-                return rho_;
-            }
+            const pointScalarField& energyAlgorithm() const { return energyAlgorithm_; }
 
-            const dimensionedScalar& lambda() const
-            {
-                return lambda_;
-            }
+            const dimensionedScalar& density() const { return rho_; }
 
-            const dimensionedScalar& mu() const
-            {
-                return mu_;
-            }
+            const dimensionedScalar& lambda() const { return lambda_; }
 
-            const dimensionedScalar& nu() const
-            {
-                return nu_;
-            }
+            const dimensionedScalar& mu() const { return mu_; }
 
-            const dimensionedScalar& kappa() const
-            {
-                return kappa_;
-            }
+            const dimensionedScalar& nu() const { return nu_; }
 
-            const dimensionedScalar& Up() const
-            {
-                return Up_;
-            }
+            const dimensionedScalar& kappa() const { return kappa_; }
 
-            const dimensionedScalar& Us() const
-            {
-                return Us_;
-            }
+            const dimensionedScalar& Up() const { return Up_; }
+
+            const dimensionedScalar& Us() const { return Us_; }
 
         // Edit
 

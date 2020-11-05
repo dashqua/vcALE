@@ -236,6 +236,10 @@ public:
             pointTensorField&,
             const pointScalarField&
         ) const;
+
+        
+        // Integration of a scalar Field over the domain
+        scalar integrateOverDomain(pointScalarField& , const pointScalarField&);
 };
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
@@ -245,5 +249,6 @@ public:
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 #endif
+
 
 // ************************************************************************* //

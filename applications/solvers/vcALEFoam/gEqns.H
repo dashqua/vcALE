@@ -17,12 +17,13 @@ if (GCLtechnique == "withInvolution") {
 } else {
     FatalErrorIn("gEqns.H") << "GCL technique is not properly defined." << abort(FatalError);
 }
-//aleModel_.correct();
-rhsW.primitiveFieldRef() = wDot_.primitiveFieldRef();//aleModel_.wDot().primitiveFieldRef();
+
+rhsW.primitiveFieldRef() = wDot_.primitiveFieldRef();
 //rhsW.primitiveFieldRef() = op.surfaceSum(PmatHC*magSf) 
 //	+ (aleModel_.wDot().primitiveFieldRef() - op.surfaceSum(PmatHC*magSf)); //rho.value()
 
 
+rhsMatE.primitiveFieldRef() = op.surfaceSum(Pmat_pmat*magSf);
 
 // Compute boundary terms for right hand sides
 forAll(mesh.boundary(), patch)
@@ -140,11 +141,10 @@ op.volumeIntegrate(rhsF,    V);
 op.volumeIntegrate(rhsJ,    V);
 op.volumeIntegrate(rhsMatF, V);
 //op.volumeIntegrate(rhsW,    V);
-
+op.volumeIntegrate(rhsMatE, V);
 
 // Compute solvedW
-solvedW += deltaT * rhsW;//wDot_;  //rhsW;
-
+solvedW += deltaT * rhsW;
 
 // Compute node coordinates
 x += deltaT * vHat;
@@ -165,5 +165,5 @@ matF += deltaT * rhsMatF;
 lm += deltaT * rhsLm;
 lm.correctBoundaryConditions();
 
-// Comnpute node coordinates from solvedW
-xsolvedW += deltaT * solvedW;
+// Compute materiel energy
+matE += deltaT * rhsMatE;

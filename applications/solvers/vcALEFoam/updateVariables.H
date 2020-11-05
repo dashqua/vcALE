@@ -11,6 +11,7 @@ forAll(mesh.points(), node)
 aleModel_.correct();
 aleH = matJ * op.invT(matF); 
 matP = aleModel_.getMaterialPiola(matF, aleH, matJ);
+matPres = aleModel_.getMaterialPressure(matF, aleH, matJ);
 trueF = F & op.inverse(matF);
 trueJ = det(trueF);
 trueH = trueJ * op.invT(trueF);
@@ -56,3 +57,5 @@ vC  = inter.pointToEdge( vHat ) * N;
 wC  = inter.pointToEdge( solvedW )   * N;
 
 PmatHC = inter.pointToEdge( matP & aleH ) & N;
+
+Pmat_pmat = inter.pointToEdge( matP.T()&solvedW ) & N;

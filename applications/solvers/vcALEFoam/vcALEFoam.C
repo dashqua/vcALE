@@ -75,10 +75,11 @@ int main(int argc, char *argv[])
 	matJ.oldTime();
 	matF.oldTime();
         lm.oldTime(); pTilde.oldTime(); pR.oldTime();
-	solvedW.oldTime();//
+	solvedW.oldTime();
 	x.oldTime();
 	xw.oldTime();
 	xsolvedW.oldTime();
+	matE.oldTime();
 
 	forAll(RKstage, i)
         {
@@ -94,10 +95,11 @@ int main(int argc, char *argv[])
 	matJ     = 0.5*(matJ.oldTime() + matJ);
 	matF     = 0.5*(matF.oldTime() + matF);
         lm       = 0.5*(lm.oldTime()   + lm);
-	solvedW  = 0.5*(solvedW.oldTime() + solvedW);//
+	solvedW  = 0.5*(solvedW.oldTime() + solvedW);
 	x        = 0.5*(x.oldTime() + x);
 	xw       = 0.5*(xw.oldTime() + xw);
 	xsolvedW = 0.5*(xsolvedW.oldTime() + xsolvedW);
+	matE     = 0.5*(matE.oldTime() + matE);
 	
         #include "updateVariables.H"
 

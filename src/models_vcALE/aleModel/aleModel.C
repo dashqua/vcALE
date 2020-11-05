@@ -298,61 +298,49 @@ pointTensorField aleModel::getMaterialPiola (pointTensorField& matF, pointTensor
   (
      IOobject ("matP", mesh_.time().timeName(), mesh_, IOobject::NO_READ, IOobject::AUTO_WRITE),
      pMesh_,
-     dimensionedTensor("matP", dimensionSet(1,-1,-2,0,0,0,0), tensor::zero)  // 1,-1,-2
+     dimensionedTensor("matP", dimensionSet(1,-1,-2,0,0,0,0), tensor::zero)
   );
-  
-  forAll(mesh_.points(), n) {
-    matP[n] = mu_.value()*pow(matJ[n], -2.0/3.0)*matF[n]
-      - ((mu_.value()/3.0)*pow(matJ[n],(-5.0/3.0))*(matF[n] && matF[n])*matH[n])
-      + ( kappa_.value()*(matJ[n]-1.0) )*matH[n];
+
+  if (model_ == "neoHookean") {  //nearly incompressible neo_hookean
+    forAll(mesh_.points(), n) {
+      matP[n] = mu_.value()*pow(matJ[n], -2.0/3.0)*matF[n]
+	- ((mu_.value()/3.0)*pow(matJ[n],(-5.0/3.0))*(matF[n] && matF[n])*matH[n])
+	+ ( kappa_.value()*(matJ[n]-1.0) )*matH[n];
+    }
+
+  } else if (model_ == "mooneyRivlin") {
+    forAll(mesh_.points(),n) {
+      matP[n] = mu_.value()*(matF[n] - matH[n]/matJ[n]) + lambda_.value() * (matJ[n]-1.0) * matH[n];
+    }
+  } else {
+    FatalErrorIn("aleModel.C") << "Material Piola Model is not properly defined." << abort(FatalError);
   }
   
   return matP;
 }
 
-pointVectorField aleModel::bodyForces ()
-{
-  scalar pi = Foam::constant::mathematical::pi, pi2 = pi*pi, T2 = T_*T_;  
-  pointVectorField w_dot = motMap();
-  forAll(w_dot, n){
-    w_dot[n][0] = (mesh_.points()[n][0] - w_dot[n][0]) * (pi2/T2);
-    w_dot[n][1] = (mesh_.points()[n][1] - w_dot[n][1]) * (pi2/T2);
-    w_dot[n][2] = 0;
-  }
-
-  //test -> op is recognized OK
-  pointScalarField test = det(H_);
-  return op.inverseScalar(test) * rho_  * w_dot ;// /!\ Not ready yet
-}
-
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-//pointVectorField& aleModel::wDot(){
-  /*
-  scalar pi = Foam::constant::mathematical::pi, pi2 = pi*pi, T2 = T_*T_;
-  scalar t = mesh_.time().value(); 
-  pointVectorField wD( 
-     IOobject("wD", mesh_),
+pointScalarField aleModel::getMaterialPressure (pointTensorField& matF, pointTensorField& matH, pointScalarField& matJ)
+{
+  pointScalarField matPres
+  (
+     IOobject ("matPres", mesh_.time().timeName(), mesh_, IOobject::NO_READ, IOobject::AUTO_WRITE),
      pMesh_,
-     dimensionedVector("wD", dimensionSet(0,1,-2,0,0,0,0), vector::zero)       // /!\ dimensions are wrong  0,1,-2
+     dimensionedScalar("matPres", dimensionSet(1,-1,-2,0,0,0,0), 0.0)
   );
- 
-  //wD.primitiveFieldRef() = motMap_.primitiveFieldRef();
-  
-  forAll(wD, n){
-    scalar X = mesh_.points()[n][0];
-    scalar Y = mesh_.points()[n][1];
-    //scalar Z = mesh_.points()[n][2];    
-    wD[n][0] = -beta_*pi2/T2    * Foam::sin(2*pi*X) * Foam::sin(pi*Y/3.0) * Foam::sin(pi*t/T_) ; //(mesh_.points()[n][0] - wD[n][0]) * (pi2/T2) ;
-    wD[n][1] = -10*beta_*pi2/T2 * Foam::sin(2*pi*X) * Foam::sin(pi*Y/3.0) * Foam::sin(2*pi*t/T_) ;//(mesh_.points()[n][1] - wD[n][0]) * (4*pi2/T2) ;
-    wD[n][2] = 0;
-  }
 
-  return wD;
-  */
-//  return wDot_;
-//  
-//}
+  if (model_ == "neoHookean") { 
+    forAll(mesh_.points(), n) {
+      matPres[n] = kappa_.value()*(matJ[n]-1.0) ;
+    }
+  } else {
+    FatalErrorIn("aleModel.C") << "Material Pressure Model is not properly defined." << abort(FatalError);
+  }
+  
+  return matPres;
+}
+
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 }

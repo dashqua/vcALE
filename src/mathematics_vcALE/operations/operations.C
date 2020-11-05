@@ -851,6 +851,16 @@ pointTensorField operations::volumeIntegrate
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
+scalar operations::integrateOverDomain(pointScalarField& matE, const pointScalarField& V){
+  scalar sum(0.0);
+  forAll(mesh_.points(), n){
+    sum += matE[n]/V[n];
+  }
+  return sum/( sizeof(mesh_.points())/sizeof(mesh_.points()[0]) );
+}
+
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
 } // End namespace Foam
 
 // ************************************************************************* //

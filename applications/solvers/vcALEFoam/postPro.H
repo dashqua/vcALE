@@ -5,11 +5,16 @@ u.write();
 uw = xw - X;
 uw.write();
 
-usolvedW = xsolvedW - X;
-usolvedW.write();
-
 p = model.pressure();
 p.write();
+
+
+matE.write();
+
+
+// integration over domain of matE
+//scalar integrationMatE = op.integrateOverDomain(matE,V);
+//Info << "Energy of the material system:\n intMatE =" << integrationMatE << endl;
 
 
 if (doPostPro == "activated") {
@@ -19,6 +24,9 @@ lm.write();
 matJ.write();
 v_.write();
 
+//integration over domain of matE
+scalar integrationMatE = op.integrateOverDomain(matE,V);
+Info << "Energy of the material system:\n intMatE = " << integrationMatE << endl;
 
 
 

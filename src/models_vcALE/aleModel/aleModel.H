@@ -144,28 +144,19 @@ public:
   // ALE mappings
 
   //- Motion Mapping
-  pointVectorField& motMap()
-  {
-    return motMap_;
-  }
+  pointVectorField& motMap() { return motMap_; }
 
   //- Time derivative of motMap
-  pointVectorField& w()
-  {
-    return w_;
-  }
+  pointVectorField& w() { return w_; }
+
+  // Compute wDot
+  pointVectorField& wDot() { return wDot_; }
   
   //- Deformation Gradient
-  pointTensorField& defGrad()
-  {
-    return defGrad_;
-  }
+  pointTensorField& defGrad() { return defGrad_; }
 
   //- Jacobian
-  pointScalarField& jacobian()
-  {
-    return J_; 
-  }
+  pointScalarField& jacobian() { return J_; }
   
   //- CoFactor
   pointTensorField& coFactor()
@@ -180,10 +171,7 @@ public:
     return cof;
   }
 
-  word fictitiousMotionType()
-  {
-    return fictitiousMotionType_;
-  }
+  word fictitiousMotionType() { return fictitiousMotionType_; }
       
   //- Correct material model
   virtual void correct();
@@ -194,14 +182,8 @@ public:
   // get P_{Mat} from F_{Mat}, according to the chosen model
   pointTensorField getMaterialPiola (pointTensorField&, pointTensorField&, pointScalarField&);
 
-  // Compute manufactured body forces vector (DEPRECATED)
-  pointVectorField bodyForces ();
-
-  // Compute wDot
-  pointVectorField& wDot(){
-    return wDot_;
-  }
-  
+  // get Pres_{Mat} from J_{Mat}, according to the chosen model
+  pointScalarField getMaterialPressure (pointTensorField&, pointTensorField&, pointScalarField&);
 };
 
 
