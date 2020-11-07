@@ -51,24 +51,12 @@ class solidModel
 
         // Mesh
         const fvMesh& mesh_;   
-  
+
         //- First Piola Kirchhoff stress tensor
         pointTensorField P_;
 
-        //- right Cauchy stress tensor
-        pointTensorField inverseC_;
-
-        //- epsilon criterion
-        dimensionedScalar epsilon_;
-  
-        //- First Piola Kirchhoff stress tensor
-        pointScalarField one_;
-
         //- Pressure
         pointScalarField p_;
-
-        //- Energy of algorithm
-        pointScalarField energyAlgorithm_;
 
         //- Constitutive model
         word model_;
@@ -98,11 +86,34 @@ class solidModel
         dimensionedScalar Us_;
 
         // operations
-        operations op;
+        operations op;  
+
+        // Von Mises vars
+        //- Elastic left strain tensor
+        pointTensorField b_;
+  
+        //- Hardening modulus
+        dimensionedScalar Hm_ = dimensionedScalar("Hm", dimensionSet(1,-1,-2,0,0,0,0), 0.0);
+
+        //- Initial yield stress
+        dimensionedScalar Ys0_ = dimensionedScalar("Ys", dimensionSet(0,-1,-2,0,0,0,0), 0.0);
+
+        //- Current yield stress
+        pointScalarField Ys_;
+
+        //- Plastic strain
+        pointScalarField strain_p_;
+
+        //- Inverse of plastic Right Cauchy Green strain tensor
+        pointTensorField CpInv_;
+
+        //- First Piola Kirchhoff stress tensor
+        pointTensorField tau_;
+
+        //- Von Mises stresses
+        pointScalarField vMises_;
   
 private:
-
-    // Private Member Functions
 
         //- Disallow default bitwise copy construct
         solidModel(const solidModel&);
@@ -137,13 +148,7 @@ public:
 
             const pointTensorField& piola() const { return P_; }
 
-            const pointTensorField& inverseC() const { return inverseC_; }
-
-            const dimensionedScalar& epsilon() const { return epsilon_; }
-  
             const pointScalarField& pressure() const { return p_; }
-
-            const pointScalarField& energyAlgorithm() const { return energyAlgorithm_; }
 
             const dimensionedScalar& density() const { return rho_; }
 

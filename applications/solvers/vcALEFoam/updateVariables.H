@@ -42,8 +42,19 @@ scalarField aleUs___ = inter.pointToEdge( op.inverseScalar(matJ) ) *
        );
 
 // Average terms
-tC = (inter.pointToEdge(PHat) & N)
-  + inter.pointToEdge(matJ*rho)*(0.5*mech.SmatrixMod(aleUp___, aleUs___) & (vP - vM));
+stabC = inter.pointToEdge(matJ*rho)*(0.5*mech.SmatrixMod(aleUp___, aleUs___) & (vP - vM));
+if (PHatTerm == "withInvolution") {
+  forAll(Px, n) { 
+    Px[n] = vector(P[n].xx(),P[n].yx(),P[n].zx()); 
+    Py[n] = vector(P[n].xy(),P[n].yy(),P[n].zy());
+    Pz[n] = vector(P[n].xz(),P[n].yz(),P[n].zz());
+  }
+  P1C = inter.pointToEdge(Px) * N;
+  P2C = inter.pointToEdge(Py) * N;
+  P3C = inter.pointToEdge(Pz) * N;
+} else if (PHatTerm == "withoutInvolution") {
+  tC = (inter.pointToEdge(PHat) & N);
+}
 if (GCLtechnique == "withInvolution") {
     tC2   = inter.pointToEdge( pR )   * N;
 } else if (GCLtechnique == "withoutInvolution") {

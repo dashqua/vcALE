@@ -181,10 +181,7 @@ Info << "Creating fields for wave speeds ..." << endl;
 pointScalarField stretch = mech.stretch();
 
 // Wave speed for time increment
-pointScalarField Up_time
-(
-    IOobject("Up_time", mesh), pMesh, model.Up()
-);
+pointScalarField Up_time ( IOobject("Up_time", mesh), pMesh, model.Up() );
 Up_time = Up_time/stretch;
 
 // Longitudinal wave speed
@@ -330,9 +327,26 @@ grad.reconstruct(v_, vGrad, vM, vP);
                                                                         */
 Info << "Creating fields for fluxes ..." << endl;
 
+// Edge Stabilisation
+vectorField stabC = inter.pointToEdge(matJ*rho)*(0.5*mech.SmatrixMod(aleUp___, aleUs___) & (vP - vM));
 // Edge traction
-vectorField tC = (inter.pointToEdge(PHat) & N )
-	+ inter.pointToEdge(matJ*rho)*(0.5*mech.SmatrixMod(aleUp___, aleUs___) & (vP - vM));
+vectorField tC    = inter.pointToEdge(PHat) & N;  // case without Involution
+//
+pointVectorField Px ( IOobject("Px", mesh), pMesh, vector::zero );
+pointVectorField Py ( IOobject("Py", mesh), pMesh, vector::zero );
+pointVectorField Pz ( IOobject("Pz", mesh), pMesh, vector::zero );
+forAll(Px, n) { 
+	Px[n] = vector(P[n].xx(),P[n].yx(),P[n].zx()); 
+	Py[n] = vector(P[n].xy(),P[n].yy(),P[n].zy()); 
+	Pz[n] = vector(P[n].xz(),P[n].yz(),P[n].zz());
+}
+pointVectorField vector_100 ( IOobject("vector_100", mesh), pMesh, vector(1,0,0) );
+pointVectorField vector_010 ( IOobject("vector_010", mesh), pMesh, vector(0,1,0) );
+pointVectorField vector_001 ( IOobject("vector_001", mesh), pMesh, vector(0,0,1) );
+//
+tensorField P1C = inter.pointToEdge(Px) * N;   
+tensorField P2C = inter.pointToEdge(Py) * N;
+tensorField P3C = inter.pointToEdge(Pz) * N;     // case with Involution
 // Edge linear momentum
 tensorField vC = inter.pointToEdge(vHat) * N;
 // Edge traction two
@@ -359,7 +373,7 @@ vectorField pRwHC     = inter.pointToEdge( (pR*solvedW) & aleH ) & N;
 scalarField Pmat_pmat = inter.pointToEdge( matP.T()&solvedW ) & N;
 
 /*
-   _______     ____  ____   ______  
+    _______     ____  ____   ______  
    |_   __ \   |_   ||   _|.' ____ \
      | |__) |    | |__| |  | (___ \_| 
      |  __ /     |  __  |   _.____`.  
@@ -373,7 +387,6 @@ pointScalarField rhsJ
 	pMesh,
 	dimensionedScalar("rhsJ", dimensionSet(0,0,-1,0,0,0,0), 0)
 );
-
 
 // RHS of linear momentum equation
 pointVectorField rhsLm
@@ -401,8 +414,15 @@ pointVectorField rhsLm3
     dimensionedVector("rhsLm3", dimensionSet(1,-2,-2,0,0,0,0), vector::zero)
 );
 
-// ALE - Here: "IF statement" like in gEqns.H to attribute value to rhsLm*
-rhsLm1.primitiveFieldRef() = op.surfaceSum(tC*magSf);
+rhsLm1.primitiveFieldRef() = op.surfaceSum(stabC*magSf) ; 
+if (PHatTerm == "withoutInvolution") { 
+    rhsLm1.primitiveFieldRef() += op.surfaceSum(tC*magSf);
+} else if (PHatTerm == "withInvolution") {
+    rhsLm1.primitiveFieldRef() += 
+		    ((aleH && op.surfaceSum(P1C*magSf))*vector_100)
+		  + ((aleH && op.surfaceSum(P2C*magSf))*vector_010)
+                  + ((aleH && op.surfaceSum(P3C*magSf))*vector_001);  
+}
 if (GCLtechnique == "withInvolution") {
     rhsJ.primitiveFieldRef() = aleH && op.surfaceSum(wC*magSf);
     rhsLm2.primitiveFieldRef() = op.surfaceSum(tC2*magSf) & (aleH.T() & solvedW);
