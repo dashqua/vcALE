@@ -32,19 +32,18 @@ rhsW.primitiveFieldRef() = wDot_.primitiveFieldRef();
 //	+ (aleModel_.wDot().primitiveFieldRef() - op.surfaceSum(PmatHC*magSf)); //rho.value()
 
 
-rhsMatE.primitiveFieldRef() = op.surfaceSum(Pmat_pmat*magSf);
+//rhsMatE.primitiveFieldRef() = op.surfaceSum(Pmat_pmat*magSf);
+rhsMatE1.primitiveFieldRef() = op.surfaceSum( inter.pointToEdge(PHat.T()&v_)             & Sf );
+rhsMatE2.primitiveFieldRef() = op.surfaceSum( inter.pointToEdge((aleH.T()&solvedW)*matE) & Sf );
+rhsMatE = rhsMatE1 + rhsMatE2;
 
 // Compute boundary terms for right hand sides
-forAll(mesh.boundary(), patch)
-{
-    forAll(mesh.boundaryMesh()[patch], facei)
-    {
+forAll(mesh.boundary(), patch) {
+    forAll(mesh.boundaryMesh()[patch], facei) {
         const label& face = mesh.boundaryMesh()[patch].start() + facei;
-        forAll(mesh.faces()[face], nodei)
-        {
+        forAll(mesh.faces()[face], nodei) {
             const label& node = mesh.faces()[face][nodei];
             label nodeB = -1, nodeC = -1;
-
             if (nodei == 0) {
                 nodeB = mesh.faces()[face][1];
                 nodeC = mesh.faces()[face][2];
@@ -56,9 +55,9 @@ forAll(mesh.boundary(), patch)
                 nodeC = mesh.faces()[face][1];
             }
 
-	    vector vH1 = vHat[node];      vector w1 = solvedW[node];
-	    vector vH2 = vHat[nodeB];     vector w2 = solvedW[nodeB];
-	    vector vH3 = vHat[nodeC];     vector w3 = solvedW[nodeC];
+	    vector v1 = v_[node];  vector vH1 = vHat[node];  vector w1 = solvedW[node];
+	    vector v2 = v_[nodeB]; vector vH2 = vHat[nodeB]; vector w2 = solvedW[nodeB];
+	    vector v3 = v_[nodeC]; vector vH3 = vHat[nodeC]; vector w3 = solvedW[nodeC];
  
             tensor PH1 = matP[node]  & aleH[node];
 	    tensor PH2 = matP[nodeB] & aleH[nodeB];
@@ -162,15 +161,20 @@ forAll(mesh.boundary(), patch)
 	    } else {
 	        FatalErrorIn("gEqns.H") << "GCL technique is not properly defined." << abort(FatalError);
 	    }
-	    rhsLm[node]   += rhsLmSum * (magSf_p.boundaryField()[patch][facei]);
-            rhsF[node]    += vHatClocal*(Sf_p.boundaryField()[patch][facei]);
-	    rhsMatF[node] += wClocal*(Sf_p.boundaryField()[patch][facei]);
+	    rhsLm[node]   += rhsLmSum   * (magSf_p.boundaryField()[patch][facei]);
+            rhsF[node]    += vHatClocal * (Sf_p.boundaryField()[patch][facei]);
+	    rhsMatF[node] += wClocal    * (Sf_p.boundaryField()[patch][facei]);
 	    
 	    //rhsW[node]    += PmatHClocal & (Sf_p.boundaryField()[patch][facei]);
 	    rhsW[node] = vector::zero;  // At the moment: fix BCs to 0 for w
 	    //rhsW[node]    -= (rhsW[node] & Npf) * Npf; // removing the normal component
 	    // check BC for rhsMatE
 	    // J has no BC
+
+
+	    vector rhsMatEClocal1 = 0.125*( 6*(PH1.T()&v1) + (PH2.T()&v2) + (PH3.T()&v3) )/3.;
+            scalar rhsMatEClocal2 = 0.125*( 6*(jC_1*matE[node]) + (jC_2*matE[nodeB]) + (jC_3*matE[nodeC]) )/3.;
+	    rhsMatE[node] += (rhsMatEClocal1 & Sf_p.boundaryField()[patch][facei]) + (rhsMatEClocal2 * magSf_p.boundaryField()[patch][facei]);
         }
     }
 }

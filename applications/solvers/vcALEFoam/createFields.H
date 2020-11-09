@@ -61,8 +61,7 @@ mechanics mech(mesh, Sf);
 Info << "Creating mesh coordinate fields ..." << endl;
 
 // Spatial nodal coordinate
-pointVectorField x
-(
+pointVectorField x (
     IOobject("x", mesh),
     pMesh,
     dimensionedVector("x", dimensionSet(0,1,0,0,0,0,0), vector::zero)
@@ -70,8 +69,7 @@ pointVectorField x
 x.primitiveFieldRef() = mesh.points();
 
 // Material nodal coordinate
-pointVectorField xw
-(
+pointVectorField xw (
     IOobject("xw", mesh),
     pMesh,
     dimensionedVector("xw", dimensionSet(0,1,0,0,0,0,0), vector::zero)
@@ -130,8 +128,8 @@ Info << "Creating material energy field..." << endl;
 pointScalarField matE (
         IOobject("matE", runTime.timeName(),mesh,IOobject::NO_READ,IOobject::AUTO_WRITE),
 	pMesh,
-        dimensionedScalar("matE", dimensionSet(1,-1,-2,0,0,0,0), 0.0)
-);
+	mechanicalProperties.lookupOrDefault<dimensionedScalar>("E",0)
+);       //dimensionedScalar("matE", dimensionSet(1,-1,-2,0,0,0,0), 0.0
 
 /*
      ______     ___   _____     _____  ______     ____    ____   ___   ______   ________  _____     
@@ -370,6 +368,7 @@ if (GCLtechnique == "withInvolution") {
 */
 vectorField PmatHC    = inter.pointToEdge( matP & aleH ) & N;
 vectorField pRwHC     = inter.pointToEdge( (pR*solvedW) & aleH ) & N;
+
 scalarField Pmat_pmat = inter.pointToEdge( matP.T()&solvedW ) & N;
 
 /*
@@ -381,34 +380,29 @@ scalarField Pmat_pmat = inter.pointToEdge( matP.T()&solvedW ) & N;
    |____| |___||____||____| \______.' 
                                          */
 // ALE - RHS of jacobian equation
-pointScalarField rhsJ
-(
+pointScalarField rhsJ (
 	IOobject("rhsJ", mesh),
 	pMesh,
 	dimensionedScalar("rhsJ", dimensionSet(0,0,-1,0,0,0,0), 0)
 );
 
 // RHS of linear momentum equation
-pointVectorField rhsLm
-(
+pointVectorField rhsLm (
     IOobject ("rhsLm", mesh),
     pMesh,
     dimensionedVector("rhsLm", dimensionSet(1,-2,-2,0,0,0,0), vector::zero)
 );
-pointVectorField rhsLm1
-(
+pointVectorField rhsLm1 (
     IOobject ("rhsLm1", mesh),
     pMesh,
     dimensionedVector("rhsLm1", dimensionSet(1,-2,-2,0,0,0,0), vector::zero)
 );
-pointVectorField rhsLm2
-(
+pointVectorField rhsLm2 (
     IOobject ("rhsLm2", mesh),
     pMesh,
     dimensionedVector("rhsLm2", dimensionSet(1,-2,-2,0,0,0,0), vector::zero)
 );
-pointVectorField rhsLm3
-(
+pointVectorField rhsLm3 (
     IOobject ("rhsLm3", mesh),
     pMesh,
     dimensionedVector("rhsLm3", dimensionSet(1,-2,-2,0,0,0,0), vector::zero)
@@ -458,11 +452,18 @@ pointVectorField rhsW (
 );
 
 // ALE - RHS of matE energy
-pointScalarField rhsMatE (
-    IOobject ("rhsMatE", mesh),
-    pMesh,
+pointScalarField rhsMatE1 ( IOobject ("rhsMatE1", mesh), pMesh,
+    dimensionedScalar("rhsMatE1",matE.dimensions()/dimTime, 0.0)
+);
+pointScalarField rhsMatE2 ( IOobject ("rhsMatE2", mesh), pMesh,
+    dimensionedScalar("rhsMatE2",matE.dimensions()/dimTime, 0.0)
+);
+pointScalarField rhsMatE ( IOobject ("rhsMatE", mesh), pMesh,
     dimensionedScalar("rhsMatE",matE.dimensions()/dimTime, 0.0)
 );
+rhsMatE1.primitiveFieldRef() = op.surfaceSum( inter.pointToEdge(PHat.T()&v_)             & Sf );
+rhsMatE2.primitiveFieldRef() = op.surfaceSum( inter.pointToEdge((aleH.T()&solvedW)*matE) & Sf );
+rhsMatE = rhsMatE1 + rhsMatE2;
 
 /*
    ______   _____   ______   _______  _____          _        ______  ________  ____    ____  ________  ____  _____  _________   ______   
@@ -476,15 +477,13 @@ pointScalarField rhsMatE (
 Info << "Creating fields for post-processing ..." << endl;
 
 // Nodal displacements
-pointVectorField u
-(
+pointVectorField u (
     IOobject ("u", runTime.timeName(), mesh, IOobject::NO_READ, IOobject::AUTO_WRITE),
     pMesh,
     dimensionedVector("u", dimLength, vector::zero)
 );
 // w Nodal displacements
-pointVectorField uw
-(
+pointVectorField uw (
     IOobject ("uw", runTime.timeName(), mesh, IOobject::NO_READ, IOobject::AUTO_WRITE),
     pMesh,
     dimensionedVector("uw", dimLength, vector::zero)
@@ -504,9 +503,7 @@ Info << "Creating variables for time ..." << endl;
 scalar tstep = 0;
 dimensionedScalar deltaT("deltaT", dimTime, runTime.deltaTValue());
 dimensionedScalar t("t", dimTime, 0.0);
-
-if (timeStepping == "variable")
-{
+if (timeStepping == "variable") {
     deltaT = (cfl*h)/model.Up();
     runTime.setDeltaT(deltaT);
 }
