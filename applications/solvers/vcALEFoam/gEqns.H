@@ -21,13 +21,14 @@ if (GCLtechnique == "withInvolution") {
     rhsLm.primitiveFieldRef() = rhsLm1 + rhsLm2 + rhsLm3;
 } else if (GCLtechnique == "withoutInvolution") {
     rhsJ.primitiveFieldRef() = op.surfaceSum(HTwC*magSf);
-    rhsLm2.primitiveFieldRef() = op.surfaceSum(pRwHC*magSf); //pR.primitiveFieldRef() * rhsJ.primitiveFieldRef();
+    rhsLm2.primitiveFieldRef() = op.surfaceSum(pRwHC*magSf);
     rhsLm.primitiveFieldRef() = rhsLm1 + rhsLm2;
 } else {
     FatalErrorIn("gEqns.H") << "GCL technique is not properly defined." << abort(FatalError);
 }
 
-rhsW.primitiveFieldRef() = wDot_.primitiveFieldRef();
+rhsW.primitiveFieldRef() = aleModel_.wDot().primitiveFieldRef();  //wDot_.primitiveFieldRef();
+
 //rhsW.primitiveFieldRef() = op.surfaceSum(PmatHC*magSf) 
 //	+ (aleModel_.wDot().primitiveFieldRef() - op.surfaceSum(PmatHC*magSf)); //rho.value()
 
@@ -91,10 +92,7 @@ forAll(mesh.boundary(), patch) {
 	           PzlocC = vector(P[nodeC].xz(),P[nodeC].yz(),P[nodeC].zz());
 
 	    vector v100(1,0,0), v010(0,1,0), v001(0,0,1);
-
-	      
 	    pointTensorField HT = aleH.T();
-	    	
 	    const fvPatch& patx = mesh.boundary()[patch];
             vector Npf = N_p.boundaryField()[patch][facei];
 	    
@@ -166,8 +164,12 @@ forAll(mesh.boundary(), patch) {
 	    rhsMatF[node] += wClocal    * (Sf_p.boundaryField()[patch][facei]);
 	    
 	    //rhsW[node]    += PmatHClocal & (Sf_p.boundaryField()[patch][facei]);
-	    rhsW[node] = vector::zero;  // At the moment: fix BCs to 0 for w
-	    //rhsW[node]    -= (rhsW[node] & Npf) * Npf; // removing the normal component
+	    
+	    
+	    //rhsW[node] = vector::zero;  // At the moment: fix BCs to 0 for w
+	    
+	    
+	    rhsW[node]    -= (rhsW[node] & Npf) * Npf; // removing the normal component
 	    // check BC for rhsMatE
 	    // J has no BC
 

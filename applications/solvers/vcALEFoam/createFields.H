@@ -211,7 +211,7 @@ pointScalarField Us
 Info << "Creating ALE objects ..." << nl;
 aleModel aleModel_(mechanicalProperties, mesh, pMesh);
 aleModel_.correct();
-pointVectorField& w_    = aleModel_.w();
+//pointVectorField& w_    = aleModel_.w();
 pointVectorField& wDot_ = aleModel_.wDot();
 
 // Depending on tim mapping, we have to provide with good Init Cond
@@ -361,7 +361,7 @@ scalarField HTwC = inter.pointToEdge( aleH.T() & solvedW ) & N;
 if (GCLtechnique == "withInvolution") {
     tC2 = inter.pointToEdge( pR )   * N;
 } else if (GCLtechnique == "withoutInvolution") {
-    HTwC = inter.pointToEdge( aleH.T()&w_ ) & N;
+    HTwC = inter.pointToEdge( aleH.T()&solvedW ) & N;
 } else {
     FatalErrorIn("updateVariables.H") << "GCL technique is not properly defined." << abort(FatalError);
 }
