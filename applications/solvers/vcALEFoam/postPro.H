@@ -8,7 +8,7 @@ uw.write();
 p = model.pressure();
 p.write();
 
-matE.write();
+E.write();
 
 if (doPostPro == "activated") {
 
@@ -17,8 +17,25 @@ lm.write();
 matJ.write();
 v_.write();
 
-//integration over domain of matE
-Info << "Energy of the material system:\n intMatE = " << op.integrateOverDomain(matE,V) << endl;
+// integration over domain of E
+Info << "Energy of the system:\n intE = " << op.integrateOverDomain(E,V) << endl;
+
+// theoretical energies
+kinE.primitiveFieldRef() = 0.5 * rho.value() * (lm&lm);
+forAll(potE, n) {
+  potE[n] = (0.5*mu.value()*Foam::pow(trueJ[n],-2./3.)*(trueF[n]&&trueF[n])) - (3*mu.value()/2.) + (0.5*kappa.value()*Foam::pow(trueJ[n]-1,2));
+}
+
+// Theoretical Energy
+theoE = kinE + potE;
+
+// Residual
+residualE = mag(E - (kinE + potE));
+
+// integration over domain of residual and theoretical energy
+Info << "Theoretical of the system:\n theoE = " << op.integrateOverDomain(theoE,V) << endl;
+Info << "Residual of the system:\n residualE = " << op.integrateOverDomain(residualE,V) << endl;
+
 
 // ALE - CoG
 vector sum = vector::zero;
@@ -31,7 +48,6 @@ Info << "time           : " << runTime.value() << nl;
 Info << "CoG            : " << cog[0] << " " << cog[1] << " " << cog[2] << nl;
 Info << "sample solvedW : " << solvedW[index] << nl;
 Info << "sample wDot_   : " << wDot_[index] << nl;
-Info << "sample rhsW    : " << rhsW[index] << nl;
 Info << "sample lm      : " << lm[index]  << nl;
 Info << "sample pR      : " << pR[index]  << nl;
 Info << "sample tC2     : " << tC2[index] << nl;

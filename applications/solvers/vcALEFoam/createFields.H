@@ -125,11 +125,11 @@ pointVectorField solvedW(
 );
 
 Info << "Creating material energy field..." << endl;
-pointScalarField matE (
-        IOobject("matE", runTime.timeName(),mesh,IOobject::NO_READ,IOobject::AUTO_WRITE),
+pointScalarField E (
+        IOobject("E", runTime.timeName(),mesh,IOobject::NO_READ,IOobject::AUTO_WRITE),
 	pMesh,
 	mechanicalProperties.lookupOrDefault<dimensionedScalar>("E",0)
-);       //dimensionedScalar("matE", dimensionSet(1,-1,-2,0,0,0,0), 0.0
+);       //dimensionedScalar("E", dimensionSet(1,-1,-2,0,0,0,0), 0.0
 
 /*
      ______     ___   _____     _____  ______     ____    ____   ___   ______   ________  _____     
@@ -155,8 +155,10 @@ trueH = trueJ * op.invT(trueF);
 solidModel model(trueF, mechanicalProperties, mesh);
 model.correct(trueF, trueH, trueJ);
 
-// Density
-const dimensionedScalar& rho = model.density();
+// Model quantities
+const dimensionedScalar& rho   = model.density();
+const dimensionedScalar& mu    = model.mu() ;
+const dimensionedScalar& kappa = model.kappa() ;
 
 // Pressure
 pointScalarField p = model.pressure();
@@ -260,8 +262,7 @@ pointVectorField pTilde
 pTilde = matJ * pR;
 
 //- ALE: v
-pointVectorField v_
-(
+pointVectorField v_ (
 	IOobject("v_", runTime.timeName(), mesh, IOobject::NO_READ, IOobject::AUTO_WRITE),
 	pMesh,
 	dimensionedVector("v_", dimensionSet(0,1,-1,0,0,0,0), vector::zero)
@@ -269,29 +270,64 @@ pointVectorField v_
 v_ = pR/rho;
 
 //- ALE:  vHat
-pointVectorField vHat
-(
+pointVectorField vHat (
 	IOobject("vHat", runTime.timeName(), mesh, IOobject::NO_READ, IOobject::AUTO_WRITE),
 	pMesh,
 	dimensionedVector("vHat", dimensionSet(0,1,-1,0,0,0,0), vector::zero)
 );
 vHat = v_ + (trueF & solvedW);
 
+/*
+    ____  ____       _       _____     ________  ____      ____  _     ____  ____  
+   |_   ||   _|     / \     |_   _|   |_   __  ||_  _|    |_  _|/ \   |_  _||_  _| 
+     | |__| |      / _ \      | |       | |_ \_|  \ \  /\  / / / _ \    \ \  / /   
+     |  __  |     / ___ \     | |   _   |  _|      \ \/  \/ / / ___ \    \ \/ /    
+    _| |  | |_  _/ /   \ \_  _| |__/ | _| |_        \  /\  /_/ /   \ \_  _|  |_    
+   |____||____||____| |____||________||_____|        \/  \/|____| |____||______|   
+                                                                                       */
+
 //- ALE: Piola Hat
-pointTensorField PHat
-(
-    IOobject
-    (
-        "PHat",
-	P.time().timeName(),
-	P.db(),
-	IOobject::NO_READ,
-	IOobject::NO_WRITE
-    ),
+pointTensorField PHat (
+    IOobject("PHat", runTime.timeName(), P.db(), IOobject::NO_READ, IOobject::NO_WRITE),
     P.mesh(),
     dimensionedTensor("PHat", dimensionSet(1,-1,-2,0,0,0,0), tensor::zero)
 );
 PHat = P & aleH ;
+
+//- ALE: kinetic Energy
+pointScalarField kinE (
+    IOobject("kinE", runTime.timeName(), E.db(), IOobject::NO_READ, IOobject::NO_WRITE),
+    E.mesh(),
+    dimensionedScalar("kinE", E.dimensions(), 0.0)
+);
+//Info << "
+kinE.primitiveFieldRef() =  0.5 * rho.value() * (lm&lm);
+
+//- ALE: potential Energy
+pointScalarField potE (
+    IOobject("potE", runTime.timeName(), E.db(), IOobject::NO_READ, IOobject::NO_WRITE),
+    E.mesh(),
+    dimensionedScalar("potE", E.dimensions(), 0.0)
+);
+forAll(potE, n) {
+    potE[n] = (0.5*mu.value()*Foam::pow(trueJ[n],-2./3.)*(trueF[n]&&trueF[n])) - (3*mu.value()/2.) + (0.5*kappa.value()*Foam::pow(trueJ[n]-1,2));
+}
+
+// - ALE: theoretical Energy
+pointScalarField theoE (
+    IOobject("theoE", runTime.timeName(), E.db(), IOobject::NO_READ, IOobject::NO_WRITE),
+    E.mesh(),
+    dimensionedScalar("theoE", E.dimensions(), 0.0)
+);
+theoE = kinE + potE;
+
+//- ALE: residual field
+pointScalarField residualE (
+    IOobject("residualE", runTime.timeName(), E.db(), IOobject::NO_READ, IOobject::NO_WRITE),
+    E.mesh(),
+    dimensionedScalar("residualE", dimensionSet(1,-1,-2,0,0,0,0), 0.0)
+);
+residualE = mag(E - theoE);
 
 /*
        ______  _______          _       ______   _____  ________  ____  _____  _________  
@@ -315,7 +351,7 @@ vectorField vP(mesh.edges().size());
 grad.reconstruct(v_, vGrad, vM, vP);
 
 /*
-     ________  _____  _____  _____  ____  ____  ________   ______   
+      ________  _____  _____  _____  ____  ____  ________   ______   
      |_   __  ||_   _||_   _||_   _||_  _||_  _||_   __  |.' ____ \
        | |_ \_|  | |    | |    | |    \ \  / /    | |_ \_|| (___ \_| 
        |  _|     | |   _| '    ' |     > `' <     |  _| _  _.____`.  
@@ -451,19 +487,19 @@ pointVectorField rhsW (
     dimensionedVector("rhsW", dimensionSet(0,1,-2,0,0,0,0), vector::zero)
 );
 
-// ALE - RHS of matE energy
-pointScalarField rhsMatE1 ( IOobject ("rhsMatE1", mesh), pMesh,
-    dimensionedScalar("rhsMatE1",matE.dimensions()/dimTime, 0.0)
+// ALE - RHS of E energy
+pointScalarField rhsE1 ( IOobject ("rhsE1", mesh), pMesh,
+    dimensionedScalar("rhsE1",E.dimensions()/dimTime, 0.0)
 );
-pointScalarField rhsMatE2 ( IOobject ("rhsMatE2", mesh), pMesh,
-    dimensionedScalar("rhsMatE2",matE.dimensions()/dimTime, 0.0)
+pointScalarField rhsE2 ( IOobject ("rhsE2", mesh), pMesh,
+    dimensionedScalar("rhsE2",E.dimensions()/dimTime, 0.0)
 );
-pointScalarField rhsMatE ( IOobject ("rhsMatE", mesh), pMesh,
-    dimensionedScalar("rhsMatE",matE.dimensions()/dimTime, 0.0)
+pointScalarField rhsE ( IOobject ("rhsE", mesh), pMesh,
+    dimensionedScalar("rhsE",E.dimensions()/dimTime, 0.0)
 );
-rhsMatE1.primitiveFieldRef() = op.surfaceSum( inter.pointToEdge(PHat.T()&v_)             & Sf );
-rhsMatE2.primitiveFieldRef() = op.surfaceSum( inter.pointToEdge((aleH.T()&solvedW)*matE) & Sf );
-rhsMatE = rhsMatE1 + rhsMatE2;
+rhsE1.primitiveFieldRef() = op.surfaceSum( inter.pointToEdge(PHat.T()&v_)             & Sf );
+rhsE2.primitiveFieldRef() = op.surfaceSum( inter.pointToEdge((aleH.T()&solvedW) * E)  & Sf );
+rhsE = rhsE1 + rhsE2;
 
 /*
    ______   _____   ______   _______  _____          _        ______  ________  ____    ____  ________  ____  _____  _________   ______   
@@ -491,7 +527,7 @@ pointVectorField uw (
 X -= u;
 
 /*
- _________  _____  ____    ____  ________   ____   ____  _       _______     ______   
+  _________  _____  ____    ____  ________   ____   ____  _       _______     ______   
  |  _   _  ||_   _||_   \  /   _||_   __  | |_  _| |_  _|/ \     |_   __ \  .' ____ \
  |_/ | | \_|  | |    |   \/   |    | |_ \_|   \ \   / / / _ \      | |__) | | (___ \_| 
      | |      | |    | |\  /| |    |  _| _     \ \ / / / ___ \     |  __ /   _.____`.  
@@ -518,7 +554,7 @@ RKstage[1] = 1;
        | |__) | | |__) |    | |    |   \ | |  |_/ | | \_| 
        |  ___/  |  __ /     | |    | |\ \| |      | |     
       _| |_    _| |  \ \_  _| |_  _| |_\   |_    _| |_    
-      |_____|  |____| |___||_____||_____|\____|  |_____|   
+     |_____|  |____| |___||_____||_____|\____|  |_____|   
                                                             */
 
 Info << "Printing data ..." << endl;

@@ -33,10 +33,10 @@ rhsW.primitiveFieldRef() = aleModel_.wDot().primitiveFieldRef();  //wDot_.primit
 //	+ (aleModel_.wDot().primitiveFieldRef() - op.surfaceSum(PmatHC*magSf)); //rho.value()
 
 
-//rhsMatE.primitiveFieldRef() = op.surfaceSum(Pmat_pmat*magSf);
-rhsMatE1.primitiveFieldRef() = op.surfaceSum( inter.pointToEdge(PHat.T()&v_)             & Sf );
-rhsMatE2.primitiveFieldRef() = op.surfaceSum( inter.pointToEdge((aleH.T()&solvedW)*matE) & Sf );
-rhsMatE = rhsMatE1 + rhsMatE2;
+//rhsE.primitiveFieldRef() = op.surfaceSum(Pmat_pmat*magSf);
+rhsE1.primitiveFieldRef() = op.surfaceSum( inter.pointToEdge(PHat.T()&v_)             & Sf );
+rhsE2.primitiveFieldRef() = op.surfaceSum( inter.pointToEdge((aleH.T()&solvedW) * E)  & Sf );
+rhsE = rhsE1 + rhsE2;
 
 // Compute boundary terms for right hand sides
 forAll(mesh.boundary(), patch) {
@@ -170,13 +170,13 @@ forAll(mesh.boundary(), patch) {
 	    
 	    
 	    rhsW[node]    -= (rhsW[node] & Npf) * Npf; // removing the normal component
-	    // check BC for rhsMatE
+	    // check BC for rhsE
 	    // J has no BC
 
 
-	    vector rhsMatEClocal1 = 0.125*( 6*(PH1.T()&v1) + (PH2.T()&v2) + (PH3.T()&v3) )/3.;
-            scalar rhsMatEClocal2 = 0.125*( 6*(jC_1*matE[node]) + (jC_2*matE[nodeB]) + (jC_3*matE[nodeC]) )/3.;
-	    rhsMatE[node] += (rhsMatEClocal1 & Sf_p.boundaryField()[patch][facei]) + (rhsMatEClocal2 * magSf_p.boundaryField()[patch][facei]);
+	    vector rhsEClocal1 = 0.125*( 6*(PH1.T()&v1) + (PH2.T()&v2) + (PH3.T()&v3) )/3.;
+            scalar rhsEClocal2 = 0.125*( 6*(jC_1*E[node]) + (jC_2*E[nodeB]) + (jC_3*E[nodeC]) )/3.;
+	    rhsE[node] += (rhsEClocal1 & Sf_p.boundaryField()[patch][facei]) + (rhsEClocal2 * magSf_p.boundaryField()[patch][facei]);
         }
     }
 }
@@ -187,7 +187,7 @@ op.volumeIntegrate(rhsF,    V);
 op.volumeIntegrate(rhsJ,    V);
 op.volumeIntegrate(rhsMatF, V);
 //op.volumeIntegrate(rhsW,    V);
-op.volumeIntegrate(rhsMatE, V);
+op.volumeIntegrate(rhsE, V);
 
 // Compute solvedW
 solvedW += deltaT * rhsW;
@@ -212,4 +212,4 @@ lm += deltaT * rhsLm;
 lm.correctBoundaryConditions();
 
 // Compute materiel energy
-matE += deltaT * rhsMatE;
+E += deltaT * rhsE;
