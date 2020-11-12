@@ -298,7 +298,7 @@ void aleModel::printProperties()
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-pointTensorField aleModel::getMaterialPiola (pointTensorField& matF, pointTensorField& matH, pointScalarField& matJ)
+pointTensorField aleModel::piola (pointTensorField& matF, pointTensorField& matH, pointScalarField& matJ)
 {
   pointTensorField matP
   (

@@ -10,7 +10,7 @@ forAll(mesh.points(), node)
 // Update material quantities
 materialModel_.correct();
 aleH    = matJ * op.invT(matF); 
-matP    = materialModel_.getMaterialPiola(matF, aleH, matJ);
+matP    = materialModel_.piola(matF, aleH, matJ);
 //matPres = materialModel_.getMaterialPressure(matF, aleH, matJ);
 lambdaH = sqrt((inter.pointToEdge(aleH) & N) & (inter.pointToEdge(aleH) & N)); 
 scalarField aleUp___ = inter.pointToEdge( op.inverseScalar(matJ) ) *
@@ -29,7 +29,7 @@ scalarField aleUs___ = inter.pointToEdge( op.inverseScalar(matJ) ) *
 spatialModel_.correct();
 spatJ   = det(F);
 spatH   = spatJ * op.invT(F);
-spatP   = spatialModel_.getMaterialPiola(F,  spatH, spatJ);
+spatP   = spatialModel_.piola(F,  spatH, spatJ);
 
 // Update 'true'/solid quantities
 starP   = ((1.0-alpha)*matP) + (alpha*(trueF.T()&spatP));//(alpha*matP) + ((1.0-alpha)*(trueF.T()&spatP)); 

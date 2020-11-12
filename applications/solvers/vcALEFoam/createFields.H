@@ -230,7 +230,7 @@ pointScalarField Us
 Info << "Creating ALE Material Model ..." << nl;
 aleModel materialModel_(mechanicalProperties, mesh, pMesh, "materialModel");
 materialModel_.correct();
-pointTensorField matP    = materialModel_.getMaterialPiola(matF, aleH, matJ);
+pointTensorField matP    = materialModel_.piola(matF, aleH, matJ);
 //pointScalarField matPres = materialModel_.getMaterialPressure(matF, aleH, matJ);
 //
 scalarField lambdaH = sqrt((inter.pointToEdge(aleH) & N) & (inter.pointToEdge(aleH) & N));
@@ -250,7 +250,7 @@ scalarField aleUs___ = inter.pointToEdge( op.inverseScalar(matJ) ) *
 Info << "Creating ALE Spatial Model ..." << nl;
 aleModel spatialModel_(mechanicalProperties, mesh, pMesh, "spatialModel");
 spatialModel_.correct();
-pointTensorField spatP   = spatialModel_.getMaterialPiola(F,  spatH, spatJ);
+pointTensorField spatP   = spatialModel_.piola(F,  spatH, spatJ);
 
 // ALE - get Piola Star
 pointTensorField starP   = ((1.0-alpha)*matP) + (alpha*(trueF.T()&spatP));//(alpha*matP) + ((1.0-alpha)*(trueF.T()&spatP));
