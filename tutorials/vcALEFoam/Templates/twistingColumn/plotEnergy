@@ -1,0 +1,10 @@
+awk -e '/intE/ {print $3}' log.vcALEFoam > intE.txt;
+awk -e '/theoE/ {print $3}' log.vcALEFoam > theoE.txt;
+awk -e '/residualE/ {print$3}' log.vcALEFoam > residualE.txt;
+gnuplot -e "set terminal jpeg; set output 'intE.jpeg';  p 'intE.txt' w lp;";
+gnuplot -e "set terminal jpeg; set output 'theoE.jpeg'; p 'theoE.txt' w lp;";
+gnuplot -e "set terminal jpeg; set output 'residualE.jpeg'; p'residualE.txt' w lp;";
+rm intE.txt theoE.txt residualE.txt;
+
+
+echo "Energy graph plotted"
