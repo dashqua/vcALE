@@ -119,18 +119,24 @@ pointVectorField lm ( IOobject("lm", runTime.timeName(), mesh, IOobject::MUST_RE
 Info << "Creating material velocity field ..." << endl;
 // ALE - Material velocity (to be solved)
 pointVectorField solvedW(
+		IOobject("solvedW", runTime.timeName(), mesh, IOobject::MUST_READ, IOobject::AUTO_WRITE), pMesh
+		/*
         IOobject("solvedW",runTime.timeName(),mesh,IOobject::NO_READ,IOobject::AUTO_WRITE),
         pMesh,
         dimensionedVector("solvedW", dimensionSet(0,1,-1,0,0,0,0), vector::zero)
+	*/
 );
 
 Info << "Creating material energy field..." << endl;
 pointScalarField E (
+	IOobject("E", runTime.timeName(), mesh, IOobject::MUST_READ, IOobject::AUTO_WRITE), pMesh
+		/*
         IOobject("E", runTime.timeName(),mesh,IOobject::NO_READ,IOobject::AUTO_WRITE),
 	pMesh,
 	mechanicalProperties.lookupOrDefault<dimensionedScalar>("E",0)
-);       //dimensionedScalar("E", dimensionSet(1,-1,-2,0,0,0,0), 0.0
-
+        //dimensionedScalar("E", dimensionSet(1,-1,-2,0,0,0,0), 0.0)
+	*/
+);
 /*
      ______     ___   _____     _____  ______     ____    ____   ___   ______   ________  _____     
    .' ____ \  .'   `.|_   _|   |_   _||_   _ `.  |_   \  /   _|.'   `.|_   _ `.|_   __  ||_   _|    
@@ -150,6 +156,10 @@ pointScalarField trueJ ( IOobject("trueJ", mesh), pMesh, 1.0 );
 trueF = F & op.inverse(matF);
 trueJ = det(trueF);
 trueH = trueJ * op.invT(trueF);
+
+// ALE - spatial J and H
+pointScalarField spatJ = det(F);
+pointTensorField spatH = spatJ * op.invT(F);
 
 // Solid Model
 solidModel model(trueF, mechanicalProperties, mesh);
@@ -210,20 +220,19 @@ pointScalarField Us
                                                                                            */
 
 //- ALE: Declaration and initialization of ALE Objects
-Info << "Creating ALE objects ..." << nl;
-aleModel aleModel_(mechanicalProperties, mesh, pMesh);
-aleModel_.correct();
-//pointVectorField& w_    = aleModel_.w();
-pointVectorField& wDot_ = aleModel_.wDot();
+//pointVectorField& w_    = materialModel_.w();
+//pointVectorField& wDot_ = materialModel_.wDot();
 
 // Depending on tim mapping, we have to provide with good Init Cond
 //solvedW.primitiveFieldRef() = w_.primitiveFieldRef();
 
-// ALE - get Material Piola and Pressure
-pointTensorField matP    = aleModel_.getMaterialPiola(matF, aleH, matJ);
-pointScalarField matPres = aleModel_.getMaterialPressure(matF, aleH, matJ);
-
-// ALE - initialization of wave speeds
+// ALE - Material Model
+Info << "Creating ALE Material Model ..." << nl;
+aleModel materialModel_(mechanicalProperties, mesh, pMesh, "materialModel");
+materialModel_.correct();
+pointTensorField matP    = materialModel_.getMaterialPiola(matF, aleH, matJ);
+//pointScalarField matPres = materialModel_.getMaterialPressure(matF, aleH, matJ);
+//
 scalarField lambdaH = sqrt((inter.pointToEdge(aleH) & N) & (inter.pointToEdge(aleH) & N));
 scalarField aleUp___ = inter.pointToEdge( op.inverseScalar(matJ) ) * 
        (
@@ -236,6 +245,16 @@ scalarField aleUs___ = inter.pointToEdge( op.inverseScalar(matJ) ) *
          (lambdaH * inter.pointToEdge(Us)) 
        - (inter.pointToEdge(solvedW) & (inter.pointToEdge(aleH) & N))
        );
+
+// ALE - Spatial Model
+Info << "Creating ALE Spatial Model ..." << nl;
+aleModel spatialModel_(mechanicalProperties, mesh, pMesh, "spatialModel");
+spatialModel_.correct();
+pointTensorField spatP   = spatialModel_.getMaterialPiola(F,  spatH, spatJ);
+
+// ALE - get Piola Star
+pointTensorField starP   = ((1.0-alpha)*matP) + (alpha*(trueF.T()&spatP));//(alpha*matP) + ((1.0-alpha)*(trueF.T()&spatP));
+
 /*
     ____   ____  ________  _____       ___      ______  _____  _________  _____  ________   ______   
    |_  _| |_  _||_   __  ||_   _|    .'   `.  .' ___  ||_   _||  _   _  ||_   _||_   __  |.' ____ \
@@ -300,8 +319,7 @@ pointScalarField kinE (
     E.mesh(),
     dimensionedScalar("kinE", E.dimensions(), 0.0)
 );
-//Info << "
-kinE.primitiveFieldRef() =  0.5 * rho.value() * (lm&lm);
+//kinE =  0.5 * (lm&lm) / rho.value();
 
 //- ALE: potential Energy
 pointScalarField potE (
@@ -310,6 +328,8 @@ pointScalarField potE (
     dimensionedScalar("potE", E.dimensions(), 0.0)
 );
 forAll(potE, n) {
+    kinE[n] = 0.5 * (lm[n]&lm[n]) / rho.value();//rho.value() * (vHat[n]&vHat[n]) ;//(lm[n]&lm[n]) / rho.value();
+    kinE[n] += 0.5 * rho.value() * (solvedW[n]&solvedW[n]);
     potE[n] = (0.5*mu.value()*Foam::pow(trueJ[n],-2./3.)*(trueF[n]&&trueF[n])) - (3*mu.value()/2.) + (0.5*kappa.value()*Foam::pow(trueJ[n]-1,2));
 }
 
@@ -405,7 +425,8 @@ if (GCLtechnique == "withInvolution") {
 vectorField PmatHC    = inter.pointToEdge( matP & aleH ) & N;
 vectorField pRwHC     = inter.pointToEdge( (pR*solvedW) & aleH ) & N;
 
-scalarField Pmat_pmat = inter.pointToEdge( matP.T()&solvedW ) & N;
+scalarField Pmat_pmat = inter.pointToEdge( matP.T()&solvedW ) & N; // for energy, deprecated ?
+vectorField PstarHC   = inter.pointToEdge( starP & aleH ) & N; // alternative Pstar term for PmatHc
 
 /*
     _______     ____  ____   ______  
@@ -559,7 +580,8 @@ RKstage[1] = 1;
 
 Info << "Printing data ..." << endl;
 model.printMaterialProperties();
-aleModel_.printMaterialProperties();
+materialModel_.printProperties();
+spatialModel_.printProperties();
 
 Info << "Printing global momentum ..." << endl;
 dual.printPrimalMeshCentroid();

@@ -84,6 +84,9 @@ if (timeStepping != "constant" && timeStepping != "variable") {
                                    << abort(FatalError);
 }
 
+const scalar& alpha = mechanicalProperties.lookupOrDefault<dimensionedScalar>("alpha", 0.0).value();
+Info << "Average P* coefficient alpha: " << alpha << nl;
+
 // Courant-Friedrichs-Lewy Number
 const scalar& cfl = readScalar(controlDict.lookup("cfl"));
 if (cfl <= 0.0 || cfl > 1.0) {

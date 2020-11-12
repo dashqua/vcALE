@@ -42,13 +42,15 @@ aleModel::aleModel
 (
     const dictionary& dict,
     const fvMesh& vm,
-    pointMesh& pMesh
+    pointMesh& pMesh,
+    const word name
 )
 :
+    name_(name),
     mesh_(vm),
     pMesh_(pMesh),
 
-    model_(dict.lookup("aleModel")),
+    model_(dict.subDict(name_).lookup("aleModel")),
     
     motMap_(
      IOobject("motMap", mesh_),
@@ -107,7 +109,7 @@ aleModel::aleModel
      dimensionedVector("wDot", dimensionSet(0,1,-2,0,0,0,0), vector::zero)     
     ),
     
-    fictitiousMotionType_(dict.lookup("fictitiousMotionType")),
+    fictitiousMotionType_("Void"),
 
     beta_( 0.0 ),
     T_( 0.0 ),
@@ -118,23 +120,25 @@ aleModel::aleModel
     mu_(E_/(2.0*(1.0 + nu_))),
     lambda_(nu_*E_/((1.0 + nu_)*(1.0 - 2.0*nu_))),
     kappa_(lambda_ + (2.0/3.0)*mu_),
-
+    
     op(mesh_)
 {
-  dict.lookup("beta") >> beta_;
-  dict.lookup("T") >> T_;
+  if (model_ == "neoHookean"){
+    dict.subDict(name_).subDict("neoHookeanDict").lookup("fictitiousMotionType") >> fictitiousMotionType_;
+    dict.subDict(name_).subDict("neoHookeanDict").lookup("beta") >> beta_;
+    dict.subDict(name_).subDict("neoHookeanDict").lookup("T") >> T_;
+  }
 }
 
 
 // * * * * * * * * * * * * * * * Destructor  * * * * * * * * * * * * * * * * //
-aleModel::~aleModel()
-{}
-
+aleModel::~aleModel() {}
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
 void aleModel::correct()
 {
+  //if (model_ == "vonMises") { return; }
   //Info << fictitiousMotionType() << " .. t=" << mesh_.time().value() << nl;
   /*
     To update:
@@ -282,12 +286,14 @@ void aleModel::correct()
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-void aleModel::printMaterialProperties()
+void aleModel::printProperties()
 {
+  Info << nl << nl << "Model: " << name_ << nl;
   Info << "aleModel: " << model_ << nl;
   Info << "fictitious Motion Type: " << fictitiousMotionType() << nl;
   Info << "beta: " << beta_ << nl;
   Info << "T: " << T_ << nl;
+  Info << nl << nl;
 }
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //

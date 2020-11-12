@@ -48,6 +48,9 @@ namespace Foam
 
 class aleModel
 {
+  const word name_;
+  //const word& timeStepping = controlDict.lookup("timeStepping");
+
   // Mesh
   const fvMesh& mesh_;
 
@@ -107,7 +110,6 @@ class aleModel
   /////////////////////////////
   // Operations definition
   operations op;
-
   
 private:
 
@@ -130,7 +132,8 @@ public:
   (
    const dictionary&,
    const fvMesh&,
-   pointMesh&
+   pointMesh&,
+   const word name
   );
 
   //- Destructor
@@ -156,28 +159,17 @@ public:
   pointTensorField& defGrad() { return defGrad_; }
 
   //- Jacobian
-  pointScalarField& jacobian() { return J_; }
-  
-  //- CoFactor
-  pointTensorField& coFactor()
-  {
-    pointScalarField& jac = jacobian();
-    pointTensorField& dg  = defGrad();
-    pointTensorField& cof = defGrad();
-    forAll(cof, pt)
-    {
-   	cof[pt] = jac[pt] * inv( dg[pt].T() );
-    }
-    return cof;
-  }
+  pointScalarField& jacobian() { return J_; }  
 
+  /////////////////////////////////////////////////////////////
+  
   word fictitiousMotionType() { return fictitiousMotionType_; }
-      
+
   //- Correct material model
   virtual void correct();
 
   //- Print material properties
-  void printMaterialProperties();
+  void printProperties();
 
   // get P_{Mat} from F_{Mat}, according to the chosen model
   pointTensorField getMaterialPiola (pointTensorField&, pointTensorField&, pointScalarField&);

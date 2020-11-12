@@ -71,7 +71,7 @@ solidModel::solidModel
         dimensionedScalar("p", dimensionSet(1,-1,-2,0,0,0,0), 0.0)
     ),
 
-    model_(dict.lookup("solidModel")),
+    model_(dict.subDict("solidModel").lookup("solidModel")),
 
     rho_(dict.lookup("rho")),
     E_(dict.lookup("E")),
@@ -88,9 +88,6 @@ solidModel::solidModel
     // Von Mises vars
     b_ (F & F.T()),
   
-    //Hm_(dimensionedScalar("Hm", dimensionSet(1,-1,-2,0,0,0,0), 0.0)),
-    //Ys0_(dimensionedScalar("Ys", dimensionSet(1,-1,-2,0,0,0,0), 0.0)),
-
     Ys_(
       IOobject(
         "Ys",
@@ -132,8 +129,8 @@ solidModel::solidModel
   
 {
   if (model_ == "vonMises"){
-    Hm_  = dict.subDict("vonMisesDict").lookup("Hm");
-    Ys0_ = dict.subDict("vonMisesDict").lookup("Ys");
+    Hm_  = dict.subDict("solidModel").subDict("vonMisesDict").lookup("Hm");
+    Ys0_ = dict.subDict("solidModel").subDict("vonMisesDict").lookup("Ys");
   }
 }
 
@@ -261,16 +258,13 @@ void solidModel::printMaterialProperties()
         << "Density = " << rho_.value() << " " << rho_.dimensions() << nl
         << "Young's modulus = " << E_.value() << " " << E_.dimensions() << nl
         << "Poisson's ratio = " << nu_.value() << " " << nu_.dimensions() << nl
-        << "Lame's first parameter lambda = " << lambda_.value() << " "
-        << lambda_.dimensions() << nl
-        << "Lame's second parameter mu = " << mu_.value() << " "
-        << mu_.dimensions() << nl
-        << "Bulk modulus kappa = " << kappa_.value() << " "
-        << kappa_.dimensions() << nl
-        << "Linear pressure wave speed = " << Up_.value() << " "
-        << Up_.dimensions() << nl
-        << "Linear shear wave speed = " << Us_.value() << " "
-        << Us_.dimensions() << endl;
+        << "Lame's first parameter lambda = " << lambda_.value() << " " << lambda_.dimensions() << nl
+        << "Lame's second parameter mu = " << mu_.value() << " " << mu_.dimensions() << nl
+        << "Bulk modulus kappa = " << kappa_.value() << " " << kappa_.dimensions() << nl
+	<< "Hardening modulus = " << Hm_.value() << " " << Hm_.dimensions() << nl
+	<< "Initial yield stress = " << Ys0_.value() << " " << Ys0_.dimensions() << nl
+        << "Linear pressure wave speed = " << Up_.value() << " " << Up_.dimensions() << nl
+        << "Linear shear wave speed = " << Us_.value() << " " << Us_.dimensions() << endl;
 }
 
 

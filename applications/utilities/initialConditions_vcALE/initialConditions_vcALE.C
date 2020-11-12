@@ -104,7 +104,7 @@ int main(int argc, char *argv[])
     }
 
     // Non uniform angular velocity initialsed testcases
-    if (tutorial == "twistingColumn" || tutorial == "spinningCube")
+    else if (tutorial == "twistingColumn" || tutorial == "spinningCube")
     {
         pointVectorField omega
         (
@@ -132,6 +132,16 @@ int main(int argc, char *argv[])
         {
             lm[node] = rho.value()*omega[node] ^ X[node];
         }
+    }
+
+    else if (tutorial == "taylorImpact") {
+        // Read initial velocity
+	pointVectorField v (
+	  IOobject("v", mesh), 
+	  pMesh,
+	  dimensionedVector(runParameters.lookup("initialVelocity"))
+	);
+	lm = rho*v;
     }
 
     lm.write();

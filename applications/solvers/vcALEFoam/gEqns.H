@@ -27,15 +27,16 @@ if (GCLtechnique == "withInvolution") {
     FatalErrorIn("gEqns.H") << "GCL technique is not properly defined." << abort(FatalError);
 }
 
-rhsW.primitiveFieldRef() = aleModel_.wDot().primitiveFieldRef();  //wDot_.primitiveFieldRef();
+//rhsW.primitiveFieldRef() = materialModel_.wDot().primitiveFieldRef();  //wDot_.primitiveFieldRef();
 
-//rhsW.primitiveFieldRef() = op.surfaceSum(PmatHC*magSf) 
-//	+ (aleModel_.wDot().primitiveFieldRef() - op.surfaceSum(PmatHC*magSf)); //rho.value()
+rhsW.primitiveFieldRef() = op.surfaceSum(PstarHC*magSf) / rho.value() ;
+//materialModel_.wDot(); //op.surfaceSum(PstarHC*magSf) / rho.value() ;
+//	+ (materialModel_.wDot().primitiveFieldRef() - op.surfaceSum(PmatHC*magSf)); //rho.value()
 
 
 //rhsE.primitiveFieldRef() = op.surfaceSum(Pmat_pmat*magSf);
-rhsE1.primitiveFieldRef() = op.surfaceSum( inter.pointToEdge(PHat.T()&v_)             & Sf );
-rhsE2.primitiveFieldRef() = op.surfaceSum( inter.pointToEdge((aleH.T()&solvedW) * E)  & Sf );
+rhsE1.primitiveFieldRef() = op.surfaceSum( inter.pointToEdge( PHat.T()&v_)                 & Sf );
+rhsE2.primitiveFieldRef() = op.surfaceSum( inter.pointToEdge( (aleH.T()&solvedW) * E/matJ) & Sf );
 rhsE = rhsE1 + rhsE2;
 
 // Compute boundary terms for right hand sides
@@ -60,9 +61,9 @@ forAll(mesh.boundary(), patch) {
 	    vector v2 = v_[nodeB]; vector vH2 = vHat[nodeB]; vector w2 = solvedW[nodeB];
 	    vector v3 = v_[nodeC]; vector vH3 = vHat[nodeC]; vector w3 = solvedW[nodeC];
  
-            tensor PH1 = matP[node]  & aleH[node];
-	    tensor PH2 = matP[nodeB] & aleH[nodeB];
-	    tensor PH3 = matP[nodeC] & aleH[nodeC];
+            tensor PH1 = matP[node]  & aleH[node];    tensor PstarH1 = starP[node]  & aleH[node];
+	    tensor PH2 = matP[nodeB] & aleH[nodeB];   tensor PstarH2 = starP[nodeB] & aleH[nodeB];
+	    tensor PH3 = matP[nodeC] & aleH[nodeC];   tensor PstarH3 = starP[nodeC] & aleH[nodeC];
 
             scalar jC_1(0.0), jC_2(0.0), jC_3(0.0);
 	      
@@ -79,7 +80,8 @@ forAll(mesh.boundary(), patch) {
 	           tC3_1(tensor::zero), 
 		   tC3_2(tensor::zero), 
 	           tC3_3(tensor::zero), 
-	           PmatHClocal(tensor::zero);
+	           PmatHClocal(tensor::zero),
+	           PstarHClocal(tensor::zero);
 
 	    vector PxlocA = vector(P[node].xx(),P[node].yx(),P[node].zx()),
 	           PylocA = vector(P[node].xy(),P[node].yy(),P[node].zy()),
@@ -121,12 +123,20 @@ forAll(mesh.boundary(), patch) {
 	             + ((aleH[nodeC] && (PzlocC*Npf))*v001);		
 	      }
             } else if (patx.name().find("roller") != string::npos) { // symmetric
-	      tC_1 = ( (Npf*Npf) & ((PHat[node]&Npf)-(aleUp___[node]*lm[node])) )
-		+ ((tensor::I - Npf*Npf) & traction);
-	      tC_2 = ( (Npf*Npf) & ((PHat[nodeB]&Npf)-(aleUp___[nodeB]*lm[nodeB])) )
-		+ ((tensor::I - Npf*Npf) & traction);
-	      tC_3 = ( (Npf*Npf) & ((PHat[nodeC]&Npf)-(aleUp___[nodeC]*lm[nodeC])) )
-		+ ((tensor::I - Npf*Npf) & traction);
+              //scalar ramp = 0.0;
+	       //    /!\   THIS PART IS NOT VALID
+	      tC_1 = ((Npf*Npf) & ((PHat[node]&Npf) - (aleUp___[node]*lm[node])))
+                   ;//+ ((tensor::I - (Npf*Npf)) & (ramp*traction));
+	      tC_2 = ((Npf*Npf) & ((PHat[nodeB]&Npf) - (aleUp___[nodeB]*lm[nodeB])))
+                   ;//+ ((tensor::I - (Npf*Npf)) & (ramp*traction));
+	      tC_3 = ((Npf*Npf) & ((PHat[nodeC]&Npf) - (aleUp___[nodeC]*lm[nodeC])))
+                   ;//+ ((tensor::I - (Npf*Npf)) & (ramp*traction));
+		//above is cancelled ATM
+
+	      tC_1 = vector::zero, tC_2 = vector::zero, tC_3 = vector::zero;
+
+	      lm[node] = ((Npf*Npf) & ((PHat[node]&Npf) - (aleUp___[node]*lm[node]))); // + ((tensor::I - (Npf*Npf)) & (ramp*traction));
+
             } else if (patx.name().find("procBoundary") != string::npos) {
                 // this case is for parallel simulation : do nothing
 		// at the moment, this BC does not work, and produces
@@ -138,6 +148,7 @@ forAll(mesh.boundary(), patch) {
       	    vHatClocal   = 0.125*(6*vH1 + vH2 + vH3)/3.;
 	    wClocal      = 0.125*(6*w1 + w2 + w3)/3.;
 	    PmatHClocal  = 0.125*(6*PH1 + PH2 + PH3)/3.;
+	    PstarHClocal = 0.125*(6*PstarH1 + PstarH2 + PstarH3)/3.;
             rhsLmSum     = 0.125*(6*tC_1 + tC_2 + tC_3)/3.;
 	    
 	    if (GCLtechnique == "withInvolution") {
@@ -163,20 +174,21 @@ forAll(mesh.boundary(), patch) {
             rhsF[node]    += vHatClocal * (Sf_p.boundaryField()[patch][facei]);
 	    rhsMatF[node] += wClocal    * (Sf_p.boundaryField()[patch][facei]);
 	    
-	    //rhsW[node]    += PmatHClocal & (Sf_p.boundaryField()[patch][facei]);
+	    //rhsW[node]    += PmatHClocal & (Sf_p.boundaryField()[patch][facei]);	    
+	    //rhsW[node]    += PstarHClocal & (Sf_p.boundaryField()[patch][facei]);
 	    
+	    rhsW[node] = vector::zero;  // At the moment: fix BCs to 0 for w	    	    
 	    
-	    //rhsW[node] = vector::zero;  // At the moment: fix BCs to 0 for w
-	    
-	    
-	    rhsW[node]    -= (rhsW[node] & Npf) * Npf; // removing the normal component
+	    //solvedW[node]    -= (solvedW[node] & Npf) * Npf; // removing the normal component
 	    // check BC for rhsE
 	    // J has no BC
 
 
+	    /*
 	    vector rhsEClocal1 = 0.125*( 6*(PH1.T()&v1) + (PH2.T()&v2) + (PH3.T()&v3) )/3.;
-            scalar rhsEClocal2 = 0.125*( 6*(jC_1*E[node]) + (jC_2*E[nodeB]) + (jC_3*E[nodeC]) )/3.;
+            scalar rhsEClocal2 = 0.125*( 6*(jC_1*E[node]/matJ[node]) + (jC_2*E[nodeB]/matJ[nodeB]) + (jC_3*E[nodeC]/matJ[nodeC]) )/3.;
 	    rhsE[node] += (rhsEClocal1 & Sf_p.boundaryField()[patch][facei]) + (rhsEClocal2 * magSf_p.boundaryField()[patch][facei]);
+	    */
         }
     }
 }
@@ -190,7 +202,8 @@ op.volumeIntegrate(rhsMatF, V);
 op.volumeIntegrate(rhsE, V);
 
 // Compute solvedW
-solvedW += deltaT * rhsW;
+solvedW += deltaT * materialModel_.wDot();//rhsW;
+//solvedW.correctBoundaryConditions();
 
 // Compute node coordinates
 x += deltaT * vHat;
@@ -213,3 +226,4 @@ lm.correctBoundaryConditions();
 
 // Compute materiel energy
 E += deltaT * rhsE;
+E.correctBoundaryConditions();

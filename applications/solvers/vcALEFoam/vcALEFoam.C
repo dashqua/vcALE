@@ -56,36 +56,34 @@ int main(int argc, char *argv[])
     #include "createFields.H"
     #include "postPro.H" 
 	
-
     while (runTime.loop())
     {
         if (timeStepping == "variable")
         {
-            deltaT = (cfl*h)/model.Up();
+            deltaT = (cfl*h)/model.Up();	
             runTime.setDeltaT(deltaT);
         }
-
+	
         t += deltaT; tstep++;
-
+	
         Info << "\nTime Step =" << tstep << "\n deltaT = " << deltaT.value() << " s"
              << "\n Time = " << t.value() << " s" << endl;
-
-
-        F.oldTime();
+	     
+	
+	
+        F.oldTime();        
 	matJ.oldTime();
 	matF.oldTime();
-        lm.oldTime(); pTilde.oldTime(); pR.oldTime();
+        lm.oldTime(); pR.oldTime(); pTilde.oldTime();
 	solvedW.oldTime();
-	x.oldTime();
-	xw.oldTime();
-	E.oldTime();
+	x.oldTime(); 
+	xw.oldTime(); 
+	E.oldTime(); 
 
-	forAll(RKstage, i)
-        {
+
+	forAll(RKstage, i) {
             #include "gEqns.H"
-
-            if (RKstage[i] == 0)
-            {
+            if (RKstage[i] == 0) {
                 #include "updateVariables.H"
             }
         }
