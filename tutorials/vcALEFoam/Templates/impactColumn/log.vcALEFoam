@@ -7,10 +7,10 @@
 \*---------------------------------------------------------------------------*/
 Build  : 6
 Exec   : vcALEFoam
-Date   : Nov 12 2020
-Time   : 22:00:24
+Date   : Nov 13 2020
+Time   : 17:17:45
 Host   : "DESKTOP-JSPBMTA"
-PID    : 28391
+PID    : 18178
 I/O    : uncollated
 Case   : /home/thomas/OpenFOAM/vcALE/tutorials/vcALEFoam/Templates/impactColumn
 nProcs : 1
@@ -75,9 +75,11 @@ beta: 0.02
 T: 1
 
 
-Printing global momentum ...
+Printing mesh centroids
 Centroid of primal mesh = (0.0013406239 0.0162 0.0013406239)
 Centroid of dual mesh = (0.0013354696 0.0162 0.0013354696)
+Objects all created !
+Post Processing ...
 Energy of the system:
  intE = 5.0723392e+19
 Theoretical of the system:
@@ -92,9 +94,11 @@ sample pR      : (0 -249700 0)
 sample tC2     : (0 0 0 -0 -249700 -1.2376013e-09 0 0 0)
 sample wC      : (0 0 0 0 0 0 0 0 0)
 sample lambdaH : 1
+sample rhsLm1  : (0 0 0)
 sample rhsLm2  : (0 0 0)
 sample rhsLm3  : (0 0 0)
-sample rhsLm   : (5.4782948e-30 -3.988531e-15 3.1126833e-30)
+sample rhsLm4  : (5.4782948e-30 -3.988531e-15 3.1126833e-30)
+sample rhsLm   : (0 0 0)
 sample rhsW    : (0 0 0)
 deltaT         : 1.0078601e-06
 

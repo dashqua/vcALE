@@ -58,18 +58,19 @@ int main(int argc, char *argv[])
 	
     while (runTime.loop())
     {
+	//    Info << "before tstep.............." << nl;
         if (timeStepping == "variable")
         {
             deltaT = (cfl*h)/model.Up();	
             runTime.setDeltaT(deltaT);
         }
-	
+	//Info << "after tstep" << nl;
         t += deltaT; tstep++;
 	
         Info << "\nTime Step =" << tstep << "\n deltaT = " << deltaT.value() << " s"
              << "\n Time = " << t.value() << " s" << endl;
 	     
-	
+	//Info << "oldTimes" << nl;
 	
         F.oldTime();        
 	matJ.oldTime();
@@ -80,10 +81,11 @@ int main(int argc, char *argv[])
 	xw.oldTime(); 
 	E.oldTime(); 
 
-
 	forAll(RKstage, i) {
+		//Info << "gEqns.H" << nl;
             #include "gEqns.H"
             if (RKstage[i] == 0) {
+		    //Info << "updateVariables.H" << nl;
                 #include "updateVariables.H"
             }
         }
@@ -104,8 +106,13 @@ int main(int argc, char *argv[])
             #include "postPro.H"
   	}
 
-        Info<< " Simulation completed = "
+	//Info << "tvalue: " << t.value() << nl;
+	//Info << "endTime: " << runTime.endTime().value() << nl;
+	//Info << "testent:" << (t.value()/runTime.endTime().value())*100 << nl;
+        Info << " Simulation completed = "
              << (t.value()/runTime.endTime().value())*100 << "%" << endl;
+
+	//Info << "end tstep..................." << nl;
     }
 
     Info<< "\nExecutionTime = " << runTime.elapsedCpuTime() << " s"

@@ -178,6 +178,11 @@ pointTensorField P = model.piola();
 // ALE - CoFactor computed from solved quantities 
 pointTensorField aleH = matJ * op.invT(matF);
 
+// TO MOVE EVENTUALLY
+forAll(E,n){
+  E[n] = 0.5 * (lm[n]&lm[n])/rho.value()  +  0.5*mu.value()*(Foam::pow(trueJ[n],(-2.0/3.0))*(trueF[n]&&trueF[n])-3.0) + (0.5*kappa.value()*(trueJ[n]-1.0)*(trueJ[n]-1.0));
+}
+
 /*
   ____      ____  _  ____   ____  ________      ______   _______  ________  ________  ______     ______   
  |_  _|    |_  _|/ \|_  _| |_  _||_   __  |   .' ____ \ |_   __ \|_   __  ||_   __  ||_   _ `. .' ____ \
@@ -341,13 +346,6 @@ pointScalarField theoE (
 );
 theoE = kinE + potE;
 
-//- ALE: residual field
-pointScalarField residualE (
-    IOobject("residualE", runTime.timeName(), E.db(), IOobject::NO_READ, IOobject::NO_WRITE),
-    E.mesh(),
-    dimensionedScalar("residualE", dimensionSet(1,-1,-2,0,0,0,0), 0.0)
-);
-residualE = mag(E - theoE);
 
 /*
        ______  _______          _       ______   _____  ________  ____  _____  _________  
@@ -464,12 +462,17 @@ pointVectorField rhsLm3 (
     pMesh,
     dimensionedVector("rhsLm3", dimensionSet(1,-2,-2,0,0,0,0), vector::zero)
 );
+pointVectorField rhsLm4 (
+    IOobject ("rhsLm4", mesh),
+    pMesh,
+    dimensionedVector("rhsLm4", dimensionSet(1,-2,-2,0,0,0,0), vector::zero)
+);
 
-rhsLm1.primitiveFieldRef() = op.surfaceSum(stabC*magSf) ; 
+rhsLm4.primitiveFieldRef() = op.surfaceSum(stabC*magSf) ; 
 if (PHatTerm == "withoutInvolution") { 
-    rhsLm1.primitiveFieldRef() += op.surfaceSum(tC*magSf);
+    rhsLm1.primitiveFieldRef() = op.surfaceSum(tC*magSf);
 } else if (PHatTerm == "withInvolution") {
-    rhsLm1.primitiveFieldRef() += 
+    rhsLm1.primitiveFieldRef() = 
 		    ((aleH && op.surfaceSum(P1C*magSf))*vector_100)
 		  + ((aleH && op.surfaceSum(P2C*magSf))*vector_010)
                   + ((aleH && op.surfaceSum(P3C*magSf))*vector_001);  
@@ -478,14 +481,16 @@ if (GCLtechnique == "withInvolution") {
     rhsJ.primitiveFieldRef() = aleH && op.surfaceSum(wC*magSf);
     rhsLm2.primitiveFieldRef() = op.surfaceSum(tC2*magSf) & (aleH.T() & solvedW);
     rhsLm3.primitiveFieldRef() = pR * (aleH && (op.surfaceSum(wC*magSf)));
-    rhsLm.primitiveFieldRef() = rhsLm1 + rhsLm2  + rhsLm3;
+    //rhsLm.primitiveFieldRef() = rhsLm1 + rhsLm2  + rhsLm3;
 } else if (GCLtechnique == "withoutInvolution") {
     rhsJ.primitiveFieldRef() = op.surfaceSum(HTwC*magSf);
-    rhsLm2.primitiveFieldRef() = op.surfaceSum(pRwHC*magSf);//pR.primitiveFieldRef() * rhsJ.primitiveFieldRef();
-    rhsLm.primitiveFieldRef() = rhsLm1 + rhsLm2;
+    rhsLm2.primitiveFieldRef() = op.surfaceSum(pRwHC*magSf);
+    //rhsLm.primitiveFieldRef() = rhsLm1 + rhsLm2;
 } else {
     FatalErrorIn("createFields.H") << "GCL technique is not properly defined." << abort(FatalError);
 }
+
+pointVectorField trac ( IOobject("trac",  runTime.timeName(), mesh, IOobject::MUST_READ, IOobject::AUTO_WRITE), pMesh );
 
 // RHS of F equation
 pointTensorField rhsF (
@@ -518,7 +523,7 @@ pointScalarField rhsE2 ( IOobject ("rhsE2", mesh), pMesh,
 pointScalarField rhsE ( IOobject ("rhsE", mesh), pMesh,
     dimensionedScalar("rhsE",E.dimensions()/dimTime, 0.0)
 );
-rhsE1.primitiveFieldRef() = op.surfaceSum( inter.pointToEdge(PHat.T()&v_)             & Sf );
+rhsE1.primitiveFieldRef() = op.surfaceSum( inter.pointToEdge(PHat.T()&(lm/rho.value()))             & Sf );
 rhsE2.primitiveFieldRef() = op.surfaceSum( inter.pointToEdge((aleH.T()&solvedW) * E)  & Sf );
 rhsE = rhsE1 + rhsE2;
 
@@ -583,7 +588,9 @@ model.printMaterialProperties();
 materialModel_.printProperties();
 spatialModel_.printProperties();
 
-Info << "Printing global momentum ..." << endl;
+//Info << "Printing global momentum ..." << endl;
+Info << "Printing mesh centroids" << nl;
 dual.printPrimalMeshCentroid();
 dual.printDualMeshCentroid();
 
+Info << "Objects all created !" << nl;

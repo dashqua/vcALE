@@ -104,7 +104,7 @@ int main(int argc, char *argv[])
     }
 
     // Non uniform angular velocity initialsed testcases
-    else if (tutorial == "twistingColumn" || tutorial == "spinningCube")
+    else if (tutorial == "twistingColumn" || tutorial == "spinningCube" || tutorial == "spinningTop" )
     {
         pointVectorField omega
         (

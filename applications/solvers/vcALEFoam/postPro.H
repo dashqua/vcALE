@@ -1,3 +1,4 @@
+Info << "Post Processing ..." << nl;
 // Initial output quantities 
 u = x - X;
 u.write();
@@ -26,18 +27,17 @@ Info << "Energy of the system:\n intE = " << op.integrateOverDomain(E,V) << endl
 forAll(potE, n) {
   kinE[n] = 0.5 * (lm[n]&lm[n]) / rho.value();// rho.value() * (vHat[n]&vHat[n]); //(lm[n]&lm[n]) / rho.value();
   //kinE[n] += 0.5 * rho.value() * (solvedW[n]&solvedW[n]);
-  potE[n] = (0.5*mu.value()*Foam::pow(trueJ[n],-2./3.)*(trueF[n]&&trueF[n])) - (3*mu.value()/2.) + (0.5*kappa.value()*Foam::pow(trueJ[n]-1,2));
+  potE[n] = 0.5*mu.value()*(Foam::pow(trueJ[n],(-2.0/3.0))*(trueF[n]&&trueF[n])-3.0) + (0.5*kappa.value()*(trueJ[n]-1.0)*(trueJ[n]-1.0));
+	  //(0.5*mu.value()*Foam::pow(trueJ[n],-2./3.)*(trueF[n]&&trueF[n])) - (3*mu.value()/2.) + (0.5*kappa.value()*Foam::pow(trueJ[n]-1,2));
 }
 
 // Theoretical Energy
 theoE = kinE + potE;
 
-// Residual
-residualE = mag(E - (kinE + potE));
-
 // integration over domain of residual and theoretical energy
-Info << "Theoretical of the system:\n theoE = " << op.integrateOverDomain(theoE,V) << endl;
-Info << "Residual of the system:\n residualE = " << op.integrateOverDomain(residualE,V) << endl;
+Info << "Theoretical kinetic energy of the system:\n kinE = " << op.integrateOverDomain(kinE,V) << endl;
+Info << "Theoretical potential energy of the system:\n potE = " << op.integrateOverDomain(potE,V) << nl;
+Info << "Theoretical energy of the system:\n theoE = " << op.integrateOverDomain(theoE,V) << endl;
 
 
 // ALE - CoG
@@ -55,8 +55,10 @@ Info << "sample pR      : " << pR[index]  << nl;
 Info << "sample tC2     : " << tC2[index] << nl;
 Info << "sample wC      : " << wC[index] << nl;
 Info << "sample lambdaH : " << lambdaH[index] << nl;
+Info << "sample rhsLm1  : " << rhsLm1[index] << nl;
 Info << "sample rhsLm2  : " << rhsLm2[index] << nl;
 Info << "sample rhsLm3  : " << rhsLm3[index] << nl;
+Info << "sample rhsLm4  : " << rhsLm4[index] << nl;
 Info << "sample rhsLm   : " << rhsLm[index] << nl;
 Info << "sample rhsW    : " << rhsW[index] << nl;
 Info << "deltaT         : " << deltaT.value() << nl;

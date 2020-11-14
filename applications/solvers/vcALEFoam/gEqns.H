@@ -4,11 +4,11 @@ pR = op.inverseScalar(matJ) * lm ;
 rhsF.primitiveFieldRef() = op.surfaceSum(vC*magSf);
 rhsMatF.primitiveFieldRef() = op.surfaceSum(wC*magSf);
 
-rhsLm1.primitiveFieldRef() = op.surfaceSum(stabC*magSf);
+rhsLm4.primitiveFieldRef() = op.surfaceSum(stabC*magSf);
 if (PHatTerm == "withoutInvolution") {
-    rhsLm1.primitiveFieldRef() += op.surfaceSum(tC*magSf);
+    rhsLm1.primitiveFieldRef() = op.surfaceSum(tC*magSf);
 } else if (PHatTerm == "withInvolution") {
-  rhsLm1.primitiveFieldRef() += 
+  rhsLm1.primitiveFieldRef() = 
       ((aleH && op.surfaceSum(P1C*magSf))*vector_100)
     + ((aleH && op.surfaceSum(P2C*magSf))*vector_010)
     + ((aleH && op.surfaceSum(P3C*magSf))*vector_001);   
@@ -18,24 +18,17 @@ if (GCLtechnique == "withInvolution") {
     rhsJ.primitiveFieldRef() = aleH && op.surfaceSum(wC*magSf);
     rhsLm2.primitiveFieldRef() = op.surfaceSum(tC2*magSf) & (aleH.T() & solvedW);
     rhsLm3.primitiveFieldRef() = pR * rhsJ.primitiveField();
-    rhsLm.primitiveFieldRef() = rhsLm1 + rhsLm2 + rhsLm3;
+    //rhsLm.primitiveFieldRef() = rhsLm1 + rhsLm2 + rhsLm3;
 } else if (GCLtechnique == "withoutInvolution") {
     rhsJ.primitiveFieldRef() = op.surfaceSum(HTwC*magSf);
     rhsLm2.primitiveFieldRef() = op.surfaceSum(pRwHC*magSf);
-    rhsLm.primitiveFieldRef() = rhsLm1 + rhsLm2;
-} else {
-    FatalErrorIn("gEqns.H") << "GCL technique is not properly defined." << abort(FatalError);
+    //rhsLm.primitiveFieldRef() = rhsLm1 + rhsLm2;
 }
 
-//rhsW.primitiveFieldRef() = materialModel_.wDot().primitiveFieldRef();  //wDot_.primitiveFieldRef();
-
-rhsW.primitiveFieldRef() = op.surfaceSum(PstarHC*magSf) / rho.value() ;
-//materialModel_.wDot(); //op.surfaceSum(PstarHC*magSf) / rho.value() ;
-//	+ (materialModel_.wDot().primitiveFieldRef() - op.surfaceSum(PmatHC*magSf)); //rho.value()
-
+rhsW.primitiveFieldRef() = op.surfaceSum(PstarHC*magSf) / rho.value() ; // materialModel_.wDot().primitiveField()
 
 //rhsE.primitiveFieldRef() = op.surfaceSum(Pmat_pmat*magSf);
-rhsE1.primitiveFieldRef() = op.surfaceSum( inter.pointToEdge( PHat.T()&v_)                 & Sf );
+rhsE1.primitiveFieldRef() = op.surfaceSum( inter.pointToEdge( PHat.T()&(lm/rho.value()))                 & Sf );
 rhsE2.primitiveFieldRef() = op.surfaceSum( inter.pointToEdge( (aleH.T()&solvedW) * E/matJ) & Sf );
 rhsE = rhsE1 + rhsE2;
 
@@ -72,7 +65,9 @@ forAll(mesh.boundary(), patch) {
 	      	   tC_3(vector::zero),
 		   vHatClocal(vector::zero),
 	           wClocal(vector::zero),
-	           rhsLmSum(vector::zero);
+	           rhsLmSum(vector::zero),
+		   rhsLm1Clocal(vector::zero),
+		   rhsLm2Clocal(vector::zero);
 
 	    tensor tC2_1(tensor::zero), 
 		   tC2_2(tensor::zero), 
@@ -123,6 +118,17 @@ forAll(mesh.boundary(), patch) {
 	             + ((aleH[nodeC] && (PzlocC*Npf))*v001);		
 	      }
             } else if (patx.name().find("roller") != string::npos) { // symmetric
+              if (PHatTerm == "withoutInvolution") {     
+		      // Note at the moment, traction and ramp are null
+                tC_1 = (Npf*Npf) & (PHat[node]   & Npf);
+		tC_2 = (Npf*Npf) & (PHat[nodeB]  & Npf);
+		tC_3 = (Npf*Npf) & (PHat[nodeC]  & Npf);
+	      } else if (PHatTerm == "withInvolution") {
+                FatalErrorIn("gEqns.H") << "'roller BC' and 'PHatTern' == 'withInvolution' not coded yet." << abort(FatalError);
+	      }
+
+/*
+
               //scalar ramp = 0.0;
 	       //    /!\   THIS PART IS NOT VALID
 	      tC_1 = ((Npf*Npf) & ((PHat[node]&Npf) - (aleUp___[node]*lm[node])))
@@ -136,7 +142,7 @@ forAll(mesh.boundary(), patch) {
 	      tC_1 = vector::zero, tC_2 = vector::zero, tC_3 = vector::zero;
 
 	      lm[node] = ((Npf*Npf) & ((PHat[node]&Npf) - (aleUp___[node]*lm[node]))); // + ((tensor::I - (Npf*Npf)) & (ramp*traction));
-
+*/
             } else if (patx.name().find("procBoundary") != string::npos) {
                 // this case is for parallel simulation : do nothing
 		// at the moment, this BC does not work, and produces
@@ -149,7 +155,8 @@ forAll(mesh.boundary(), patch) {
 	    wClocal      = 0.125*(6*w1 + w2 + w3)/3.;
 	    PmatHClocal  = 0.125*(6*PH1 + PH2 + PH3)/3.;
 	    PstarHClocal = 0.125*(6*PstarH1 + PstarH2 + PstarH3)/3.;
-            rhsLmSum     = 0.125*(6*tC_1 + tC_2 + tC_3)/3.;
+            ///////////rhsLmSum     = 0.125*(6*tC_1 + tC_2 + tC_3)/3.;
+	    rhsLm1Clocal =  0.125*(6*tC_1 + tC_2 + tC_3)/3.;
 	    
 	    if (GCLtechnique == "withInvolution") {
 	        tC2_1 = (pR[node]  * Npf);
@@ -160,19 +167,22 @@ forAll(mesh.boundary(), patch) {
 	        tC3_2 = w2 * Npf;
 	        tC3_3 = w3 * Npf;
 	        //
-	        rhsLmSum += 0.125*( (6*tC2_1 + tC2_2 + tC2_3 ) & (HT[node] & solvedW[node]) )/3.;
-	        //rhsLmSum += 0.125*( pR[node] * (aleH[node] && (6*tC3_1 + tC3_2 + tC3_3)));  //always
+	        //rhsLmSum += 0.125*( (6*tC2_1 + tC2_2 + tC2_3 ) & (HT[node] & solvedW[node]) )/3.;
+		// no BC for rhsLm3
+		rhsLm2Clocal = 0.125*( (6*tC2_1 + tC2_2 + tC2_3 ) & (HT[node] & solvedW[node]) )/3.;
 	    } else if (GCLtechnique == "withoutInvolution") {
    	        jC_1 = (HT[node]  & w1) & Npf;
 	        jC_2 = (HT[nodeB] & w2) & Npf;
 	        jC_3 = (HT[nodeC] & w3) & Npf;
-                rhsLmSum += 0.125*( pR[node] * (6*jC_1 + jC_2 + jC_3))/3.;
-	    } else {
-	        FatalErrorIn("gEqns.H") << "GCL technique is not properly defined." << abort(FatalError);
+                //rhsLmSum += 0.125*( pR[node] * (6*jC_1 + jC_2 + jC_3))/3.;
+		rhsLm2Clocal = 0.125*( pR[node] * (6*jC_1 + jC_2 + jC_3))/3.;
 	    }
-	    rhsLm[node]   += rhsLmSum   * (magSf_p.boundaryField()[patch][facei]);
-            rhsF[node]    += vHatClocal * (Sf_p.boundaryField()[patch][facei]);
-	    rhsMatF[node] += wClocal    * (Sf_p.boundaryField()[patch][facei]);
+
+	    //rhsLm[node]   += rhsLmSum   * (magSf_p.boundaryField()[patch][facei]);
+	    rhsLm1[node]  += rhsLm1Clocal  * (magSf_p.boundaryField()[patch][facei]);
+	    rhsLm2[node]  += rhsLm2Clocal  * (magSf_p.boundaryField()[patch][facei]);
+            rhsF[node]    += vHatClocal    * (Sf_p.boundaryField()[patch][facei]);
+	    rhsMatF[node] += wClocal       * (Sf_p.boundaryField()[patch][facei]);
 	    
 	    //rhsW[node]    += PmatHClocal & (Sf_p.boundaryField()[patch][facei]);	    
 	    //rhsW[node]    += PstarHClocal & (Sf_p.boundaryField()[patch][facei]);
@@ -194,11 +204,15 @@ forAll(mesh.boundary(), patch) {
 }
 
 // Compute right hand sides
-op.volumeIntegrate(rhsLm,   V);
+//op.volumeIntegrate(rhsLm,   V);
+op.volumeIntegrate(rhsLm1,   V);
+op.volumeIntegrate(rhsLm2,   V);
+op.volumeIntegrate(rhsLm3,   V);
+op.volumeIntegrate(rhsLm4,   V);
 op.volumeIntegrate(rhsF,    V);
 op.volumeIntegrate(rhsJ,    V);
 op.volumeIntegrate(rhsMatF, V);
-//op.volumeIntegrate(rhsW,    V);
+op.volumeIntegrate(rhsW,    V);
 op.volumeIntegrate(rhsE, V);
 
 // Compute solvedW
@@ -221,7 +235,9 @@ matJ += deltaT * rhsJ;
 matF += deltaT * rhsMatF;
 
 // Compute linear momentum
-lm += deltaT * rhsLm;
+//trac = rhsLm1;
+//trac.correctBoundaryConditions();
+lm += deltaT * (rhsLm1 + rhsLm2 + rhsLm3 + rhsLm4);//rhsLm;
 lm.correctBoundaryConditions();
 
 // Compute materiel energy

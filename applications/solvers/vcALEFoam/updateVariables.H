@@ -49,7 +49,6 @@ PHat = P & aleH;
 vGrad = grad.gradient(v_);
 grad.reconstruct(v_, vGrad, vM, vP);
 
-
 // Average terms
 stabC = inter.pointToEdge(matJ*rho)*(0.5*mech.SmatrixMod(aleUp___, aleUs___) & (vP - vM));
 if (PHatTerm == "withInvolution") {
