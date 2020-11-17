@@ -223,6 +223,14 @@ public:
             const pointScalarField&
         ) const;
 
+        // Volume integration of 2 scalarField
+        pointScalarField volumeIntegrateScalar2
+        (
+            pointScalarField&,
+	    pointScalarField&,
+            const pointScalarField&
+        ) const;
+
         // Volume integration of a vectorField
         pointVectorField volumeIntegrate
         (
@@ -230,14 +238,32 @@ public:
             const pointScalarField&
         ) const;
 
+        // Volume integration of 5 vectorField
+        pointVectorField volumeIntegrateVector5
+	(
+            pointVectorField&,
+            pointVectorField&,
+            pointVectorField&,
+            pointVectorField&,
+            pointVectorField&,
+	    const pointScalarField&
+	) const;
+  
         // Volume integration of a tensorField
         pointTensorField volumeIntegrate
         (
             pointTensorField&,
             const pointScalarField&
         ) const;
+ 
+        // Volume integration of 2 tensorField
+        pointTensorField volumeIntegrateTensor2
+        (
+            pointTensorField&,
+	    pointTensorField&,
+            const pointScalarField&
+        ) const;
 
-        
         // Integration of a scalar Field over the domain
         scalar integrateOverDomain(pointScalarField& , const pointScalarField&);
 };

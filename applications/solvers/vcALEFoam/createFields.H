@@ -183,6 +183,9 @@ forAll(E,n){
   E[n] = 0.5 * (lm[n]&lm[n])/rho.value()  +  0.5*mu.value()*(Foam::pow(trueJ[n],(-2.0/3.0))*(trueF[n]&&trueF[n])-3.0) + (0.5*kappa.value()*(trueJ[n]-1.0)*(trueJ[n]-1.0));
 }
 
+
+//vectorField n = mech.spatialNormal();
+
 /*
   ____      ____  _  ____   ____  ________      ______   _______  ________  ________  ______     ______   
  |_  _|    |_  _|/ \|_  _| |_  _||_   __  |   .' ____ \ |_   __ \|_   __  ||_   __  ||_   _ `. .' ____ \
@@ -258,7 +261,14 @@ spatialModel_.correct();
 pointTensorField spatP   = spatialModel_.piola(F,  spatH, spatJ);
 
 // ALE - get Piola Star
-pointTensorField starP   = ((1.0-alpha)*matP) + (alpha*(trueF.T()&spatP));//(alpha*matP) + ((1.0-alpha)*(trueF.T()&spatP));
+/*
+pointTensorField starP(
+		       IOobject("starP", runTime.timeName(), mesh, IOobject::NO_READ, IOobject::AUTO_WRITE), pMesh,
+		       dimensionedTensor("starP", matP.dimensions(), tensor::zero)
+		       );
+starP   = ((1.0-alpha)*matP) + (alpha*(trueF.T()&spatP));
+*/
+pointTensorField starP = ((1.0-alpha)*matP) + (alpha*(trueF.T()&spatP));
 
 /*
     ____   ____  ________  _____       ___      ______  _____  _________  _____  ________   ______   
@@ -490,7 +500,7 @@ if (GCLtechnique == "withInvolution") {
     FatalErrorIn("createFields.H") << "GCL technique is not properly defined." << abort(FatalError);
 }
 
-pointVectorField trac ( IOobject("trac",  runTime.timeName(), mesh, IOobject::MUST_READ, IOobject::AUTO_WRITE), pMesh );
+//pointVectorField trac ( IOobject("trac",  runTime.timeName(), mesh, IOobject::MUST_READ, IOobject::AUTO_WRITE), pMesh );
 
 // RHS of F equation
 pointTensorField rhsF (
@@ -508,7 +518,7 @@ pointTensorField rhsMatF (
 
 // ALE - RHS of solvedW velocity
 pointVectorField rhsW (
-    IOobject ("rhsW", mesh),
+    IOobject ("rhsW",runTime.timeName(), mesh, IOobject::NO_READ, IOobject::AUTO_WRITE),
     pMesh,
     dimensionedVector("rhsW", dimensionSet(0,1,-2,0,0,0,0), vector::zero)
 );
@@ -570,9 +580,11 @@ if (timeStepping == "variable") {
     runTime.setDeltaT(deltaT);
 }
 
+
 scalarList RKstage(2);
 RKstage[0] = 0;
 RKstage[1] = 1;
+
 
 /*
       _______  _______     _____  ____  _____  _________  
@@ -593,4 +605,4 @@ Info << "Printing mesh centroids" << nl;
 dual.printPrimalMeshCentroid();
 dual.printDualMeshCentroid();
 
-Info << "Objects all created !" << nl;
+Info << "\nObjects all created !" << nl << nl << nl;

@@ -18,6 +18,18 @@ lm.write();
 //matJ.write();
 v_.write();
 solvedW.write();
+rhsW.write();
+spatP.write();
+starP.write();
+
+/*
+pointTensorField  FTspatP(
+	IOobject("FTspatP", runTime.timeName(), mesh, IOobject::NO_READ, IOobject::AUTO_WRITE), pMesh,
+	dimensionedTensor("FTspatP", spatP.dimensions(), tensor::zero)
+		);
+FTspatP = trueF.T()&spatP;
+FTspatP.write();
+*/
 
 // integration over domain of E
 Info << "Energy of the system:\n intE = " << op.integrateOverDomain(E,V) << endl;

@@ -1,3 +1,6 @@
+// Update spatial normals
+//n = mech.spatialNormal();
+
 // Strain measures
 stretch = mech.stretch();
 
@@ -10,7 +13,7 @@ forAll(mesh.points(), node)
 // Update material quantities
 materialModel_.correct();
 aleH    = matJ * op.invT(matF); 
-matP    = materialModel_.piola(matF, aleH, matJ);
+matP    = materialModel_.piola(matF, aleH, matJ);           //P(material)
 //matPres = materialModel_.getMaterialPressure(matF, aleH, matJ);
 lambdaH = sqrt((inter.pointToEdge(aleH) & N) & (inter.pointToEdge(aleH) & N)); 
 scalarField aleUp___ = inter.pointToEdge( op.inverseScalar(matJ) ) *
@@ -29,14 +32,14 @@ scalarField aleUs___ = inter.pointToEdge( op.inverseScalar(matJ) ) *
 spatialModel_.correct();
 spatJ   = det(F);
 spatH   = spatJ * op.invT(F);
-spatP   = spatialModel_.piola(F,  spatH, spatJ);
+spatP   = spatialModel_.piola(F,  spatH, spatJ);             //P(spatial)
 
 // Update 'true'/solid quantities
-starP   = ((1.0-alpha)*matP) + (alpha*(trueF.T()&spatP));//(alpha*matP) + ((1.0-alpha)*(trueF.T()&spatP)); 
 trueF = F & op.inverse(matF);
 trueJ = det(trueF);
 trueH = trueJ * op.invT(trueF);
 model.correct(trueF, trueH, trueJ);
+starP   = ((1.0-alpha)*matP) + (alpha*(trueF.T()&spatP));    // P*
 P = model.piola();
 
 // Update velocities

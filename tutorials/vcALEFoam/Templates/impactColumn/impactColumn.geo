@@ -31,7 +31,7 @@ Transfinite Line{1,2,3,4} = nc;
 Line Loop(1) = {1,2,3,4} ;
 Plane Surface(1) = {1};
 Transfinite Surface{1} = {1,2,3,4};
-Recombine Surface{1};
+//Recombine Surface{1};
 
 // Circular section 1
 Point(5) = {r, 0, 0};
@@ -44,7 +44,7 @@ Transfinite Line{5,7} = nr;
 Line Loop(2) = {5,6,7,-2};
 Plane Surface(2) = {2};
 Transfinite Surface{2} = {2,5,6,3};
-Recombine Surface{2};
+//Recombine Surface{2};
 
 // Circular section 2
 Point(8) = {0, 0, r};
@@ -55,12 +55,12 @@ Transfinite Line{9} = nr;
 Line Loop(3) = {-7,8,9,-3};
 Plane Surface(3) = {3};
 Transfinite Surface{3} = {3,6,8,4};
-Recombine Surface{3};
+//Recombine Surface{3};
 
 // Extrusion
 Extrude{0,ymax,0}{
 Surface{1,2,3};
-Layers{cy};Recombine;
+Layers{cy};//Recombine;
 }
 
 // Definition of surfaces for boundary conditions

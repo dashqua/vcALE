@@ -58,6 +58,7 @@ Info << "Reading data from dictionaries ..." << endl;
 // Boundary traction
 const vector& traction =
     runParameters.lookupOrDefault<vector>("traction", vector::zero);
+Info << "value of 'traction': " << traction << nl;
 
 // ALE - GCL technique:
 // 1. "withInvolution" = Full GCL coverage with involution
@@ -84,7 +85,9 @@ if (timeStepping != "constant" && timeStepping != "variable") {
                                    << abort(FatalError);
 }
 
-const scalar& alpha = mechanicalProperties.lookupOrDefault<dimensionedScalar>("alpha", 0.0).value();
+//const DimensionedScalar& alpha_ = mechanicalProperties.lookupOrDefault<scalar>("alpha", 0.0);
+//const scalar& alpha = alpha_.value();
+const scalar& alpha = readScalar(mechanicalProperties.lookup("alpha"));
 Info << "Average P* coefficient alpha: " << alpha << nl;
 
 // Courant-Friedrichs-Lewy Number
@@ -98,3 +101,13 @@ if (cfl <= 0.0 || cfl > 1.0) {
 const scalar& beta =
     readScalar(fvSolution.lookup("incompressiblilityCoefficient"));
 
+
+// ALE - For P*: use of manufactured motion or use of P*-based RHS for solvedW
+bool usePstar = mechanicalProperties.lookupOrDefault<bool>("usePstar", false);
+Info << "Computation of solvedW's RHS: use of Pstar (1) or wDot (0): " << usePstar << nl;
+
+// ALE - For update of solvedW
+// update material motion every x iteration
+//const scalar updateEvery = mechanicalProperties.lookupOrDefault<scalar>("updateEvery", 1);
+const scalar& updateEvery = readScalar(mechanicalProperties.lookup("updateEvery"));
+scalar curTimeStep = 0;

@@ -54,24 +54,21 @@ int main(int argc, char *argv[])
     #include "createMesh.H"
     #include "readControls.H"
     #include "createFields.H"
+    #include "checks.H"
     #include "postPro.H" 
 	
     while (runTime.loop())
     {
-	//    Info << "before tstep.............." << nl;
         if (timeStepping == "variable")
         {
             deltaT = (cfl*h)/model.Up();	
             runTime.setDeltaT(deltaT);
         }
-	//Info << "after tstep" << nl;
         t += deltaT; tstep++;
 	
         Info << "\nTime Step =" << tstep << "\n deltaT = " << deltaT.value() << " s"
              << "\n Time = " << t.value() << " s" << endl;
-	     
-	//Info << "oldTimes" << nl;
-	
+	     	
         F.oldTime();        
 	matJ.oldTime();
 	matF.oldTime();
@@ -82,10 +79,8 @@ int main(int argc, char *argv[])
 	E.oldTime(); 
 
 	forAll(RKstage, i) {
-		//Info << "gEqns.H" << nl;
             #include "gEqns.H"
             if (RKstage[i] == 0) {
-		    //Info << "updateVariables.H" << nl;
                 #include "updateVariables.H"
             }
         }
@@ -106,13 +101,20 @@ int main(int argc, char *argv[])
             #include "postPro.H"
   	}
 
-	//Info << "tvalue: " << t.value() << nl;
-	//Info << "endTime: " << runTime.endTime().value() << nl;
-	//Info << "testent:" << (t.value()/runTime.endTime().value())*100 << nl;
+        if (curTimeStep < updateEvery){
+          Info << "Updating material motion ..." << nl;
+	  curTimeStep += 1;
+	} else if (curTimeStep == updateEvery) {
+          curTimeStep = 0;
+	} else {
+          FatalErrorIn("vcALEFoam.C") <<"Error in curTimeStep "<< abort(FatalError);
+	}
+
+
+
         Info << " Simulation completed = "
              << (t.value()/runTime.endTime().value())*100 << "%" << endl;
 
-	//Info << "end tstep..................." << nl;
     }
 
     Info<< "\nExecutionTime = " << runTime.elapsedCpuTime() << " s"

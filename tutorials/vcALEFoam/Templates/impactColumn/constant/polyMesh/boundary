@@ -21,29 +21,29 @@ FoamFile
     {
         type            patch;
         physicalType    patch;
-        nFaces          12;
-        startFace       1188;
+        nFaces          24;
+        startFace       5256;
     }
     roller_symmetricZ
     {
         type            patch;
         physicalType    patch;
-        nFaces          160;
-        startFace       1200;
+        nFaces          320;
+        startFace       5280;
     }
     roller_symmetricX
     {
         type            patch;
         physicalType    patch;
-        nFaces          160;
-        startFace       1360;
+        nFaces          320;
+        startFace       5600;
     }
     free
     {
         type            patch;
         physicalType    patch;
-        nFaces          172;
-        startFace       1520;
+        nFaces          344;
+        startFace       5920;
     }
 )
 

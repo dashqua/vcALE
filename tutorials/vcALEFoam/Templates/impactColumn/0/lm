@@ -17,21 +17,24 @@ FoamFile
 
 dimensions      [1 -2 -1 0 0 0 0];
 
-internalField   uniform (0 -249700 0);
+internalField   uniform (0 -2027110 0);
 
 boundaryField
 {
     roller_symmetricY
     {
-        type            zeroGradient;
+        type            fixedNormalSlip;
+        n               (0 0 0);
     }
     roller_symmetricZ
     {
-        type            zeroGradient;
+        type            fixedNormalSlip;
+        n               (0 0 0);
     }
     roller_symmetricX
     {
-        type            zeroGradient;
+        type            fixedNormalSlip;
+        n               (0 0 0);
     }
     free
     {

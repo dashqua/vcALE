@@ -302,7 +302,7 @@ pointTensorField aleModel::piola (pointTensorField& matF, pointTensorField& matH
 {
   pointTensorField matP
   (
-     IOobject ("matP", mesh_.time().timeName(), mesh_, IOobject::NO_READ, IOobject::AUTO_WRITE),
+     IOobject (name_+"P", mesh_.time().timeName(), mesh_, IOobject::NO_READ, IOobject::AUTO_WRITE),
      pMesh_,
      dimensionedTensor("matP", dimensionSet(1,-1,-2,0,0,0,0), tensor::zero)
   );

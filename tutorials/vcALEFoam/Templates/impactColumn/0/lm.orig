@@ -21,15 +21,11 @@ internalField   uniform (0 0 0);
 
 boundaryField
 {
-    roller_symmetricX { type zeroGradient; }
-    roller_symmetricY { type zeroGradient; }
-    roller_symmetricZ { type zeroGradient; }
-    /*
     roller_symmetricX { type fixedNormalSlip; n (0 0 0); }
     roller_symmetricY { type fixedNormalSlip; n (0 0 0); }
     roller_symmetricZ { type fixedNormalSlip; n (0 0 0); } 
-    */
-    free       { type zeroGradient; }
+
+    free              { type zeroGradient; }
 }
 
 // ************************************************************************* //

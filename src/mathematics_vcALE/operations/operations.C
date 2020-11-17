@@ -819,6 +819,22 @@ pointScalarField operations::volumeIntegrate
     return sum;
 }
 
+pointScalarField operations::volumeIntegrateScalar2
+(
+ pointScalarField& sum1, 
+ pointScalarField& sum2,
+ const pointScalarField& V
+) const
+{
+    forAll(mesh_.points(),n)
+    {
+	sum1[n] = sum1[n]/V[n];
+	sum2[n] = sum2[n]/V[n];
+    }
+    
+    return sum1;
+}
+
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 pointVectorField operations::volumeIntegrate
 (
@@ -832,6 +848,27 @@ pointVectorField operations::volumeIntegrate
     }
 
     return sum;
+}
+
+pointVectorField operations::volumeIntegrateVector5
+(
+            pointVectorField& sum1,
+            pointVectorField& sum2,
+            pointVectorField& sum3,
+            pointVectorField& sum4,
+            pointVectorField& sum5,
+	    const pointScalarField& V
+ ) const
+{
+  forAll(mesh_.points(), n)
+    {
+      sum1[n] = sum1[n]/V[n];
+      sum2[n] = sum2[n]/V[n];
+      sum3[n] = sum3[n]/V[n];
+      sum4[n] = sum4[n]/V[n];
+      sum5[n] = sum5[n]/V[n];      
+    }
+  return sum1;
 }
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
@@ -849,6 +886,21 @@ pointTensorField operations::volumeIntegrate
     return sum;
 }
 
+pointTensorField operations::volumeIntegrateTensor2
+(
+    pointTensorField& sum1,
+    pointTensorField& sum2,
+    const pointScalarField& V
+) const
+{
+    forAll(mesh_.points(), n)
+    {
+	sum1[n] = sum1[n]/V[n];
+	sum2[n] = sum2[n]/V[n];
+    }
+
+    return sum1;
+}
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 scalar operations::integrateOverDomain(pointScalarField& matE, const pointScalarField& V){
