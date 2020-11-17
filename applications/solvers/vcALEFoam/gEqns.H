@@ -124,6 +124,7 @@ forAll(mesh.boundary(), patch) {
 		tC_2 = ((Npf*Npf) & (PHat[nodeB] & Npf)) + ((I - Npf*Npf) & traction);
 		tC_3 = ((Npf*Npf) & (PHat[nodeC] & Npf)) + ((I - Npf*Npf) & traction);
 
+		
 		vH1 = (tanLM1/matJ[node])/rho.value()  + (trueF[node] & solvedW[node]);
 		vH2 = (tanLM2/matJ[nodeB])/rho.value() + (trueF[nodeB] & solvedW[nodeB]); 
 		vH3 = (tanLM3/matJ[nodeC])/rho.value() + (trueF[nodeC] & solvedW[nodeC]); 
@@ -131,7 +132,9 @@ forAll(mesh.boundary(), patch) {
 		pR1 = tanLM1/matJ[node];
 		pR2 = tanLM2/matJ[nodeB];
 		pR3 = tanLM3/matJ[nodeC];
- 
+ 		
+		lm[node] = tanLM1;
+
 	      } else if (PHatTerm == "withInvolution") {
                 FatalErrorIn("gEqns.H") << "'roller BC' and 'PHatTern' == 'withInvolution' not coded yet." << abort(FatalError);
 	      }
@@ -225,10 +228,24 @@ matJ += deltaT * rhsJ;
 matF += deltaT * rhsMatF;
 
 // Compute linear momentum
-lm += deltaT * (rhsLm1 + rhsLm2 + rhsLm3 + rhsLm4);//rhsLm;
+lm += deltaT * (rhsLm1 + rhsLm2 + rhsLm3 + rhsLm4);
 lm.correctBoundaryConditions();
-// there create new BCs "symmetry" for lm
-
+/*
+forAll(mesh.boundary(), patch) {
+  const fvPatch& patx = mesh.boundary()[patch];
+  if (patx.name().find("free") != string::npos) {
+    forAll(mesh.boundaryMesh()[patch], facei) {
+      const label& face = mesh.boundaryMesh()[patch].start() + facei;
+      vector Npf = N_p.boundaryField()[patch][facei];
+      forAll(mesh.faces()[face], nodei) {
+        const label& node = mesh.faces()[face][nodei];
+        const fvPatch& patx = mesh.boundary()[patch];
+        lm[node] =  (I - (Npf*Npf)) & lm[node];
+      }
+    }
+  }
+}
+*/
 
 // Compute materiel energy
 E += deltaT * rhsE;

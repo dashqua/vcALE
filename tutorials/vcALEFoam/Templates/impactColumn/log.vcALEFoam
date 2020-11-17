@@ -8,11 +8,11 @@
 Build  : 6
 Exec   : vcALEFoam
 Date   : Nov 17 2020
-Time   : 10:06:53
+Time   : 17:50:50
 Host   : "DESKTOP-JSPBMTA"
-PID    : 15703
+PID    : 23280
 I/O    : uncollated
-Case   : /home/thomas/OpenFOAM/vcALE/tutorials/vcALEFoam/Templates/impactColumn
+Case   : /home/thomas/OpenFOAM/vcALE/tutorials/vcALEFoam/Templates/impactColumn3
 nProcs : 1
 sigFpe : Enabling floating point exception trapping (FOAM_SIGFPE).
 fileModificationChecking : Monitoring run-time modified files using timeStampMaster (fileModificationSkew 10)
@@ -38,11 +38,6 @@ Creating linear momentum field ...
 Creating material velocity field ...
 Creating material energy field...
 Creating constitutive model ...
-true equals
-spatj spath
-solid model
-corre
-dimensionedscalars
 Creating fields for wave speeds ...
 Creating ALE Material Model ...
 Creating ALE Spatial Model ...
@@ -44171,6 +44166,6 @@ Time Step =8000
 Post Processing ...
  Simulation completed = 100%
 
-ExecutionTime = 514.59 s  ClockTime = 515 s
+ExecutionTime = 480.42 s  ClockTime = 481 s
 End
 
