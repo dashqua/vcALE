@@ -18,9 +18,9 @@ lm.write();
 //matJ.write();
 v_.write();
 solvedW.write();
-rhsW.write();
-spatP.write();
-starP.write();
+//rhsW.write();
+//spatP.write();
+//starP.write();
 
 /*
 pointTensorField  FTspatP(
