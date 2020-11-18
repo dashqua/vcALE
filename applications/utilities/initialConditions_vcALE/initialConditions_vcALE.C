@@ -71,7 +71,8 @@ int main(int argc, char *argv[])
     );
 
     // Test case name
-    const word& tutorial(runParameters.lookup("tutorial"));
+    const word& tutorial(runParameters.lookupOrDefault<word>("tutorial", "None"));
+    Info << "Tutorial name: " << tutorial;
 
     // Read density
     const dimensionedScalar& rho(mechanicalProperties.lookup("rho"));
@@ -142,6 +143,19 @@ int main(int argc, char *argv[])
 	  dimensionedVector(runParameters.lookup("initialVelocity"))
 	);
 	lm = rho*v;
+    } else if (tutorial == "punchTest") {   
+        // Read initial velocity
+	pointVectorField v ( IOobject("v", mesh), pMesh, dimensionedVector(runParameters.lookup("initialVelocity")) );
+	forAll(mesh.points(), n){
+	    const scalar X = mesh.points()[n][0];
+	    const scalar Y = mesh.points()[n][1];
+	    //Info << X << " , " << Y << nl;
+	    if ((0.0<X) && (0.0<Y)) {
+		lm[n] = rho.value() * v[n];
+	    }
+	}
+    } else {
+	Info << "Initial Conditions: nothing is applied." << nl;
     }
 
     lm.write();

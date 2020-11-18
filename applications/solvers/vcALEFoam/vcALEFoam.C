@@ -88,7 +88,7 @@ int main(int argc, char *argv[])
 	F        = 0.5*(F.oldTime()    + F);
 	matJ     = 0.5*(matJ.oldTime() + matJ);
 	matF     = 0.5*(matF.oldTime() + matF);
-        lm       = 0.5*(lm.oldTime()   + lm);
+        lm       = 0.5*(lm.oldTime()   + lm);   lm.correctBoundaryConditions();
 	solvedW  = 0.5*(solvedW.oldTime() + solvedW);
 	x        = 0.5*(x.oldTime() + x);
 	xw       = 0.5*(xw.oldTime() + xw);
@@ -109,6 +109,11 @@ int main(int argc, char *argv[])
 	} else {
           FatalErrorIn("vcALEFoam.C") <<"Error in curTimeStep "<< abort(FatalError);
 	}
+
+
+
+
+
 
 
 

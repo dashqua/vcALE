@@ -23,18 +23,15 @@ boundaryField
 {
     roller_symmetricY
     {
-        type            fixedNormalSlip;
-        n               (0 0 0);
+        type            calculated;
     }
     roller_symmetricZ
     {
-        type            fixedNormalSlip;
-        n               (0 0 0);
+        type            calculated;
     }
     roller_symmetricX
     {
-        type            fixedNormalSlip;
-        n               (0 0 0);
+        type            calculated;
     }
     free
     {

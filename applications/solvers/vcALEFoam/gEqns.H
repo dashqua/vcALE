@@ -22,6 +22,7 @@ if (GCLtechnique == "withInvolution") {
 } else if (GCLtechnique == "withoutInvolution") {
     rhsJ.primitiveFieldRef() = op.surfaceSum(HTwC*magSf);
     rhsLm2.primitiveFieldRef() = op.surfaceSum(pRwHC*magSf);
+    rhsLm3.primitiveFieldRef() -= rhsLm3.primitiveFieldRef();
     //rhsLm.primitiveFieldRef() = rhsLm1 + rhsLm2;
 }
 
@@ -120,10 +121,11 @@ forAll(mesh.boundary(), patch) {
             } else if (patx.name().find("roller") != string::npos) { // symmetric
               if (PHatTerm == "withoutInvolution") {     
 		// Note at the moment, traction and ramp are null
-                tC_1 = ((Npf*Npf) & (PHat[node]  & Npf)) + ((I - Npf*Npf) & traction);
-		tC_2 = ((Npf*Npf) & (PHat[nodeB] & Npf)) + ((I - Npf*Npf) & traction);
-		tC_3 = ((Npf*Npf) & (PHat[nodeC] & Npf)) + ((I - Npf*Npf) & traction);
-
+                tC_1 = ((Npf*Npf) & (PHat[node]  & Npf)) ;//+ ((I - Npf*Npf) & traction);
+		tC_2 = ((Npf*Npf) & (PHat[nodeB] & Npf)) ;//+ ((I - Npf*Npf) & traction);
+		tC_3 = ((Npf*Npf) & (PHat[nodeC] & Npf)) ;//+ ((I - Npf*Npf) & traction);
+		
+		// WEAK TREATMENT
 		
 		vH1 = (tanLM1/matJ[node])/rho.value()  + (trueF[node] & solvedW[node]);
 		vH2 = (tanLM2/matJ[nodeB])/rho.value() + (trueF[nodeB] & solvedW[nodeB]); 
@@ -131,9 +133,26 @@ forAll(mesh.boundary(), patch) {
 
 		pR1 = tanLM1/matJ[node];
 		pR2 = tanLM2/matJ[nodeB];
-		pR3 = tanLM3/matJ[nodeC];
- 		
-		lm[node] = tanLM1;
+		pR3 = tanLM3/matJ[nodeC];	
+		
+		// STRoNG TREATMENT
+		/*
+		tC_1 = vector::zero; 
+		tC_2 = vector::zero;
+		tC_3 = vector::zero;
+
+		tC2_1 = tensor::zero;
+		tC2_2 = tensor::zero;
+		tC2_3 = tensor::zero;
+	        */
+		/*
+		rhsLm1[node] = (I - (Npf*Npf)) & rhsLm1[node];
+		rhsLm2[node] = (I - (Npf*Npf)) & rhsLm2[node];
+		rhsLm3[node] = (I - (Npf*Npf)) & rhsLm3[node];
+		rhsLm4[node] = (I - (Npf*Npf)) & rhsLm4[node];
+		externalForces[node] = (I - (Npf*Npf)) & externalForces[node];
+		//lm[node]     = tanLM1;
+		*/
 
 	      } else if (PHatTerm == "withInvolution") {
                 FatalErrorIn("gEqns.H") << "'roller BC' and 'PHatTern' == 'withInvolution' not coded yet." << abort(FatalError);
@@ -142,10 +161,10 @@ forAll(mesh.boundary(), patch) {
                 // this case is for parallel simulation : do nothing
 		// at the moment, this BC does not work, and produces
 		// something very wrong !
-	    } else {	    
+	    } /*else {	    
 	      FatalErrorIn("gEqns.H") << "Problem with BC " << patx.name() << abort(FatalError);
-	    }
-	    
+	    }*/
+
       	    vHatClocal   = 0.125*(6*vH1 + vH2 + vH3)/3.;
 	    wClocal      = 0.125*(6*w1 + w2 + w3)/3.;
 	    PmatHClocal  = 0.125*(6*PH1 + PH2 + PH3)/3.;
@@ -181,6 +200,10 @@ forAll(mesh.boundary(), patch) {
             scalar rhsEClocal2 = 0.125*( 6*(jC_1*E[node]/matJ[node]) + (jC_2*E[nodeB]/matJ[nodeB]) + (jC_3*E[nodeC]/matJ[nodeC]) )/3.;
 	    rhsE[node] += (rhsEClocal1 & Sf_p.boundaryField()[patch][facei]) + (rhsEClocal2 * magSf_p.boundaryField()[patch][facei]);
 	    */
+
+
+
+
         }
     }
 }
@@ -198,9 +221,8 @@ op.volumeIntegrateScalar2(rhsJ, rhsE, V);
 //op.volumeIntegrate(rhsMatF, V);    //tensor
 //op.volumeIntegrate(rhsW,    V);    //vect
 //op.volumeIntegrate(rhsE, V);       //scalar
-
-
-
+externalForces.correctBoundaryConditions();
+op.volumeIntegrate(externalForces, V);
 
 // Compute solvedW
 if (curTimeStep == updateEvery){
@@ -212,12 +234,6 @@ if (curTimeStep == updateEvery){
 } 
 //solvedW.correctBoundaryConditions();
 
-// Compute node coordinates
-x += deltaT * vHat;
-
-// same for xw
-xw += deltaT * solvedW;
-
 // Compute deformation gradient tensor
 F += deltaT * rhsF;
 
@@ -228,25 +244,39 @@ matJ += deltaT * rhsJ;
 matF += deltaT * rhsMatF;
 
 // Compute linear momentum
-lm += deltaT * (rhsLm1 + rhsLm2 + rhsLm3 + rhsLm4);
+lm += deltaT * (rhsLm1 + rhsLm2 + rhsLm3 + rhsLm4 + externalForces);
 lm.correctBoundaryConditions();
-/*
+
+// Roller BC
 forAll(mesh.boundary(), patch) {
   const fvPatch& patx = mesh.boundary()[patch];
-  if (patx.name().find("free") != string::npos) {
+  if (patx.name().find("roller") != string::npos) {
     forAll(mesh.boundaryMesh()[patch], facei) {
       const label& face = mesh.boundaryMesh()[patch].start() + facei;
       vector Npf = N_p.boundaryField()[patch][facei];
       forAll(mesh.faces()[face], nodei) {
         const label& node = mesh.faces()[face][nodei];
         const fvPatch& patx = mesh.boundary()[patch];
-        lm[node] =  (I - (Npf*Npf)) & lm[node];
+        lm[node]      = (I - (Npf*Npf)) & lm[node];
+	//vector p = mesh.points()[node];
+
+	//if ((p[0] == 0) && (p[1] ==0) & (p[2] == 0)) { Info << lm[node] << nl; } 
+	//solvedW[node] = (I - (Npf*Npf)) & solvedW[node];
       }
     }
   }
 }
-*/
 
-// Compute materiel energy
+
+// Compute energy
 E += deltaT * rhsE;
-E.correctBoundaryConditions();
+//E.correctBoundaryConditions();
+
+
+vHat = (lm/matJ)/rho + (trueF & solvedW);
+
+// Compute node coordinates
+x += deltaT * vHat;
+
+// same for xw
+xw += deltaT * solvedW;

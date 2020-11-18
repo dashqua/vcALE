@@ -452,12 +452,12 @@ pointScalarField rhsJ (
 );
 
 // RHS of linear momentum equation
-pointVectorField rhsLm (
+pointVectorField rhsLm (          // useless
     IOobject ("rhsLm", mesh),
     pMesh,
     dimensionedVector("rhsLm", dimensionSet(1,-2,-2,0,0,0,0), vector::zero)
 );
-pointVectorField rhsLm1 (
+pointVectorField rhsLm1 (           // PH traction term
     IOobject ("rhsLm1", mesh),
     pMesh,
     dimensionedVector("rhsLm1", dimensionSet(1,-2,-2,0,0,0,0), vector::zero)
@@ -477,6 +477,16 @@ pointVectorField rhsLm4 (
     pMesh,
     dimensionedVector("rhsLm4", dimensionSet(1,-2,-2,0,0,0,0), vector::zero)
 );
+pointVectorField externalForces (             // external forces
+    IOobject("externalForces", runTime.timeName(), mesh, IOobject::READ_IF_PRESENT, IOobject::AUTO_WRITE), pMesh,
+    dimensionedVector("externalForces", dimensionSet(1,-2,-2,0,0,0,0), vector::zero)
+    /*
+    IOobject ("externalForces", mesh),
+    pMesh,
+    dimensionedVector("externalForces", dimensionSet(1,-2,-2,0,0,0,0), vector::zero)
+    */
+);
+externalForces.correctBoundaryConditions();
 
 rhsLm4.primitiveFieldRef() = op.surfaceSum(stabC*magSf) ; 
 if (PHatTerm == "withoutInvolution") { 
@@ -606,3 +616,10 @@ dual.printPrimalMeshCentroid();
 dual.printDualMeshCentroid();
 
 Info << "\nObjects all created !" << nl << nl << nl;
+
+
+
+
+
+
+

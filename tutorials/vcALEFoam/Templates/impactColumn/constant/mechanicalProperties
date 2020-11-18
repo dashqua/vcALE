@@ -17,7 +17,7 @@ FoamFile
 
 PHatTerm        withoutInvolution;
 GCLtechnique    withoutInvolution;
-doPostPro       desactivated;
+doPostPro       activated;
 usePstar        true;
 alpha           0.0; //alpha [0 0 0 0 0 0 0] 1.0;
 updateEvery	1;

@@ -1,3 +1,6 @@
+// Update external Forces
+externalForces.correctBoundaryConditions();
+
 // Update spatial normals
 //n = mech.spatialNormal();
 

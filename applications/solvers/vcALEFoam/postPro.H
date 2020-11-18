@@ -10,15 +10,39 @@ p = model.pressure();
 p.write();
 
 E.write();
+lm.write();
+solvedW.write();
+
+
+
+pointScalarField test(
+	 IOobject("test", runTime.timeName(), mesh, IOobject::NO_READ, IOobject::AUTO_WRITE), pMesh,
+	                    dimensionedScalar("test", E.dimensions(), 0.0)
+									                                                                        );
+
+label rollerID = mesh.boundaryMesh().findPatchID("free");
+forAll(mesh.boundaryMesh()[rollerID].meshPoints(), n){
+
+	                        test[n] = 1.0;
+}
+test.write();
 
 if (doPostPro == "activated") {
 
+
+
+
+
+
+
+
 // Additionnal output quantities
-lm.write();
+//lm.write();
 //matJ.write();
 v_.write();
-solvedW.write();
+//solvedW.write();
 //rhsW.write();
+
 //spatP.write();
 //starP.write();
 
