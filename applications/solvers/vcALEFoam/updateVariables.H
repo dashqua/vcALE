@@ -17,7 +17,6 @@ forAll(mesh.points(), node)
 materialModel_.correct();
 aleH    = matJ * op.invT(matF); 
 matP    = materialModel_.piola(matF, aleH, matJ);           //P(material)
-//matPres = materialModel_.getMaterialPressure(matF, aleH, matJ);
 lambdaH = sqrt((inter.pointToEdge(aleH) & N) & (inter.pointToEdge(aleH) & N)); 
 scalarField aleUp___ = inter.pointToEdge( op.inverseScalar(matJ) ) *
        (
@@ -33,15 +32,15 @@ scalarField aleUs___ = inter.pointToEdge( op.inverseScalar(matJ) ) *
 
 // Update spatial quantities
 spatialModel_.correct();
-spatJ   = det(F);
-spatH   = spatJ * op.invT(F);
-spatP   = spatialModel_.piola(F,  spatH, spatJ);             //P(spatial)
+//spatJ   = det(F);
+spatH   = spatJdet * op.invT(F);//spatJ * op.invT(F);
+spatP   = spatialModel_.piola(F,  spatH, spatJdet);             //P(spatial)
 
 // Update 'true'/solid quantities
 trueF = F & op.inverse(matF);
-trueJ = det(trueF);
+trueJ = det(F);//trueJ = spatJ; trueJ *= op.inverseScalar(matJ);
 trueH = trueJ * op.invT(trueF);
-model.correct(trueF, trueH, trueJ);
+model.correct(trueF, trueH, trueJ, spatJ, matJ);
 starP   = ((1.0-alpha)*matP) + (alpha*(trueF.T()&spatP));    // P*
 P = model.piola();
 
@@ -54,9 +53,15 @@ PHat = P & aleH;
 // Linear reconstruction
 vGrad = grad.gradient(v_);
 grad.reconstruct(v_, vGrad, vM, vP);
+//
+p = model.pressure();
+pGrad = grad.gradient(p);
+grad.reconstruct(p, pGrad, pM, pP);
 
 // Average terms
-stabC = inter.pointToEdge(matJ*rho)*(0.5*mech.SmatrixMod(aleUp___, aleUs___) & (vP - vM));
+stabC    = inter.pointToEdge(matJ*rho)*(0.5*mech.SmatrixMod(aleUp___, aleUs___) & (vP - vM));
+stabJacC = ((0.5*mech.SmatrixJacobianMod(aleUp___, aleUs___)) * (pP - pM))/rho.value();
+// (0.5/rho.value()) * (mech.SmatrixJacobianMod(aleUp___, aleUs___) & ((pP - pM) * (inter.pointToEdge(aleH) & (Sf/magSf))  )) ;//& (inter.pointToEdge(aleH) & (N));
 if (PHatTerm == "withInvolution") {
   forAll(Px, n) { 
     Px[n] = vector(P[n].xx(),P[n].yx(),P[n].zx()); 

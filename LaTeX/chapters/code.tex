@@ -218,19 +218,165 @@ Material Motion $n^\circ 2$:
 %\bigbreak
 
 
-\newpage
-\subsection{Energy equation}
+%\newpage
+%\subsection{Energy equation}
+%
+%\begin{subequations}
+%Theoretical Energy:
+%\begin{equation}
+%	E_{\cchi}^{theo} = \left[ \frac{1}{2} \frac{\vect{p}_{\x}\cdot \vect{p}_{\x}}{\rho_R} \right] + \left[ \frac{\mu}{2} \J^{-2/3} (\mat{F}\bm{:}\mat{F}) - \frac{3\mu}{2} + \frac{\kappa}{2}(\J-1)^{2}\right]
+%\end{equation}
+%Solved Energy
+%\begin{equation}
+%	\frac{\partial E_{\cchi}}{\partial t} = \DIV_{\cchi} \left( (\mat{P}\mat{H}_{\psi})^T\vect{v} \right) + \DIV_{\cchi} \left( \frac{E_{\cchi}}{\J_{\psi}}\mat{H}_{\psi}^T \vect{w} \right)
+%\end{equation}
+%\begin{equation}
+%	\frac{\partial E_{\cchi}}{\partial \vect{n}} = 0; \qquad E_{\cchi,0} = 17\times10^6\;  [kg.m^{-1}.s^{-2}]
+%\end{equation}
+%\end{subequations}
 
+\newpage
+\subsection{Conservation of the spatial Jacobian}
+Initially:
+\begin{equation}
+	\frac{\partial \J_{\phi}}{\partial t} = \DIV_{\cchi} \left( \mat{H}_{\phi}^T \hat{\vect{v}} \right)
+\end{equation}
+Using the velocity relation $\hat{\vect{v}} = \vect{v} + \mat{F}\vect{w}$ and the involution $\DIV_{\cchi}\mat{H}_{\phi} = \vect{0}$, the above equation yields
+\begin{equation}
+	\frac{\partial \J_{\phi}}{\partial t} = \mat{H}_{\phi} \bm{:} \GRAD_{\cchi}\vect{v} + \DIV_{\cchi} \left( \mat{H}_{\phi}^T \mat{F} \vect{w} \right)
+\end{equation}
 \begin{subequations}
-Theoretical Energy:
+The VC-FVM discretization is as follows:
 \begin{equation}
-	E_{\cchi}^{theo} = \left[ \frac{1}{2} \frac{\vect{p}_{\x}\cdot \vect{p}_{\x}}{\rho_R} \right] + \left[ \frac{\mu}{2} \J^{-2/3} (\mat{F}\bm{:}\mat{F}) - \frac{3\mu}{2} + \frac{\kappa}{2}(\J-1)^{2}\right]
+	V_a^{\cchi} \frac{\partial \J_{\phi}^a}{\partial t} = \mat{H}^a_{\phi} \bm{:} \GRAD_{\cchi}\vect{v}_a + \DIV_{\cchi} \left( \mat{H}^T_{\phi} \mat{F} \vect{w} \right)_a + stab_a
 \end{equation}
-Solved Energy
+with:
 \begin{equation}
-	\frac{\partial E_{\cchi}}{\partial t} = \DIV_{\cchi} \left( (\mat{P}\mat{H}_{\psi})^T\vect{v} \right) + \DIV_{\cchi} \left( \frac{E_{\cchi}}{\J_{\psi}}\mat{H}_{\psi}^T \vect{w} \right)
+    \mat{H}^a_{\phi} \bm{:} \GRAD_{\cchi}\vect{v}_a =  \mat{H}^a_{\psi} \bm{:} \left( \sum\limits_{b\in\Lambda_a} \vect{v}_a^{Ave} \otimes \vect{C}_{\cchi}^{ab} \right) + \mat{H}^a_{\phi} \bm{:} \left( \sum\limits_{\gamma\in\Lambda_a^B} \vect{v}_a^{\gamma} \otimes \vect{C}_{\cchi}^{\gamma} \right) 
+\end{equation}	
+\begin{equation}
+	\DIV_{\cchi} \left( \mat{H}^T_{\phi} \mat{F} \vect{w} \right)_a = \sum\limits_{b\in\Lambda_a} \left( \mat{H}^T_{\phi} \mat{F} \vect{w} \right)^{Ave} \vect{C}_{\cchi}^{ab} + \sum\limits_{\gamma\in\Lambda_a^B} \left( \mat{H}^T_{\phi} \mat{F} \vect{w} \right)^{\gamma} \vect{C}_{\cchi}^{\gamma} 
 \end{equation}
 \begin{equation}
-	\frac{\partial E_{\cchi}}{\partial \vect{n}} = 0; \qquad E_{\cchi,0} = 17\times10^6\;  [kg.m^{-1}.s^{-2}]
+	stab_a = \sum\limits_{b\in\Lambda_a} \left( \frac{1}{2} \mat{S}_{ab}^{J_{\phi}} (p^+ - p^-) \mat{H}_{\phi}^{Ave} \vect{N}_{ab}^{\cchi} \right)\cdot \left( \mat{H}_{\phi}^{Ave} \vect{C}_{ab}^{\cchi} \right)
 \end{equation}
 \end{subequations}
+%
+\begin{note}{Patch test} \newline
+Let $\vect{v}_{cst}$ be a constant velocity field. \newline
+Say $\vect{v} = \vect{v}_{cst}$, then $\mat{F} = \mat{H} = \mat{I}$. \newline
+As a result, $\mat{F}_{\psi} = \mat{F}_{\phi}$ and $\mat{H}_{\psi} = \mat{H}_{\phi}$. \newline 
+Recalling the spatial GCL, and using $\hat{\vect{v}} = \vect{v} + \mat{F}\vect{w}$, it yields
+\begin{equation*}
+    \frac{\partial \J_{\phi}}{\partial t} = \DIV_{\cchi} \left( \mat{H}_{\phi}^T  \hat{\vect{v}}\right) = \DIV_{\cchi} \left( \mat{H}_{\phi}^T  \vect{w}\right)
+\end{equation*}
+Recalling the material GCL, and using $\hat{\vect{v}} = \vect{v} + \mat{F}\vect{w}$, it yields
+\begin{equation*}
+	\frac{\partial \J_{\psi}}{\partial t} = \DIV_{\cchi} \left( \mat{H}_{\psi}^T  \vect{w}\right)
+\end{equation*}
+And it is obtained that a patch satisfying the constant velocities condition also fulfils
+\begin{equation*}
+	 \frac{\partial \J_{\phi}}{\partial t} = \DIV_{\cchi} \left( \mat{H}_{\psi}^T  \vect{w}\right) = \frac{\partial \J_{\psi}}{\partial t}
+\end{equation*}
+\end{note}
+%
+\subsection{Conservation of the spatial Deformation Gradient}
+In low order discretisations, the conservation of the Deformation Gradient aims at avoiding locking (especially in a nearly-incompressible scenario). It yields 
+\begin{equation}
+	\frac{\partial \mat{F}_{\phi}}{\partial t} = \GRAD_{\cchi} \left( \hat{\vect{v}} \right)
+\end{equation}
+and can alternatively written as 
+\begin{equation*}
+	\frac{\partial \mat{F}_{\phi}}{\partial t} = \DIV_{\cchi} \left( \hat{\vect{v}} \otimes \mat{I} \right)
+\end{equation*}
+\begin{subequations}
+The VC-FVM discretisation is as follows:
+\begin{equation}
+V_a^{\cchi} \frac{\partial \mat{F}_{\phi}^a}{\partial t} = 
+\GRAD_{\cchi} \left( \hat{\vect{v}} \right)_a
+\end{equation}
+where
+\begin{equation}
+	\GRAD_{\cchi} \left( \hat{\vect{v}} \right)_a = \sum\limits_{b\in\Lambda_a} \hat{\vect{v}}_a \otimes \vect{C}_{\cchi}^{ab}  +  \sum\limits_{\gamma\in\Lambda_a} \hat{\vect{v}}_{\gamma} \otimes \vect{C}_{\cchi}^{\gamma} 
+\end{equation}
+\end{subequations}
+%
+\subsection{Conservation of the material Deformation Gradient}
+The material Deformation Gradient, which corresponds to the Deformation Gradient of the material motion, is also a conserved quantity considered here. Its associated conservation law is defined as
+\begin{equation}
+	\frac{\partial \mat{F}_{\psi}}{\partial t} = \GRAD_{\cchi} \left( \vect{w} \right)
+\end{equation}
+and can alternatively written as 
+\begin{equation*}
+	\frac{\partial \mat{F}_{\psi}}{\partial t} = \DIV_{\cchi} \left( \vect{w} \otimes \mat{I} \right)
+\end{equation*}
+\begin{subequations}
+The VC-FVM discretisation is as follows:
+\begin{equation}
+	V_a^{\cchi}\frac{\partial \mat{F}_{\psi}^a}{\partial t} = \GRAD_{\cchi} \left( \vect{w} \right)_a
+\end{equation}
+where
+\begin{equation}
+	\GRAD_{\cchi} \left( \vect{w} \right)_a = \sum\limits_{b\in\Lambda_a} \vect{w}^{Ave}_a \otimes \vect{C}_{\cchi}^{ab} + \sum\limits_{\gamma\in\Lambda_a^B} \vect{w}_{\gamma} \otimes \vect{C}_{\cchi}^{\gamma}
+\end{equation}
+\end{subequations}
+%
+\subsection{Conservation of the material velocity}
+The evolution of the material velocity $\vect{w}$ is also governed by a conservation law.
+A first approach is to circumvent this law and to provide the code with a manufactured right hand side, corresponding to an aimed analytical solution. It then yields
+\begin{equation}
+  \frac{\partial \vect{w}}{\partial t} = \dot{\vect{w}}
+\end{equation}
+where $\dot{\vect{w}}$ is a given acceleration term.
+
+A second approach is to solve the following conservation law:
+\begin{equation}
+	\frac{\partial \vect{w}}{\partial t} = \DIV_{\cchi} \left( \mat{P}^* \right)
+\end{equation}
+%
+\subsection{Conservation of the linear momentum}
+The linear momentum follows the following conservation law:
+\begin{equation}
+	f
+\end{equation}
+
+\section{Boundary Conditions}
+\subsection{Free}
+\subsection{Clamp}
+\subsection{Traction}
+\subsection{Roller}
+\subsection{Skew-symmetric}
+
+
+
+
+
+
+
+\newpage 
+\subsection{Time integration}
+\begin{subequations}
+2 stages Runge-Kutta
+\begin{align}
+	\vect{U}_a^{\star} &= \vect{U}_a^n + \Delta t \; \dot{\vect{U}}_a^n (\vect{U}_a^n), \\
+	\vect{U}_a^{\star\star} &= \vect{U}_a^{\star} + \Delta t \; \dot{\vect{U}}_a^{\star} (\vect{U}_a^{\star}), \\
+	\vect{U}_a^{n+1} &= \frac{1}{2} \left( \vect{U}_a^n + \vect{U}_a^{\star\star} \right)
+\end{align}
+3 stages Runge-Kutta
+\begin{align}
+	\vect{U}_a^{\star} &= \vect{U}_a^n + \Delta t \; \dot{\vect{U}}_a^n (\vect{U}_a^n), \\
+%
+	\vect{U}_a^{\star\star} &= \frac{3}{4} \vect{U}_a^n + \frac{1}{4}\left( \vect{U}_a^{\star} + \Delta t \; \dot{\vect{U}}_a^{\star}(\vect{U}_a^{\star}) \right), \\ 
+%
+    \vect{U}_a^{\star\star\star} &= \frac{1}{3} \vect{U}_a^n + \frac{2}{3}\left( \vect{U}_a^{\star\star} + \Delta t \; \dot{\vect{U}}_a^{\star\star}(\vect{U}_a^{\star\star}) \right), \\ 
+%
+    \vect{U}_a^{n+1} &= \vect{U}_a^{\star\star\star}
+\end{align}
+\end{subequations}
+
+
+
+
+
+
+%

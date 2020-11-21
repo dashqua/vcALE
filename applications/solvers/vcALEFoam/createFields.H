@@ -95,6 +95,13 @@ vectorList xe = Xe;
                                                                                                            */
 Info << "Creating strain measure fields ..." << endl;
 
+// ALE - SPatial J (to be solved)
+pointScalarField spatJ(
+        IOobject ("spatJ", runTime.timeName(), mesh, IOobject::NO_READ, IOobject::AUTO_WRITE),
+        pMesh,
+        dimensionedScalar("spatJ", dimensionSet(0,0,0,0,0,0,0), 1)	
+);
+
 // ALE - Spatial F (to be solved)
 pointTensorField F ( IOobject("F", mesh), pMesh, Foam::tensor::I );
 
@@ -154,16 +161,23 @@ pointTensorField trueH ( IOobject("trueH", mesh), pMesh, Foam::tensor::I );
 pointScalarField trueJ ( IOobject("trueJ", mesh), pMesh, 1.0 );
 // ALE - Initialization of trueF and Piola Hat // NOTE : trueJ and trueH are not necessary here
 trueF = F & op.inverse(matF);
-trueJ = det(trueF);
+trueJ = det(F);//trueJ = spatJ; trueJ *= op.inverseScalar(matJ);//trueJ = /* det(trueF) */ spatJ * op.inverseScalar(matJ);
 trueH = trueJ * op.invT(trueF);
 
 // ALE - spatial J and H
-pointScalarField spatJ = det(F);
-pointTensorField spatH = spatJ * op.invT(F);
+//pointScalarField spatJ = det(F);
+//
+pointScalarField spatJdet(
+        IOobject ("spatJdet", runTime.timeName(), mesh, IOobject::NO_READ, IOobject::AUTO_WRITE),
+        pMesh,
+        dimensionedScalar("spatJdet", dimensionSet(0,0,0,0,0,0,0), 1)
+);
+spatJdet = det(F);
+pointTensorField spatH = spatJdet * op.invT(F);//spatJ * op.invT(F);
 
 // Solid Model
 solidModel model(trueF, mechanicalProperties, mesh);
-model.correct(trueF, trueH, trueJ);
+model.correct(trueF, trueH, trueJ, spatJ, matJ);
 
 // Model quantities
 const dimensionedScalar& rho   = model.density();
@@ -258,7 +272,7 @@ scalarField aleUs___ = inter.pointToEdge( op.inverseScalar(matJ) ) *
 Info << "Creating ALE Spatial Model ..." << nl;
 aleModel spatialModel_(mechanicalProperties, mesh, pMesh, "spatialModel");
 spatialModel_.correct();
-pointTensorField spatP   = spatialModel_.piola(F,  spatH, spatJ);
+pointTensorField spatP   = spatialModel_.piola(F,  spatH, spatJdet);
 
 // ALE - get Piola Star
 /*
@@ -378,6 +392,14 @@ vectorField vM(mesh.edges().size());
 vectorField vP(mesh.edges().size());
 grad.reconstruct(v_, vGrad, vM, vP);
 
+// Gradient of pressure
+vectorField pGrad = grad.gradient(p);
+
+// Reconstruction of nodal pressure
+scalarField pM(mesh.edges().size());
+scalarField pP(mesh.edges().size());
+grad.reconstruct(p, pGrad, pM, pP);
+
 /*
       ________  _____  _____  _____  ____  ____  ________   ______   
      |_   __  ||_   _||_   _||_   _||_  _||_  _||_   __  |.' ____ \
@@ -390,7 +412,11 @@ grad.reconstruct(v_, vGrad, vM, vP);
 Info << "Creating fields for fluxes ..." << endl;
 
 // Edge Stabilisation
-vectorField stabC = inter.pointToEdge(matJ*rho)*(0.5*mech.SmatrixMod(aleUp___, aleUs___) & (vP - vM));
+vectorField stabC    = inter.pointToEdge(matJ*rho)*(0.5*mech.SmatrixMod(aleUp___, aleUs___) & (vP - vM));
+
+tensorField stabJacC =   ((0.5*mech.SmatrixJacobianMod(aleUp___, aleUs___)) * (pP - pM))/rho.value(); 
+//(0.5/rho.value()) * (mech.SmatrixJacobianMod(aleUp___, aleUs___) & ((pP - pM) * (inter.pointToEdge(aleH) & (Sf/magSf))  )) ;
+//(0.5/rho) * (mech.SmatrixJacobianMod(aleUp___, aleUs___) * (pP - pM)) ;//& (inter.pointToEdge(aleH) & (Np)); 
 // Edge traction
 vectorField tC    = inter.pointToEdge(PHat) & N;  // case without Involution
 //
@@ -510,9 +536,27 @@ if (GCLtechnique == "withInvolution") {
     FatalErrorIn("createFields.H") << "GCL technique is not properly defined." << abort(FatalError);
 }
 
-//pointVectorField trac ( IOobject("trac",  runTime.timeName(), mesh, IOobject::MUST_READ, IOobject::AUTO_WRITE), pMesh );
+// RHS of spatial J
+pointScalarField rhsSpatJ1(
+    IOobject("rhsSpatJ1", mesh),
+    pMesh,
+    dimensionedScalar("rhsSpatJ1", dimensionSet(0,0,-1,0,0,0,0), 0)
+);
+rhsSpatJ1.primitiveFieldRef() = aleH && op.surfaceSum( inter.pointToEdge( v_ ) * Sf );	
+pointScalarField rhsSpatJ2(
+    IOobject("rhsSpatJ2", mesh),
+    pMesh,
+    dimensionedScalar("rhsSpatJ2", dimensionSet(0,0,-1,0,0,0,0), 0)
+);
+rhsSpatJ2.primitiveFieldRef() = op.surfaceSum( inter.pointToEdge( (spatH.T()&trueF)&solvedW ) & Sf );
+pointScalarField rhsSpatJ3(
+    IOobject("rhsSpatJ3", mesh),
+    pMesh,
+    dimensionedScalar("rhsSpatJ3", dimensionSet(0,0,-1,0,0,0,0), 0)
+);
+rhsSpatJ3.primitiveFieldRef() = op.surfaceSum( (stabJacC & (inter.pointToEdge(aleH)&(Sf/magSf)) ) & (inter.pointToEdge(aleH) & Sf) );
 
-// RHS of F equation
+// RHS of spatial F equation
 pointTensorField rhsF (
     IOobject ("rhsF", mesh),
     pMesh,
@@ -606,7 +650,7 @@ RKstage[1] = 1;
                                                             */
 
 Info << "Printing data ..." << endl;
-model.printMaterialProperties();
+model.printProperties();
 materialModel_.printProperties();
 spatialModel_.printProperties();
 
@@ -616,8 +660,6 @@ dual.printPrimalMeshCentroid();
 dual.printDualMeshCentroid();
 
 Info << "\nObjects all created !" << nl << nl << nl;
-
-
 
 
 

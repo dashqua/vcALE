@@ -77,6 +77,15 @@ int main(int argc, char *argv[])
     // Read density
     const dimensionedScalar& rho(mechanicalProperties.lookup("rho"));
 
+    // Read energy
+    const dimensionedScalar& E(mechanicalProperties.lookup("E"));
+
+    // Read nu
+    const dimensionedScalar& nu(mechanicalProperties.lookup("nu"));
+
+    // Compute mu
+    const dimensionedScalar mu = E/(2*(1+nu));
+
     // Nodal coordinates
     const vectorField& X = mesh.points();
 
@@ -153,6 +162,29 @@ int main(int argc, char *argv[])
 	    if ((0.0<X) && (0.0<Y)) {
 		lm[n] = rho.value() * v[n];
 	    }
+	}
+    } else if (tutorial == "swingingCube") {
+	// Read parameters
+	const scalar& A  = readScalar(runParameters.lookup("A"));
+	const scalar& B  = readScalar(runParameters.lookup("B"));
+	const scalar& C  = readScalar(runParameters.lookup("C"));
+	pointScalarField U0 (
+	         IOobject("U0", mesh),
+	         pMesh,
+	         dimensionedScalar(runParameters.lookup("U0"))
+	);
+
+	//const scalar cd  = Foam::sqrt(mu/rho); // useless
+	const scalar pi  = Foam::constant::mathematical::pi;
+
+	// Initialization of velocity
+	forAll(mesh.points(), n){
+          const scalar X = mesh.points()[n][0];
+	  const scalar Y = mesh.points()[n][1];
+	  const scalar Z = mesh.points()[n][2];
+          lm[n][0] = U0[n] * A * Foam::sin(pi*X/2.) * Foam::cos(pi*Y/2.) * Foam::cos(pi*Z/2.);
+	  lm[n][1] = U0[n] * B * Foam::cos(pi*X/2.) * Foam::sin(pi*Y/2.) * Foam::cos(pi*Z/2.);
+	  lm[n][2] = U0[n] * C * Foam::cos(pi*X/2.) * Foam::cos(pi*Y/2.) * Foam::sin(pi*Z/2.);
 	}
     } else {
 	Info << "Initial Conditions: nothing is applied." << nl;

@@ -160,16 +160,25 @@ tensorField mechanics::SmatrixMod
     scalarField& aleUp,
     scalarField& aleUs
 )
-{
-
-    // tmp<tensorield> S(new scalarField(mesh_.points().size(), tensor::zero));
+{    // tmp<tensorield> S(new scalarField(mesh_.points().size(), tensor::zero));
     tensorField S(mesh_.points().size(), tensor::zero);
     vectorField n = mechanics::spatialNormal();
-
     S = (aleUp*n*n) + (aleUs*(tensor::I-(n*n)));
-
     return S;
 }
+
+tensorField mechanics::SmatrixJacobianMod
+(
+    scalarField& aleUp,
+    scalarField& aleUs
+)
+{
+  tensorField S(mesh_.points().size(), tensor::zero);
+  vectorField n = mechanics::spatialNormal();
+  S = ((1./aleUp)*n*n) + ((1./aleUs)*(tensor::I-(n*n)));
+  return S;
+}
+  
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 } // End namespace Foam

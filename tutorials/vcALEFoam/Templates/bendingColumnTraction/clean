@@ -5,7 +5,7 @@ cd ${0%/*} || exit 1 # Run from this directory
 . $WM_PROJECT_DIR/bin/tools/CleanFunctions
 
 cleanCase;
-rm -rf *.png 0/p 0/u 0/E 0/matJ 0/uw 0/v_ log.* *.jpeg;
+rm -rf *.png 0/p 0/u 0/E 0/matJ 0/uw 0/v_ log.* *.jpeg  0/CpInv 0/rhsW   0/spatialModelP   0/strain_p   0/test   0/vMises    ;
 #killall vcALEFoam
 
 #/usr/bin/gmsh -3 bendingColumn.geo -o bendingColumn_625.msh > log.gmsh

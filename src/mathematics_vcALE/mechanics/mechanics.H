@@ -125,6 +125,12 @@ public:
             scalarField&
         );
 
+        tensorField SmatrixJacobianMod
+	(
+	    scalarField&,
+	    scalarField&
+	);
+  
 };
 
 

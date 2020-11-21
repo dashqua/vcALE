@@ -166,12 +166,20 @@ public:
         // Edit
 
             //- Correct material model
-            virtual void correct(pointTensorField&, pointTensorField&, pointScalarField&);
-
+            virtual void correct(pointTensorField&,
+				 pointTensorField&,
+				 pointScalarField&,
+				 pointScalarField&,
+				 pointScalarField&
+				 );
+  
         // Print
 
             //- Print material properties
-            void printMaterialProperties();
+            void printProperties();
+
+            void writeVars();
+  
 
 };
 

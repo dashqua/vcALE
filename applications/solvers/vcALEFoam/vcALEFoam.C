@@ -61,14 +61,18 @@ int main(int argc, char *argv[])
     {
         if (timeStepping == "variable")
         {
-            deltaT = (cfl*h)/model.Up();	
+	    //const dimensionedScalar& hnew = op.minimumEdgeLength();
+	    scalar minStretch = GREAT;
+	    forAll(stretch, n) { if (stretch[n] < minStretch) { minStretch = stretch[n]; } }
+            deltaT = (cfl*h)/(model.Up()/minStretch);	
             runTime.setDeltaT(deltaT);
         }
         t += deltaT; tstep++;
 	
         Info << "\nTime Step =" << tstep << "\n deltaT = " << deltaT.value() << " s"
              << "\n Time = " << t.value() << " s" << endl;
-	     	
+
+        spatJ.oldTime();	
         F.oldTime();        
 	matJ.oldTime();
 	matF.oldTime();
@@ -85,10 +89,11 @@ int main(int argc, char *argv[])
             }
         }
 
-	F        = 0.5*(F.oldTime()    + F);
-	matJ     = 0.5*(matJ.oldTime() + matJ);
-	matF     = 0.5*(matF.oldTime() + matF);
-        lm       = 0.5*(lm.oldTime()   + lm);   lm.correctBoundaryConditions();
+	spatJ    = 0.5*(spatJ.oldTime() + spatJ);
+	F        = 0.5*(F.oldTime()     + F);
+	matJ     = 0.5*(matJ.oldTime()  + matJ);
+	matF     = 0.5*(matF.oldTime()  + matF);
+        lm       = 0.5*(lm.oldTime()    + lm);   lm.correctBoundaryConditions();
 	solvedW  = 0.5*(solvedW.oldTime() + solvedW);
 	x        = 0.5*(x.oldTime() + x);
 	xw       = 0.5*(xw.oldTime() + xw);

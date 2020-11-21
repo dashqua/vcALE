@@ -106,13 +106,27 @@ solidModel::solidModel
 	F.time().timeName(),
 	F.db(),
 	IOobject::NO_READ,
-	IOobject::NO_WRITE
+	IOobject::AUTO_WRITE
 	),
       F.mesh(),
       dimensionedScalar("strain_p", dimless, 0.0)
    ),
-
+    
    CpInv_ (F),
+    /*
+   CpInv_ (
+     IOobject(
+	      "CpInv",
+	      F.time().timeName(),
+	      F.db(),
+	      IOobject::NO_READ,
+	      IOobject::AUTO_WRITE
+	      ),
+     F.mesh(),
+     dimensionedTensor("CpInv", F.dimensions(), tensor::zero)
+   ),
+    */
+    
    tau_ (F),
 
    vMises_(
@@ -128,9 +142,10 @@ solidModel::solidModel
    )
   
 {
+  //CpInv_ = F;
   if (model_ == "vonMises"){
-    Hm_  = dict.subDict("solidModel").subDict("vonMisesDict").lookup("Hm");
-    Ys0_ = dict.subDict("solidModel").subDict("vonMisesDict").lookup("Ys");
+    Hm_    = dict.subDict("solidModel").subDict("vonMisesDict").lookup("Hm");
+    Ys0_   = dict.subDict("solidModel").subDict("vonMisesDict").lookup("Ys");
   }
 }
 
@@ -142,7 +157,7 @@ solidModel::~solidModel()
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
-  void solidModel::correct(pointTensorField& F, pointTensorField& H, pointScalarField& J)
+  void solidModel::correct(pointTensorField& F, pointTensorField& H, pointScalarField& J, pointScalarField& spatJ, pointScalarField& matJ)
 {
   /*
     F has to be 'trueF' now.
@@ -174,14 +189,25 @@ solidModel::~solidModel()
 	    + p_[nodeID]*H_[nodeID];
       }
     } else if (model_ == "vonMises") {
+	    // Recconstruction of trueF J from spatJ
+      pointScalarField invMatJ = op.inverseScalar(matJ);
+      const pointScalarField& spatJ_ = const_cast<pointScalarField&>(spatJ);
+      //const pointScalarField  spatJ_clone = spatJ_;
+      //const pointScalarField newJ_   = spatJ_clone * invMatJ;
+
       const pointTensorField& F_ = const_cast<pointTensorField&>(F);
       const pointScalarField& J_ = const_cast<pointScalarField&>(J);
+
+
       const pointTensorField Finv_ = inv(F_).ref();
       //p_ = kappa_*(Foam::log(J_)/J_);
+     
       b_ = F_ & CpInv_ & F_.T();
 
       forAll(mesh_.points(), nodeID){
-	p_[nodeID] = kappa_.value()*(log(J_[nodeID]))/J_[nodeID];
+	scalar newJ = spatJ[nodeID] * invMatJ[nodeID];
+	//p_[nodeID] = kappa_.value()*( log(J_[nodeID]) )/J_[nodeID];     // pressure from det(F)
+	p_[nodeID] = kappa_.value() * ( log(newJ) / newJ );               // pressure from solved spatJ
 	op.eigenStructure(b_[nodeID]);
 	const vector& eVal = op.eigenValue();
 	const tensor& eVec = op.eigenVector();
@@ -194,7 +220,7 @@ solidModel::~solidModel()
 				);
 	// Yield Criterion
 	vector directionV = vector::zero;
-	scalar plasticM = 0.0;	
+	scalar plasticM = 0.0;
 	double f = sqrt((3.0/2.0)*(tauDevT&tauDevT)) - (Ys0_.value() + Hm_.value()*strain_p_[nodeID]);
 
 	vector tauDev = tauDevT;
@@ -230,7 +256,10 @@ solidModel::~solidModel()
 	// Kirchoff Stress Tensor
 	tau_[nodeID] = tensor::zero;
 	for (int i=0; i<3; i++) {
-	  tau_[nodeID] += (tauDev[i] + (J_[nodeID]*p_[nodeID]))
+          scalar pID = p_[nodeID];
+	  //scalar pID = kappa_.value()*( log(J_[nodeID]) )/J_[nodeID];//p_[nodeID];   // pressure from det
+	  //scalar pID = kappa_.value()*( log(newJ) )/newJ;                              // pressure from solved spatJ
+	  tau_[nodeID] += (tauDev[i] + (J_[nodeID]*pID))
 			  *(vector(eVec[3*i], eVec[3*i+1], eVec[3*i+2])
 			  *vector(eVec[3*i], eVec[3*i+1], eVec[3*i+2]));
 	}
@@ -251,8 +280,7 @@ solidModel::~solidModel()
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-void solidModel::printMaterialProperties()
-{
+void solidModel::printProperties() {
     Info<< "\nPrinting material properties ..." << nl
         << "Constitutive model = " << model_ << nl
         << "Density = " << rho_.value() << " " << rho_.dimensions() << nl
@@ -267,6 +295,13 @@ void solidModel::printMaterialProperties()
         << "Linear shear wave speed = " << Us_.value() << " " << Us_.dimensions() << endl;
 }
 
+void solidModel::writeVars() {
+  if (model_ == "vonMises"){
+    //CpInv_.write();
+    strain_p_.write();
+    vMises_.write();
+  }
+}
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
