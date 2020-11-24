@@ -23,11 +23,13 @@ startTime 0;
 
 stopAt endTime;
 
-endTime 0.5;
+endTime 1.0;
 
 timeStepping variable;
 
 cfl 0.4;
+
+RungeKuttaStages 2;
 
 deltaT 0;
 

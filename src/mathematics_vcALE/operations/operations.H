@@ -266,6 +266,9 @@ public:
 
         // Integration of a scalar Field over the domain
         scalar integrateOverDomain(pointScalarField& , const pointScalarField&);
+
+        // direct L2-difference of 2 vectorsFields
+        scalar L2diffX(pointVectorField&, pointVectorField&, const pointScalarField&);
 };
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //

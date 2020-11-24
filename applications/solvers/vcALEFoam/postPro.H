@@ -6,7 +6,7 @@ u.write();
 uw = xw - X;
 uw.write();
 
-//p = model.pressure();
+p = model.pressure();
 p.write();
 
 E.write();
@@ -19,33 +19,46 @@ model.writeVars();
 
 if (doPostPro == "activated") {
 
+  if (tutorial == "swingingCube") {
+    // Compute linear displacements or lm for small amplitudes
+    const scalar& A = readScalar(runParameters.lookup("A"));
+    const scalar& B = readScalar(runParameters.lookup("B"));
+    const scalar& C = readScalar(runParameters.lookup("C"));
+    const scalar pi = Foam::constant::mathematical::pi;
+
+    const dimensionedScalar& E = mechanicalProperties.lookup("E");
+    const dimensionedScalar& nu = mechanicalProperties.lookup("nu");
+    const dimensionedScalar mu = E/(2*(1+nu));
+    const dimensionedScalar lambda = (nu*E/((1+nu)*(1 - 2*nu)));
+    
+    const scalar cd = Foam::sqrt(((lambda.value())+(2*mu.value()))/rho.value());
+    const scalar t = runTime.value();
+    pointScalarField U0 (IOobject("U0", mesh), pMesh, dimensionedScalar(runParameters.lookup("U0")));
+    pointVectorField lm_theo (
+			     IOobject("lm_theo", runTime.timeName(), mesh, IOobject::NO_READ, IOobject::AUTO_WRITE), pMesh,
+			     dimensionedVector("lm_theo", u.dimensions(), vector::zero)
+			     );
+    forAll(lm_theo, n){
+      const scalar X = mesh.points()[n][0];
+      const scalar Y = mesh.points()[n][1];
+      const scalar Z = mesh.points()[n][2];
+    
+      lm_theo[n] = - (rho.value()*cd*pi*U0[n]*Foam::sqrt(3.0)/2.) * Foam::sin((Foam::sqrt(3.0)/2.)*cd*pi*t) * vector(
+				A * Foam::sin(pi*X/2.) * Foam::cos(pi*Y/2.) * Foam::cos(pi*Z/2.),
+			        B * Foam::cos(pi*X/2.) * Foam::sin(pi*Y/2.) * Foam::cos(pi*Z/2.),
+				C * Foam::cos(pi*X/2.) * Foam::cos(pi*Y/2.) * Foam::sin(pi*Z/2.)	  
+			 );
+    }
+    lm_theo.write();
+    //Compute the error and print it
+    Info << "L0-error of LM:\n L2errorLM = " << op.L2diffX(lm, lm_theo, V) << nl;
+    lm_theo.write();
+  }
 
 
-spatJ.write();
-spatJdet.write();
-
-
+  
 // Additionnal output quantities
-//lm.write();
-//matJ.write();
-//v_.write();
-//solvedW.write();
-//rhsW.write();
-
-//spatP.write();
-//starP.write();
-
 /*
-pointTensorField  FTspatP(
-	IOobject("FTspatP", runTime.timeName(), mesh, IOobject::NO_READ, IOobject::AUTO_WRITE), pMesh,
-	dimensionedTensor("FTspatP", spatP.dimensions(), tensor::zero)
-		);
-FTspatP = trueF.T()&spatP;
-FTspatP.write();
-*/
-
-
-
 // integration over domain of E
 Info << "Energy of the system:\n intE = " << op.integrateOverDomain(E,V) << endl;
 
@@ -63,7 +76,7 @@ theoE = kinE + potE;
 Info << "Theoretical kinetic energy of the system:\n kinE = " << op.integrateOverDomain(kinE,V) << endl;
 Info << "Theoretical potential energy of the system:\n potE = " << op.integrateOverDomain(potE,V) << nl;
 Info << "Theoretical energy of the system:\n theoE = " << op.integrateOverDomain(theoE,V) << endl;
-
+*/
 //spatJdet = det(F);
 //
 // ALE - CoG
@@ -86,7 +99,6 @@ Info << "sample rhsLm1      : " << rhsLm1[index] << nl;
 Info << "sample rhsLm2      : " << rhsLm2[index] << nl;
 Info << "sample rhsLm3      : " << rhsLm3[index] << nl;
 Info << "sample rhsLm4      : " << rhsLm4[index] << nl;
-Info << "sample rhsLm       : " << rhsLm[index] << nl;
 Info << "sample rhsW        : " << rhsW[index] << nl;
 Info << "sample rhsSpatJ1   : " << rhsSpatJ1[index] << nl;
 Info << "sample rhsSpatJ2   : " << rhsSpatJ2[index] << nl;

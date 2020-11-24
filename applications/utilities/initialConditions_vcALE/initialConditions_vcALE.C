@@ -182,9 +182,9 @@ int main(int argc, char *argv[])
           const scalar X = mesh.points()[n][0];
 	  const scalar Y = mesh.points()[n][1];
 	  const scalar Z = mesh.points()[n][2];
-          lm[n][0] = U0[n] * A * Foam::sin(pi*X/2.) * Foam::cos(pi*Y/2.) * Foam::cos(pi*Z/2.);
-	  lm[n][1] = U0[n] * B * Foam::cos(pi*X/2.) * Foam::sin(pi*Y/2.) * Foam::cos(pi*Z/2.);
-	  lm[n][2] = U0[n] * C * Foam::cos(pi*X/2.) * Foam::cos(pi*Y/2.) * Foam::sin(pi*Z/2.);
+          lm[n][0] = 0;//U0[n] * A * Foam::sin(pi*X/2.) * Foam::cos(pi*Y/2.) * Foam::cos(pi*Z/2.);
+	  lm[n][1] = 0;//U0[n] * B * Foam::cos(pi*X/2.) * Foam::sin(pi*Y/2.) * Foam::cos(pi*Z/2.);
+	  lm[n][2] = 0;//U0[n] * C * Foam::cos(pi*X/2.) * Foam::cos(pi*Y/2.) * Foam::sin(pi*Z/2.);
 	}
     } else {
 	Info << "Initial Conditions: nothing is applied." << nl;

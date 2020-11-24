@@ -152,25 +152,6 @@ forAll(mesh.boundary(), patch) {
 		pR3 = (I - (Npf*Npf)) & pR3;//tanLM3/matJ[nodeC];	
 		//
 
-		// STRONG TREATMENT
-		/*
-		tC_1 = vector::zero; 
-		tC_2 = vector::zero;
-		tC_3 = vector::zero;
-
-		tC2_1 = tensor::zero;
-		tC2_2 = tensor::zero;
-		tC2_3 = tensor::zero;
-	        */
-		/*
-		rhsLm1[node] = (I - (Npf*Npf)) & rhsLm1[node];
-		rhsLm2[node] = (I - (Npf*Npf)) & rhsLm2[node];
-		rhsLm3[node] = (I - (Npf*Npf)) & rhsLm3[node];
-		rhsLm4[node] = (I - (Npf*Npf)) & rhsLm4[node];
-		externalForces[node] = (I - (Npf*Npf)) & externalForces[node];
-		//lm[node]     = tanLM1;
-		*/
-
 	      } else if (PHatTerm == "withInvolution") {
                 FatalErrorIn("gEqns.H") << "'roller BC' and 'PHatTern' == 'withInvolution' not coded yet." << abort(FatalError);
 	      }
@@ -182,9 +163,13 @@ forAll(mesh.boundary(), patch) {
                 tC_3 = ((I - (Npf*Npf)) & (PHat[nodeC] & Npf)) ;//+ ((Npf*Npf) & traction);
 
 		// WEAK TREATMENT
-		vH1 = (normLM1/matJ[node])/rho.value()  + (trueF[node] & solvedW[node]);
-                vH2 = (normLM2/matJ[nodeB])/rho.value() + (trueF[nodeB] & solvedW[nodeB]);
-                vH3 = (normLM3/matJ[nodeC])/rho.value() + (trueF[nodeC] & solvedW[nodeC]);
+		vH1 = (Npf*Npf) & vH1;//(normLM1/matJ[node])/rho.value()  + (trueF[node] & solvedW[node]);
+                vH2 = (Npf*Npf) & vH2;//(normLM2/matJ[nodeB])/rho.value() + (trueF[nodeB] & solvedW[nodeB]);
+                vH3 = (Npf*Npf) & vH3;//(normLM3/matJ[nodeC])/rho.value() + (trueF[nodeC] & solvedW[nodeC]);
+
+                pR1 = (Npf*Npf) & pR1;//tanLM1/matJ[node];
+                pR2 = (Npf*Npf) & pR2;//tanLM2/matJ[nodeB];
+                pR3 = (Npf*Npf) & pR3;//tanLM3/matJ[nodeC];
 
 	      } else if (PHatTerm == "withInvolution") {
 		FatalErrorIn("gEqns.H") << "'skew BC' and 'PHatTern' == 'withInvolution' not coded yet." << abort(FatalError);
@@ -309,23 +294,18 @@ forAll(mesh.boundary(), patch) {
       forAll(mesh.faces()[face], nodei) {
         const label& node = mesh.faces()[face][nodei];
         lm[node]      = (I - (Npf*Npf)) & lm[node];
-	//vector p = mesh.points()[node];
-
-	//if ((p[0] == 0) && (p[1] ==0) & (p[2] == 0)) { Info << lm[node] << nl; } 
-	//solvedW[node] = (I - (Npf*Npf)) & solvedW[node];
       }
     }
   } else if (patx.name().find("skew") != string::npos) {
-    Info << "skew" <<nl;
     forAll(mesh.boundaryMesh()[patch], facei) {
       const label& face = mesh.boundaryMesh()[patch].start() + facei;
       vector Npf = N_p.boundaryField()[patch][facei];
       forAll(mesh.faces()[face], nodei) {
         const label& node = mesh.faces()[face][nodei];
         lm[node]      = (Npf*Npf) & lm[node];
-	//solvedW[node] = (I - (Npf*Npf)) & solvedW[node];
       }
     }
+    
   } else { }
 }
 

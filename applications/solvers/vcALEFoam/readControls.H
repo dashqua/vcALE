@@ -111,3 +111,23 @@ Info << "Computation of solvedW's RHS: use of Pstar (1) or wDot (0): " << usePst
 //const scalar updateEvery = mechanicalProperties.lookupOrDefault<scalar>("updateEvery", 1);
 const scalar& updateEvery = readScalar(mechanicalProperties.lookup("updateEvery"));
 scalar curTimeStep = 0;
+
+
+
+// Number of Runge-Kutta Stages
+//  Note: Current possible options are 2 or 3
+// int nbRKstages = 3;// 2 or 3;
+const scalar& nbRKstages_ = readScalar(controlDict.lookup("RungeKuttaStages"));
+const int nbRKstages(nbRKstages_);
+
+//Info << "nbRKstages_ : " << nbRKstages_ << nl;
+//Info << "nbRKstages  : " << nbRKstages  << nl;
+/*
+if (nbRKstages != 2 || nbRKstages != 3) {
+    FatalErrorIn("readControls.H") << "'RungeKuttaStages' has to be '2' or '3'." << abort(FatalError);
+}
+*/
+
+
+
+//

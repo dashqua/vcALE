@@ -85,6 +85,56 @@ const vectorList& Xe = dual.edgeCentre();
 // Spatial edge centre coordiantes
 vectorList xe = Xe;
 
+
+/*
+   ______   _____   ______   _______  _____          _        ______  ________  ____    ____  ________  ____  _____  _________   ______   
+   |_   _ `.|_   _|.' ____ \ |_   __ \|_   _|        / \     .' ___  ||_   __  ||_   \  /   _||_   __  ||_   \|_   _||  _   _  |.' ____ \
+     | | `. \ | |  | (___ \_|  | |__) | | |         / _ \   / .'   \_|  | |_ \_|  |   \/   |    | |_ \_|  |   \ | |  |_/ | | \_|| (___ \_| 
+     | |  | | | |   _.____`.   |  ___/  | |   _    / ___ \  | |         |  _| _   | |\  /| |    |  _| _   | |\ \| |      | |     _.____`.  
+    _| |_.' /_| |_ | \____) | _| |_    _| |__/ | _/ /   \ \_\ `.___.'\ _| |__/ | _| |_\/_| |_  _| |__/ | _| |_\   |_    _| |_   | \____) | 
+   |______.'|_____| \______.'|_____|  |________||____| |____|`.____ .'|________||_____||_____||________||_____|\____|  |_____|   \______.' 
+                                                                                                                                              */
+
+Info << "Creating fields for post-processing ..." << endl;
+
+// Nodal displacements
+pointVectorField u (
+    IOobject ("u", runTime.timeName(), mesh, IOobject::NO_READ, IOobject::AUTO_WRITE),
+    pMesh,
+    dimensionedVector("u", dimLength, vector::zero)
+);
+// w Nodal displacements
+pointVectorField uw (
+    IOobject ("uw", runTime.timeName(), mesh, IOobject::NO_READ, IOobject::AUTO_WRITE),
+    pMesh,
+    dimensionedVector("uw", dimLength, vector::zero)
+);
+X -= u;
+
+const word& tutorial(runParameters.lookupOrDefault<word>("tutorial", "None"));
+if (tutorial == "swingingCube") {
+    const scalar& A = readScalar(runParameters.lookup("A"));
+    const scalar& B = readScalar(runParameters.lookup("B"));
+    const scalar& C = readScalar(runParameters.lookup("C"));
+    const scalar pi = Foam::constant::mathematical::pi;
+    pointScalarField U0 (IOobject("U0", mesh), pMesh, dimensionedScalar(runParameters.lookup("U0")));
+
+    forAll(mesh.points(), n) {
+        const scalar X = mesh.points()[n][0];
+        const scalar Y = mesh.points()[n][1];
+        const scalar Z = mesh.points()[n][2];
+        u[n] = U0[n] * vector(
+             A * Foam::sin(pi*X/2.) * Foam::cos(pi*Y/2.) * Foam::cos(pi*Z/2.),
+             B * Foam::cos(pi*X/2.) * Foam::sin(pi*Y/2.) * Foam::cos(pi*Z/2.),
+             C * Foam::cos(pi*X/2.) * Foam::cos(pi*Y/2.) * Foam::sin(pi*Z/2.)
+                                     );
+   }
+   x = u + X; 
+}// else { Info << "ERROR" ; return 1; }
+
+//X -= u;
+
+
 /*
     ______     ___   _____  ____   ____  ________  ______     ____   ____  _       _______     ______   
   .' ____ \  .'   `.|_   _||_  _| |_  _||_   __  ||_   _ `.  |_  _| |_  _|/ \     |_   __ \  .' ____ \
@@ -155,12 +205,57 @@ pointScalarField E (
 Info << "Creating constitutive model ..." << endl;
 // Deformation gradient tensor for P material model
 pointTensorField trueF ( IOobject("trueF", mesh), pMesh, Foam::tensor::I );
+// ALE - Initialization of trueF and Piola Hat // NOTE : trueJ and trueH are not necessary here
+trueF = F & op.inverse(matF);
+
+
+
+
+
+
+
+if (tutorial == "swingingCube") { 
+    const scalar& A = readScalar(runParameters.lookup("A"));
+    const scalar& B = readScalar(runParameters.lookup("B"));
+    const scalar& C = readScalar(runParameters.lookup("C"));
+    const scalar pi = Foam::constant::mathematical::pi;
+    pointScalarField U0 (IOobject("U0", mesh), pMesh, dimensionedScalar(runParameters.lookup("U0")));
+    forAll(mesh.points(), n) {// += because F is already I
+      const scalar X = mesh.points()[n][0];
+      const scalar Y = mesh.points()[n][1];
+      const scalar Z = mesh.points()[n][2];
+      trueF[n] += pi/2. * U0[n] * tensor(
+	            A * Foam::cos(pi*X/2.) * Foam::cos(pi*Y/2.) * Foam::cos(pi*Z/2.),
+		    -A * Foam::sin(pi*X/2.) * Foam::sin(pi*Y/2.) * Foam::cos(pi*Z/2.),
+		    -A * Foam::sin(pi*X/2.) * Foam::cos(pi*Y/2.) * Foam::sin(pi*Z/2.),
+		    //
+		    -B * Foam::sin(pi*X/2.) * Foam::sin(pi*Y/2.) * Foam::cos(pi*Z/2.),
+		    B * Foam::cos(pi*X/2.) * Foam::cos(pi*Y/2.) * Foam::cos(pi*Z/2.),
+		    -B * Foam::cos(pi*X/2.) * Foam::sin(pi*Y/2.) * Foam::sin(pi*Z/2.),
+		    //
+		    -C * Foam::sin(pi*X/2.) * Foam::cos(pi*Y/2.) * Foam::sin(pi*Z/2.),
+		    -C * Foam::cos(pi*X/2.) * Foam::sin(pi*Y/2.) * Foam::sin(pi*Z/2.),
+		    C * Foam::cos(pi*X/2.) * Foam::cos(pi*Y/2.) * Foam::cos(pi*Z/2.)
+		      );
+      F = trueF;
+    }
+} /* else {
+	Info << "error tuto = " << tutorial << nl;
+	return 1;
+}*/
+
+
+
+
+
+
+
+
+
 // cofactor tensor for P material model
 pointTensorField trueH ( IOobject("trueH", mesh), pMesh, Foam::tensor::I );
 // Jacobian for P material model
 pointScalarField trueJ ( IOobject("trueJ", mesh), pMesh, 1.0 );
-// ALE - Initialization of trueF and Piola Hat // NOTE : trueJ and trueH are not necessary here
-trueF = F & op.inverse(matF);
 trueJ = det(F);//trueJ = spatJ; trueJ *= op.inverseScalar(matJ);//trueJ = /* det(trueF) */ spatJ * op.inverseScalar(matJ);
 trueH = trueJ * op.invT(trueF);
 
@@ -591,30 +686,6 @@ rhsE1.primitiveFieldRef() = op.surfaceSum( inter.pointToEdge(PHat.T()&(lm/rho.va
 rhsE2.primitiveFieldRef() = op.surfaceSum( inter.pointToEdge((aleH.T()&solvedW) * E)  & Sf );
 rhsE = rhsE1 + rhsE2;
 
-/*
-   ______   _____   ______   _______  _____          _        ______  ________  ____    ____  ________  ____  _____  _________   ______   
-   |_   _ `.|_   _|.' ____ \ |_   __ \|_   _|        / \     .' ___  ||_   __  ||_   \  /   _||_   __  ||_   \|_   _||  _   _  |.' ____ \
-     | | `. \ | |  | (___ \_|  | |__) | | |         / _ \   / .'   \_|  | |_ \_|  |   \/   |    | |_ \_|  |   \ | |  |_/ | | \_|| (___ \_| 
-     | |  | | | |   _.____`.   |  ___/  | |   _    / ___ \  | |         |  _| _   | |\  /| |    |  _| _   | |\ \| |      | |     _.____`.  
-    _| |_.' /_| |_ | \____) | _| |_    _| |__/ | _/ /   \ \_\ `.___.'\ _| |__/ | _| |_\/_| |_  _| |__/ | _| |_\   |_    _| |_   | \____) | 
-   |______.'|_____| \______.'|_____|  |________||____| |____|`.____ .'|________||_____||_____||________||_____|\____|  |_____|   \______.' 
-                                                                                                                                              */
-
-Info << "Creating fields for post-processing ..." << endl;
-
-// Nodal displacements
-pointVectorField u (
-    IOobject ("u", runTime.timeName(), mesh, IOobject::NO_READ, IOobject::AUTO_WRITE),
-    pMesh,
-    dimensionedVector("u", dimLength, vector::zero)
-);
-// w Nodal displacements
-pointVectorField uw (
-    IOobject ("uw", runTime.timeName(), mesh, IOobject::NO_READ, IOobject::AUTO_WRITE),
-    pMesh,
-    dimensionedVector("uw", dimLength, vector::zero)
-);
-X -= u;
 
 /*
   _________  _____  ____    ____  ________   ____   ____  _       _______     ______   
@@ -639,6 +710,30 @@ scalarList RKstage(2);
 RKstage[0] = 0;
 RKstage[1] = 1;
 
+// Alternative implementation of RK coefficient table
+// the first coef in the table is for U^n 
+// the second coef is for the solved term
+//int nbRKstages = 3; // 2 or 3;
+double RKcoefTable[nbRKstages][2];
+//int RKcoefTable[nbRKstages][2];
+if (nbRKstages == 2) {
+    //double RKcoefTable[nbRKstages][2] = {{0,1}, {.5,.5}};
+    RKcoefTable[0][0] = 0;
+    RKcoefTable[0][1] = 1;
+    RKcoefTable[1][0] = .5;
+    RKcoefTable[1][1] = .5;
+} else if (nbRKstages == 3) {
+    //double RKcoefTable[nbRKstages][2] = {{0,1}, {.75,.25}, {1./3.,2./3.}};
+    RKcoefTable[0][0] = 0;
+    RKcoefTable[0][1] = 1;
+    RKcoefTable[1][0] = .75;
+    RKcoefTable[1][1] = .25;
+    RKcoefTable[2][0] = 1./3.;
+    RKcoefTable[2][1] = 2./3.;    
+} else {
+   FatalErrorIn("createFields.H") << "Wrong number of RK steps" << abort(FatalError);
+}
+Info << "Integration method: " << nbRKstages << " stages Runge Kutta." << nl;
 
 /*
       _______  _______     _____  ____  _____  _________  

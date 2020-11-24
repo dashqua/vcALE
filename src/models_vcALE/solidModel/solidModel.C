@@ -188,6 +188,23 @@ solidModel::~solidModel()
 	    - ((mu_.value()/3.0)*pow(J_[nodeID],(-5.0/3.0))*(F_[nodeID] && F_[nodeID])*H_[nodeID])
 	    + p_[nodeID]*H_[nodeID];
       }
+    } else if (model_ == "MooneyRivlin") { 
+       //Compressible Mooney-Rivlin
+       // taken from: An upwind vertex centred Finite Volume solver for Lagrangian solid dynamics
+       // Miquel Aguirre 1, Antonio J. Gil ∗, Javier Bonet, Chun Hean Lee Zienkiewicz
+      const pointTensorField& F__ = const_cast<pointTensorField&>(F);
+      const pointTensorField& H__ = const_cast<pointTensorField&>(H);
+      const pointScalarField& J__ = const_cast<pointScalarField&>(J);
+      const tensorField& H_ = H__.internalField();
+      const tensorField& F_ = F__.internalField();
+      const scalarField& J_ = J__.internalField();
+
+      forAll(mesh_.points(), nodeID){
+	  p_[nodeID] = kappa_.value() * (J_[nodeID]-1.0);
+          P_[nodeID] = 
+              (mu_.value() * (F_[nodeID] - (H_[nodeID]/J_[nodeID]))) + (lambda_.value()*(J_[nodeID]-1.0)*H_[nodeID]);
+      }
+
     } else if (model_ == "vonMises") {
 	    // Recconstruction of trueF J from spatJ
       pointScalarField invMatJ = op.inverseScalar(matJ);

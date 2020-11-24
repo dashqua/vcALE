@@ -84,6 +84,10 @@ class aleModel
   //- ALE beta coefficient for Motion Mapping
   scalar beta_;
 
+  //- ALE XR and YR for fictitious motion
+  scalar XR;
+  scalar YR;
+
   //- ALE T period coefficient for Mot Map
   scalar T_;
 

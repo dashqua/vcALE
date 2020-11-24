@@ -112,7 +112,9 @@ aleModel::aleModel
     fictitiousMotionType_("Void"),
 
     beta_( 0.0 ),
-    T_( 0.0 ),
+    XR(1.0),
+    YR(6.0),
+    T_(0.0),
     
     rho_(dict.lookup("rho")),
     E_(dict.lookup("E")),
@@ -126,6 +128,10 @@ aleModel::aleModel
   if (model_ == "neoHookean"){
     dict.subDict(name_).subDict("neoHookeanDict").lookup("fictitiousMotionType") >> fictitiousMotionType_;
     dict.subDict(name_).subDict("neoHookeanDict").lookup("beta") >> beta_;
+
+    dict.subDict(name_).subDict("neoHookeanDict").lookup("XR") >> XR;
+    dict.subDict(name_).subDict("neoHookeanDict").lookup("YR")>> YR;
+    
     dict.subDict(name_).subDict("neoHookeanDict").lookup("T") >> T_;
   }
 }
@@ -155,10 +161,12 @@ void aleModel::correct()
     scalar pi = Foam::constant::mathematical::pi, pi2 = pi*pi, T2=T_*T_;
     forAll(motMap_, p)
     {
+	    
       //Info << "correcting ALE Motion Mapping\n";
       scalar X = mesh_.points()[p][0];
       scalar Y = mesh_.points()[p][1];
       scalar Z = mesh_.points()[p][2];
+      /*
       motMap_[p][0] =
 	X +   beta_ * Foam::sin(2*pi*X) * Foam::sin(pi*Y/3.0) * Foam::sin(pi*t/T_)*Foam::sin(pi*t/T_);
       motMap_[p][1] =
@@ -185,9 +193,10 @@ void aleModel::correct()
 	);
       J_[p] = det(defGrad_[p]);
       H_[p] = J_[p] * inv(defGrad_[p]).T();
-      wDot_[p][0] = 2*beta_*pi2/T2 * Foam::sin(2*pi*X) * Foam::sin(pi*Y/3.0)
+      */
+      wDot_[p][0] = 2*beta_*pi2/T2 * Foam::sin(2*pi*X/XR) * Foam::sin(2*pi*Y/YR)
 	* ((Foam::cos(pi*t/T_)*Foam::cos(pi*t/T_)) - (Foam::sin(pi*t/T_)*Foam::sin(pi*t/T_)));
-      wDot_[p][1] = 40*beta_*pi2/T2 * Foam::sin(2*pi*X) * Foam::sin(pi*Y/3.0)
+      wDot_[p][1] = 40*beta_*pi2/T2 * Foam::sin(2*pi*X/XR) * Foam::sin(2*pi*Y/YR)
 	* ((Foam::cos(2*pi*t/T_)*Foam::cos(2*pi*t/T_)) - (Foam::sin(2*pi*t/T_)*Foam::sin(2*pi*t/T_)));
       wDot_[p][2] = 0; 
       

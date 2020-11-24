@@ -911,6 +911,14 @@ scalar operations::integrateOverDomain(pointScalarField& matE, const pointScalar
   return sum/( sizeof(mesh_.points())/sizeof(mesh_.points()[0]) );
 }
 
+scalar operations::L2diffX(pointVectorField& v1, pointVectorField& v2, const pointScalarField& V){
+    scalar sum(0.0);
+    forAll(mesh_.points(), n){
+      sum += V[n] * Foam::pow( v1[n][0]-v2[n][0] , 2);
+  }
+    return Foam::sqrt(sum);
+}
+
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 } // End namespace Foam

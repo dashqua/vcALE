@@ -81,14 +81,33 @@ int main(int argc, char *argv[])
 	x.oldTime(); 
 	xw.oldTime(); 
 	E.oldTime(); 
+	
+	for(int n=0; n<nbRKstages; n++) {
+            #include "gEqns.H"
+            //
+            #include "updateVariables.H"
+            //
+	    spatJ = (RKcoefTable[n][0] * spatJ.oldTime()) + (RKcoefTable[n][1] * spatJ);
+	    F     = (RKcoefTable[n][0] * F.oldTime()) + (RKcoefTable[n][1] * F);
+	    matJ  = (RKcoefTable[n][0] * matJ.oldTime()) + (RKcoefTable[n][1] * matJ);
+	    matF  = (RKcoefTable[n][0] * matF.oldTime()) + (RKcoefTable[n][1] * matF);
+	    lm    = (RKcoefTable[n][0] * lm.oldTime()) + (RKcoefTable[n][1] * lm);
+	    solvedW = (RKcoefTable[n][0] * solvedW.oldTime()) + (RKcoefTable[n][1] * solvedW);
+	    x = (RKcoefTable[n][0] * x.oldTime()) + (RKcoefTable[n][1] * x);
+	    xw = (RKcoefTable[n][0] * xw.oldTime()) + (RKcoefTable[n][1] * xw);
+	    E = (RKcoefTable[n][0] * E.oldTime()) + (RKcoefTable[n][1] * E);
+	}
 
+	/*
 	forAll(RKstage, i) {
             #include "gEqns.H"
-            if (RKstage[i] == 0) {
+            if(true) { // if (RKstage[i] == 0) {
                 #include "updateVariables.H"
             }
+//       if (RKstage[i] == 0) { lm = (0.75*lm.oldTime()) + (0.25* lm);}
+//       if (RKstage[i] == 
         }
-
+	
 	spatJ    = 0.5*(spatJ.oldTime() + spatJ);
 	F        = 0.5*(F.oldTime()     + F);
 	matJ     = 0.5*(matJ.oldTime()  + matJ);
@@ -98,7 +117,8 @@ int main(int argc, char *argv[])
 	x        = 0.5*(x.oldTime() + x);
 	xw       = 0.5*(xw.oldTime() + xw);
 	E        = 0.5*(E.oldTime() + E);
-	
+	*/
+
         #include "updateVariables.H"
 
         if (runTime.outputTime())
@@ -114,9 +134,6 @@ int main(int argc, char *argv[])
 	} else {
           FatalErrorIn("vcALEFoam.C") <<"Error in curTimeStep "<< abort(FatalError);
 	}
-
-
-
 
 
 
