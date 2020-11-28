@@ -901,6 +901,26 @@ pointTensorField operations::volumeIntegrateTensor2
 
     return sum1;
 }
+
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+void operations::volumeIntegrateGlobal (
+  pointTensorField& t1, pointTensorField& t2, pointTensorField& t3,                                              //3
+  pointVectorField& v1, pointVectorField& v2, pointVectorField& v3, pointVectorField& v4, pointVectorField& v5,  //5
+  pointScalarField& s1, pointScalarField& s2, pointScalarField& s3, pointScalarField& s4, pointScalarField& s5, pointScalarField& s6, //6
+  const pointScalarField& V
+) const
+{
+  forAll(mesh_.points(), n){
+    t1[n] /=V[n]; t2[n] /=V[n]; t3[n] /=V[n];
+    v1[n] /=V[n]; v2[n] /=V[n]; v3[n] /=V[n]; v4[n] /=V[n]; v5[n] /=V[n];
+    s1[n] /=V[n]; s2[n] /=V[n]; s3[n] /=V[n]; s4[n] /=V[n]; s5[n] /=V[n]; s6[n] /=V[n];
+  }
+}
+
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 scalar operations::integrateOverDomain(pointScalarField& matE, const pointScalarField& V){
@@ -911,12 +931,14 @@ scalar operations::integrateOverDomain(pointScalarField& matE, const pointScalar
   return sum/( sizeof(mesh_.points())/sizeof(mesh_.points()[0]) );
 }
 
-scalar operations::L2diffX(pointVectorField& v1, pointVectorField& v2, const pointScalarField& V){
-    scalar sum(0.0);
+vector operations::L2diffXYZ(pointVectorField& v1, pointVectorField& v2, const pointScalarField& V){
+  scalar sumX(0.0), sumY(0.0), sumZ(0.0);
     forAll(mesh_.points(), n){
-      sum += V[n] * Foam::pow( v1[n][0]-v2[n][0] , 2);
+      sumX += V[n] * Foam::pow( v1[n][0]-v2[n][0] , 2);
+      sumY += V[n] * Foam::pow( v1[n][1]-v2[n][1] , 2);
+      sumZ += V[n] * Foam::pow( v1[n][2]-v2[n][2] , 2);      
   }
-    return Foam::sqrt(sum);
+    return vector( Foam::sqrt(sumX), Foam::sqrt(sumY), Foam::sqrt(sumZ) );
 }
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //

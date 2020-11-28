@@ -7,4 +7,8 @@ if ( face.size() == 4 ){
 } else {
     FatalErrorIn("checks.H") << "The mesh is not tetrahedral." << abort(FatalError);
 }
-// return 0;
+// return 0
+
+
+
+const word& solidModel__ = mechanicalProperties.subDict("solidModel").lookup("solidModel");

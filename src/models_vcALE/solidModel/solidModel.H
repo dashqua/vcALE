@@ -165,12 +165,26 @@ public:
 
         // Edit
 
-            //- Correct material model
+	    //-ALE: Correct CpInv, strain_p and Piola 
+	    // (only for plasticity model)
+	    virtual void correct(pointTensorField&,
+			         pointTensorField&,
+				 pointScalarField&,
+				 pointScalarField&,
+				 pointScalarField&,
+				 //
+				 pointTensorField&,
+				 pointScalarField&
+			         );
+
+
+            //- Correct solid model
             virtual void correct(pointTensorField&,
 				 pointTensorField&,
 				 pointScalarField&,
 				 pointScalarField&,
-				 pointScalarField&
+				 pointScalarField&/*,
+				 pointTensorField& */
 				 );
   
         // Print

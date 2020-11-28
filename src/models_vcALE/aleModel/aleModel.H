@@ -114,6 +114,9 @@ class aleModel
   /////////////////////////////
   // Operations definition
   operations op;
+
+  // in an attempt to save up some time
+  bool usePstar_;
   
 private:
 
@@ -179,7 +182,7 @@ public:
   pointTensorField piola (pointTensorField&, pointTensorField&, pointScalarField&);
 
   // get Pres_{Mat} from J_{Mat}, according to the chosen model
-  pointScalarField getMaterialPressure (pointTensorField&, pointTensorField&, pointScalarField&);
+  //pointScalarField getMaterialPressure (pointTensorField&, pointTensorField&, pointScalarField&);
 };
 
 

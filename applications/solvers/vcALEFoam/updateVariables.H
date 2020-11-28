@@ -1,8 +1,5 @@
 // Update external Forces
-externalForces.correctBoundaryConditions();
-
-// Update spatial normals
-//n = mech.spatialNormal();
+//externalForces.correctBoundaryConditions();
 
 // Strain measures
 stretch = mech.stretch();
@@ -32,16 +29,23 @@ scalarField aleUs___ = inter.pointToEdge( op.inverseScalar(matJ) ) *
 
 // Update spatial quantities
 spatialModel_.correct();
-//spatJ   = det(F);
-spatH   = spatJdet * op.invT(F);//spatJ * op.invT(F);
-spatP   = spatialModel_.piola(F,  spatH, spatJdet);             //P(spatial)
+spatJdet = det(F); //spatJ   = det(F);
+spatH    = spatJdet * op.invT(F);//spatJ * op.invT(F);
+spatP    = spatialModel_.piola(F,  spatH, spatJdet);             //P(spatial)
 
 // Update 'true'/solid quantities
 trueF = F & op.inverse(matF);
-trueJ = det(F);//trueJ = spatJ; trueJ *= op.inverseScalar(matJ);
+trueJ = det(F);
 trueH = trueJ * op.invT(trueF);
-model.correct(trueF, trueH, trueJ, spatJ, matJ);
-starP   = ((1.0-alpha)*matP) + (alpha*(trueF.T()&spatP));    // P*
+if (solidModel__ == "vonMises") {
+    Info << "vonMises model correct" << nl;
+    D = DH / matJ; alpha = alphaH / matJ; 
+    model.correct(trueF, trueH, trueJ, spatJ, matJ, D, alpha);
+    forAll(D, n) { DH[n] = D[n] * matJ[n];  alphaH[n] = alpha[n] * matJ[n]; }
+} else {
+    model.correct(trueF, trueH, trueJ, spatJ, matJ);
+}
+starP   = ((1.0-alpha_)*matP) + (alpha_*(trueF.T()&spatP));    // P*
 P = model.piola();
 
 // Update velocities
@@ -61,7 +65,7 @@ grad.reconstruct(p, pGrad, pM, pP);
 // Average terms
 stabC    = inter.pointToEdge(matJ*rho)*(0.5*mech.SmatrixMod(aleUp___, aleUs___) & (vP - vM));
 stabJacC = ((0.5*mech.SmatrixJacobianMod(aleUp___, aleUs___)) * (pP - pM))/rho.value();
-// (0.5/rho.value()) * (mech.SmatrixJacobianMod(aleUp___, aleUs___) & ((pP - pM) * (inter.pointToEdge(aleH) & (Sf/magSf))  )) ;//& (inter.pointToEdge(aleH) & (N));
+
 if (PHatTerm == "withInvolution") {
   forAll(Px, n) { 
     Px[n] = vector(P[n].xx(),P[n].yx(),P[n].zx()); 
@@ -79,14 +83,16 @@ if (GCLtechnique == "withInvolution") {
 } else if (GCLtechnique == "withoutInvolution") {
     HTwC  = inter.pointToEdge( aleH.T() & solvedW ) & N;
     pRwHC = inter.pointToEdge( (pR*solvedW) & aleH ) & N;					      
-} else {
-    FatalErrorIn("updateVariables.H") << "GCL technique is not properly defined." << abort(FatalError);
+} 
+//vC  = inter.pointToEdge( vHat )      * N;
+//wC  = inter.pointToEdge( solvedW )   * N;
+
+//PmatHC    = inter.pointToEdge( matP  & aleH ) & N;
+if (solidModel__ == "vonMises") {	
+    D = DH / matJ;    alpha = alpha / matJ;
+    forAll(D1, n) {
+        D1[n] = vector(D[n].xx(), D[n].xy(), D[n].xz());
+        D2[n] = vector(D[n].yx(), D[n].yy(), D[n].yz());
+        D3[n] = vector(D[n].zx(), D[n].zy(), D[n].zz());
+    }
 }
-
-vC  = inter.pointToEdge( vHat )      * N;
-wC  = inter.pointToEdge( solvedW )   * N;
-
-PmatHC    = inter.pointToEdge( matP  & aleH ) & N;
-PstarHC   = inter.pointToEdge( starP & aleH ) & N;
-
-Pmat_pmat = inter.pointToEdge( matP.T()&solvedW ) & N;

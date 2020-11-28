@@ -264,11 +264,23 @@ public:
             const pointScalarField&
         ) const;
 
+  //////////////////////////////////////////////////////////////////////////////////////////////////////
+
+        void volumeIntegrateGlobal(
+          pointTensorField&, pointTensorField&, pointTensorField&,                                        //3
+          pointVectorField&, pointVectorField&, pointVectorField&, pointVectorField&, pointVectorField&,  //5
+	  pointScalarField&, pointScalarField&, pointScalarField&, pointScalarField&, pointScalarField&, pointScalarField&, //6
+          const pointScalarField&
+        ) const;
+
+  //////////////////////////////////////////////////////////////////////////////////////////////////////
+  
         // Integration of a scalar Field over the domain
         scalar integrateOverDomain(pointScalarField& , const pointScalarField&);
 
         // direct L2-difference of 2 vectorsFields
         scalar L2diffX(pointVectorField&, pointVectorField&, const pointScalarField&);
+        vector L2diffXYZ(pointVectorField&, pointVectorField&, const pointScalarField&);
 };
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //

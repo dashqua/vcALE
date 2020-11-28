@@ -52,61 +52,22 @@ aleModel::aleModel
 
     model_(dict.subDict(name_).lookup("aleModel")),
     
-    motMap_(
-     IOobject("motMap", mesh_),
-     pMesh_,
-     dimensionedVector("motMap", dimensionSet(0,1,0,0,0,0,0), vector::zero)
+    motMap_( IOobject("motMap", mesh_), pMesh_,
+     dimensionedVector("motMap", dimLength, vector::zero)
     ),
 
-    w_(
-     IOobject
-     (
-      "w",
-      mesh_.time().timeName(),
-      mesh_,
-      IOobject::NO_READ,
-      IOobject::AUTO_WRITE
-     ),
-     pMesh_,
-     dimensionedVector("w", dimensionSet(0,1,-1,0,0,0,0), vector::zero)     
+    w_( IOobject("w", mesh_.time().timeName(), mesh_, IOobject::NO_READ, IOobject::AUTO_WRITE), pMesh_,
+     dimensionedVector("w", dimLength/dimTime, vector::zero)     
     ),
     
-    defGrad_(
-     IOobject("defGrad", mesh_),
-     pMesh_,
-     Foam::tensor::I
-    ),
+    defGrad_( IOobject("defGrad", mesh_), pMesh_, Foam::tensor::I ),
 
-    J_(
-     IOobject
-     (
-      "J",
-      mesh_.time().timeName(),
-      mesh_,
-      IOobject::NO_READ,
-      IOobject::AUTO_WRITE
-     ),
-     pMesh_,
-     1
-    ),
+    J_( IOobject("J", mesh_.time().timeName(), mesh_, IOobject::NO_READ, IOobject::AUTO_WRITE), pMesh_, 1),
 
-    H_(
-     IOobject("H", mesh_),
-     pMesh_,
-     Foam::tensor::I
-    ),
+    H_( IOobject("H", mesh_), pMesh_, Foam::tensor::I),
 
-    wDot_(
-     IOobject
-     (
-      "wDot",
-      mesh_.time().timeName(),
-      mesh_,
-      IOobject::NO_READ,
-      IOobject::AUTO_WRITE
-     ),
-     pMesh_,
-     dimensionedVector("wDot", dimensionSet(0,1,-2,0,0,0,0), vector::zero)     
+    wDot_( IOobject("wDot", mesh_.time().timeName(), mesh_, IOobject::NO_READ, IOobject::AUTO_WRITE), pMesh_,
+	   dimensionedVector("wDot", w_.dimensions()/dimTime, vector::zero)     
     ),
     
     fictitiousMotionType_("Void"),
@@ -123,16 +84,21 @@ aleModel::aleModel
     lambda_(nu_*E_/((1.0 + nu_)*(1.0 - 2.0*nu_))),
     kappa_(lambda_ + (2.0/3.0)*mu_),
     
-    op(mesh_)
+    op(mesh_),
+    usePstar_(dict.lookup("usePstar"))
+  
 {
-  if (model_ == "neoHookean"){
-    dict.subDict(name_).subDict("neoHookeanDict").lookup("fictitiousMotionType") >> fictitiousMotionType_;
-    dict.subDict(name_).subDict("neoHookeanDict").lookup("beta") >> beta_;
-
-    dict.subDict(name_).subDict("neoHookeanDict").lookup("XR") >> XR;
-    dict.subDict(name_).subDict("neoHookeanDict").lookup("YR")>> YR;
+  dict.lookup("usePstar") >> usePstar_;
+  if (model_ == "neoHookean") {
+    if (!usePstar_) {
+      dict.subDict(name_).subDict("neoHookeanDict").lookup("fictitiousMotionType") >> fictitiousMotionType_;
+      dict.subDict(name_).subDict("neoHookeanDict").lookup("beta") >> beta_;
+      
+      dict.subDict(name_).subDict("neoHookeanDict").lookup("XR") >> XR;
+      dict.subDict(name_).subDict("neoHookeanDict").lookup("YR")>> YR;
     
-    dict.subDict(name_).subDict("neoHookeanDict").lookup("T") >> T_;
+      dict.subDict(name_).subDict("neoHookeanDict").lookup("T") >> T_;
+    }
   }
 }
 
@@ -144,74 +110,32 @@ aleModel::~aleModel() {}
 
 void aleModel::correct()
 {
-  //if (model_ == "vonMises") { return; }
-  //Info << fictitiousMotionType() << " .. t=" << mesh_.time().value() << nl;
-  /*
-    To update:
-      - motMap_
-      - w_
-      - F (defGrad_)
-      - J_
-      - H_
-   */
+ if (usePstar_) { return; }
  if (fictitiousMotionType() == "sinusoid_order2inTime") {
-    // XE = xe +       beta * sin(2*pi*xe/1.) * sin(2*pi*ye/6.) * sin(pi*t/T)
-    // YE = ye + 5.0 * beta * sin(2*pi*xe/1.) * sin(2*pi*ye/6.) * sin(2*pi*t/T)
     scalar t = mesh_.time().value();
     scalar pi = Foam::constant::mathematical::pi, pi2 = pi*pi, T2=T_*T_;
-    forAll(motMap_, p)
-    {
-	    
+    forAll(wDot_, p)
+    {	    
       //Info << "correcting ALE Motion Mapping\n";
       scalar X = mesh_.points()[p][0];
       scalar Y = mesh_.points()[p][1];
-      scalar Z = mesh_.points()[p][2];
-      /*
-      motMap_[p][0] =
-	X +   beta_ * Foam::sin(2*pi*X) * Foam::sin(pi*Y/3.0) * Foam::sin(pi*t/T_)*Foam::sin(pi*t/T_);
-      motMap_[p][1] =
-	Y + 5*beta_ * Foam::sin(2*pi*X) * Foam::sin(pi*Y/3.0) * Foam::sin(2*pi*t/T_)*Foam::sin(2*pi*t/T_);
-      motMap_[p][2] = Z;
-      //Info << "correcting ALE Velocity\n";
-      w_[p][0] =
-	2*beta_*pi/T_ * Foam::sin(2*pi*X) * Foam::sin(pi*Y/3.0) * Foam::sin(pi*t/T_) * Foam::cos(pi*t/T_);
-      w_[p][1] =
-	20.0*beta_*pi/T_ * Foam::sin(pi*Y/3.0) * Foam::sin(2*pi*X) * Foam::sin(pi*Y/3.0) * Foam::cos(2*pi*t/T_) * Foam::sin(2*pi*t/T_);
-      w_[p][2] = 0.0;
-      //Info << "correcting ALE defGrad\n";
-      defGrad_[p] = tensor
-	(
-	 1 + 4*beta_*pi * Foam::sin(2*pi*X) * Foam::cos(2*pi*X) * Foam::sin(pi*Y/3.0) * Foam::sin(pi*Y/3.0) * Foam::sin(pi*t/T_),
-	   2*beta_*pi/3.0 * Foam::sin(2*pi*X) * Foam::sin(2*pi*X) * Foam::cos(pi*Y/3.0) * Foam::sin(pi*Y/3.0) * Foam::sin(pi*t/T_),
-	 0,//
-	  20.0*beta_*pi * Foam::cos(2*pi*X) * Foam::sin(2*pi*X) * Foam::sin(pi*Y/3.0) * Foam::sin(pi*Y/3.0) * Foam::sin(2*pi*t/T_),
-	 1 + 10.0*beta_*pi/3.0 * Foam::sin(2*pi*X) * Foam::sin(2*pi*X) * Foam::cos(pi*Y/3.0) * Foam::sin(pi*Y/3.0) * Foam::sin(2*pi*t/T_),
-	 0,//
-	 0,
-	 0,
-	 1//
-	);
-      J_[p] = det(defGrad_[p]);
-      H_[p] = J_[p] * inv(defGrad_[p]).T();
-      */
-      wDot_[p][0] = 2*beta_*pi2/T2 * Foam::sin(2*pi*X/XR) * Foam::sin(2*pi*Y/YR)
+      wDot_[p][0] = 2*beta_*pi2/T2 * Foam::sin(2*pi*X/1.) * Foam::sin(2*pi*Y/6.)
 	* ((Foam::cos(pi*t/T_)*Foam::cos(pi*t/T_)) - (Foam::sin(pi*t/T_)*Foam::sin(pi*t/T_)));
-      wDot_[p][1] = 40*beta_*pi2/T2 * Foam::sin(2*pi*X/XR) * Foam::sin(2*pi*Y/YR)
+      wDot_[p][1] = 40*beta_*pi2/T2 * Foam::sin(2*pi*X/1.) * Foam::sin(2*pi*Y/6.)
 	* ((Foam::cos(2*pi*t/T_)*Foam::cos(2*pi*t/T_)) - (Foam::sin(2*pi*t/T_)*Foam::sin(2*pi*t/T_)));
       wDot_[p][2] = 0; 
       
     }   
 } else if (fictitiousMotionType() == "sinusoid_order2") {
-    // XE = xe +       beta * sin(2*pi*xe/1.) * sin(2*pi*ye/6.) * sin(pi*t/T)
-    // YE = ye + 5.0 * beta * sin(2*pi*xe/1.) * sin(2*pi*ye/6.) * sin(2*pi*t/T)
-    scalar t = mesh_.time().value();
+   //scalar t = mesh_.time().value();
     scalar pi = Foam::constant::mathematical::pi, pi2 = pi*pi, T2=T_*T_;
     forAll(motMap_, p)
     {
       //Info << "correcting ALE Motion Mapping\n";
       scalar X = mesh_.points()[p][0];
       scalar Y = mesh_.points()[p][1];
-      scalar Z = mesh_.points()[p][2];
+      //scalar Z = mesh_.points()[p][2];
+      /*
       motMap_[p][0] =
 	X +   beta_ * Foam::sin(2*pi*X) * Foam::sin(2*pi*X) * Foam::sin(pi*Y/3.0) * Foam::sin(pi*Y/3.0) * Foam::sin(pi*t/T_);
       motMap_[p][1] =
@@ -238,22 +162,23 @@ void aleModel::correct()
 	);
       J_[p] = det(defGrad_[p]);
       H_[p] = J_[p] * inv(defGrad_[p]).T();
+      */
+      FatalErrorIn("aleModel.C") << "The coding for the selected motion has to be updated." << abort(FatalError);
       wDot_[p][0] = (X - motMap_[p][0]) * (pi2/T2);
       wDot_[p][1] = (Y - motMap_[p][1]) * (4*pi2/T2);
       wDot_[p][2] = 0; 
       
     }   
   } else if (fictitiousMotionType() == "sinusoid") {
-    // XE = xe +       beta * sin(2*pi*xe/1.) * sin(2*pi*ye/6.) * sin(pi*t/T)
-    // YE = ye + 5.0 * beta * sin(2*pi*xe/1.) * sin(2*pi*ye/6.) * sin(2*pi*t/T)
-    scalar t = mesh_.time().value();
+   //scalar t = mesh_.time().value();
     scalar pi = Foam::constant::mathematical::pi, pi2 = pi*pi, T2=T_*T_;
     forAll(motMap_, p)
     {
       //Info << "correcting ALE Motion Mapping\n";
       scalar X = mesh_.points()[p][0];
       scalar Y = mesh_.points()[p][1];
-      scalar Z = mesh_.points()[p][2];
+      //scalar Z = mesh_.points()[p][2];
+      /*
       motMap_[p][0] =
 	X +   beta_ * Foam::sin(2*pi*X) * Foam::sin(pi*Y/3.0) * Foam::sin(pi*t/T_);
       motMap_[p][1] =
@@ -280,6 +205,8 @@ void aleModel::correct()
 	);
       J_[p] = det(defGrad_[p]);
       H_[p] = J_[p] * inv(defGrad_[p]).T();
+*/
+      FatalErrorIn("aleModel.C") << "The coding for the selected motion has to be updated." << abort(FatalError);
       wDot_[p][0] = (X - motMap_[p][0]) * (pi2/T2);
       //-beta_*pi2/T2    * Foam::sin(2*pi*X) * Foam::sin(pi*Y/3.0) * Foam::sin(pi*t/T_) ; //(mesh_.points()[n][0] - wD[n][0]) * (pi2/T2) ;
       wDot_[p][1] = (Y - motMap_[p][1]) * (4*pi2/T2);
@@ -311,12 +238,11 @@ pointTensorField aleModel::piola (pointTensorField& matF, pointTensorField& matH
 {
   pointTensorField matP
   (
-     IOobject (name_+"P", mesh_.time().timeName(), mesh_, IOobject::NO_READ, IOobject::AUTO_WRITE),
-     pMesh_,
+     IOobject (name_+"P", mesh_.time().timeName(), mesh_, IOobject::NO_READ, IOobject::AUTO_WRITE), pMesh_,
      dimensionedTensor("matP", dimensionSet(1,-1,-2,0,0,0,0), tensor::zero)
   );
 
-  if (model_ == "neoHookean") {  //nearly incompressible neo_hookean
+  if (model_ == "neoHookean") { 
     forAll(mesh_.points(), n) {
       matP[n] = mu_.value()*pow(matJ[n], -2.0/3.0)*matF[n]
 	- ((mu_.value()/3.0)*pow(matJ[n],(-5.0/3.0))*(matF[n] && matF[n])*matH[n])
@@ -328,14 +254,14 @@ pointTensorField aleModel::piola (pointTensorField& matF, pointTensorField& matH
       matP[n] = mu_.value()*(matF[n] - matH[n]/matJ[n]) + lambda_.value() * (matJ[n]-1.0) * matH[n];
     }
   } else {
-    FatalErrorIn("aleModel.C") << "Material Piola Model is not properly defined." << abort(FatalError);
+    FatalErrorIn("aleModel.C") << "ALE Piola Model is not properly defined." << abort(FatalError);
   }
   
   return matP;
 }
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
-
+/*
 pointScalarField aleModel::getMaterialPressure (pointTensorField& matF, pointTensorField& matH, pointScalarField& matJ)
 {
   pointScalarField matPres
@@ -355,7 +281,7 @@ pointScalarField aleModel::getMaterialPressure (pointTensorField& matF, pointTen
   
   return matPres;
 }
-
+*/
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 }

@@ -47,9 +47,6 @@ const dimensionedScalar& h = op.minimumEdgeLength();
 // Continuum mechanics class
 mechanics mech(mesh, Sf);
 
-// Boundary patches
-//const polyBoundaryMesh& bm = mesh.boundaryMesh();
-
 /*
        ______    ___      ___   _______     ______   _____  ____  _____       _     _________  ________   ______   
      .' ___  | .'   `.  .'   `.|_   __ \   |_   _ `.|_   _||_   \|_   _|     / \   |  _   _  ||_   __  |.' ____ \
@@ -130,10 +127,7 @@ if (tutorial == "swingingCube") {
                                      );
    }
    x = u + X; 
-}// else { Info << "ERROR" ; return 1; }
-
-//X -= u;
-
+}
 
 /*
     ______     ___   _____  ____   ____  ________  ______     ____   ____  _       _______     ______   
@@ -146,9 +140,8 @@ if (tutorial == "swingingCube") {
 Info << "Creating strain measure fields ..." << endl;
 
 // ALE - SPatial J (to be solved)
-pointScalarField spatJ(
-        IOobject ("spatJ", runTime.timeName(), mesh, IOobject::NO_READ, IOobject::AUTO_WRITE),
-        pMesh,
+pointScalarField spatJ (
+        IOobject ("spatJ", runTime.timeName(), mesh, IOobject::NO_READ, IOobject::AUTO_WRITE), pMesh,
         dimensionedScalar("spatJ", dimensionSet(0,0,0,0,0,0,0), 1)	
 );
 
@@ -157,15 +150,13 @@ pointTensorField F ( IOobject("F", mesh), pMesh, Foam::tensor::I );
 
 // ALE - Material J (to be solved)
 pointScalarField matJ (
-	IOobject ("matJ", runTime.timeName(), mesh, IOobject::NO_READ, IOobject::AUTO_WRITE),
-	pMesh,
+	IOobject ("matJ", runTime.timeName(), mesh, IOobject::NO_READ, IOobject::AUTO_WRITE), pMesh,
 	dimensionedScalar("matJ", dimensionSet(0,0,0,0,0,0,0), 1)
 );
 
 // ALE - Material F (to be solved)
 pointTensorField matF (
-        IOobject("matF", runTime.timeName(), mesh, IOobject::NO_READ, IOobject::AUTO_WRITE),
-	pMesh,
+        IOobject("matF", runTime.timeName(), mesh, IOobject::NO_READ, IOobject::AUTO_WRITE), pMesh,
 	dimensionedTensor("matF", F.dimensions(), Foam::tensor::I)
 );
 
@@ -176,24 +167,29 @@ pointVectorField lm ( IOobject("lm", runTime.timeName(), mesh, IOobject::MUST_RE
 Info << "Creating material velocity field ..." << endl;
 // ALE - Material velocity (to be solved)
 pointVectorField solvedW(
-		IOobject("solvedW", runTime.timeName(), mesh, IOobject::MUST_READ, IOobject::AUTO_WRITE), pMesh
-		/*
-        IOobject("solvedW",runTime.timeName(),mesh,IOobject::NO_READ,IOobject::AUTO_WRITE),
-        pMesh,
-        dimensionedVector("solvedW", dimensionSet(0,1,-1,0,0,0,0), vector::zero)
-	*/
+	IOobject("solvedW", runTime.timeName(), mesh, IOobject::READ_IF_PRESENT, IOobject::AUTO_WRITE), pMesh,
+	dimensionedVector("solvedW", dimLength/dimTime, vector::zero)
 );
 
-Info << "Creating material energy field..." << endl;
+Info << "Creating energy field ..." << endl;
 pointScalarField E (
-	IOobject("E", runTime.timeName(), mesh, IOobject::MUST_READ, IOobject::AUTO_WRITE), pMesh
-		/*
-        IOobject("E", runTime.timeName(),mesh,IOobject::NO_READ,IOobject::AUTO_WRITE),
-	pMesh,
-	mechanicalProperties.lookupOrDefault<dimensionedScalar>("E",0)
-        //dimensionedScalar("E", dimensionSet(1,-1,-2,0,0,0,0), 0.0)
-	*/
+	IOobject("E", runTime.timeName(), mesh, IOobject::READ_IF_PRESENT, IOobject::AUTO_WRITE), pMesh,
+	dimensionedScalar("E", dimensionSet(1,-1,-2,0,0,0,0), 0.0)
 );
+
+Info << "Creating Plasticity solved variables ..." << endl;
+pointTensorField DH (
+	IOobject("DH", runTime.timeName(), mesh, IOobject::NO_READ, IOobject::AUTO_WRITE), pMesh,
+	dimensionedTensor("DH", dimless, tensor::I)
+);
+// plastic strain epsilon
+pointScalarField alphaH ( 
+	IOobject("alphaH", runTime.timeName(), mesh, IOobject::NO_READ, IOobject::AUTO_WRITE), 
+	pMesh,
+	dimensionedScalar("alphaH", dimless, 0.0)
+);
+
+
 /*
      ______     ___   _____     _____  ______     ____    ____   ___   ______   ________  _____     
    .' ____ \  .'   `.|_   _|   |_   _||_   _ `.  |_   \  /   _|.'   `.|_   _ `.|_   __  ||_   _|    
@@ -202,15 +198,15 @@ pointScalarField E (
    | \____) |\  `-'  /_| |__/ | _| |_  _| |_.' /  _| |_\/_| |_\  `-'  /_| |_.' /_| |__/ | _| |__/ | 
     \______.' `.___.'|________||_____||______.'  |_____||_____|`.___.'|______.'|________||________| 
                                                                                                       */
+Info << "Creating Plasticity scaled variables ..." << nl;
+pointTensorField D = DH / matJ;
+pointScalarField alpha = alphaH / matJ;
+
 Info << "Creating constitutive model ..." << endl;
 // Deformation gradient tensor for P material model
 pointTensorField trueF ( IOobject("trueF", mesh), pMesh, Foam::tensor::I );
 // ALE - Initialization of trueF and Piola Hat // NOTE : trueJ and trueH are not necessary here
 trueF = F & op.inverse(matF);
-
-
-
-
 
 
 
@@ -239,17 +235,7 @@ if (tutorial == "swingingCube") {
 		      );
       F = trueF;
     }
-} /* else {
-	Info << "error tuto = " << tutorial << nl;
-	return 1;
-}*/
-
-
-
-
-
-
-
+}
 
 
 // cofactor tensor for P material model
@@ -280,7 +266,7 @@ const dimensionedScalar& mu    = model.mu() ;
 const dimensionedScalar& kappa = model.kappa() ;
 
 // Pressure
-pointScalarField p = model.pressure();
+pointScalarField p = model.pressure(); p.write();
 // First Piola Kirchhoff stress tensor
 pointTensorField P = model.piola();
 
@@ -312,19 +298,13 @@ pointScalarField Up_time ( IOobject("Up_time", mesh), pMesh, model.Up() );
 Up_time = Up_time/stretch;
 
 // Longitudinal wave speed
-pointScalarField Up
-(
-    IOobject("Up", mesh),
-    pMesh,
-    model.Up()/beta
+pointScalarField Up (
+    IOobject("Up", mesh), pMesh, model.Up()/beta
 );
 
 // Shear wave speed
-pointScalarField Us
-(
-    IOobject("Us", mesh),
-    pMesh,
-    model.Us()*beta
+pointScalarField Us (
+    IOobject("Us", mesh), pMesh, model.Us()*beta
 );
 
 /*
@@ -335,21 +315,11 @@ pointScalarField Us
    _/ /   \ \_  _| |__/ | _| |__/ |   _| |_\/_| |_\  `-'  /_| |_.' /_| |__/ | _| |__/ | 
   |____| |____||________||________|  |_____||_____|`.___.'|______.'|________||________| 		                                                                                         
                                                                                            */
-
-//- ALE: Declaration and initialization of ALE Objects
-//pointVectorField& w_    = materialModel_.w();
-//pointVectorField& wDot_ = materialModel_.wDot();
-
-// Depending on tim mapping, we have to provide with good Init Cond
-//solvedW.primitiveFieldRef() = w_.primitiveFieldRef();
-
 // ALE - Material Model
 Info << "Creating ALE Material Model ..." << nl;
 aleModel materialModel_(mechanicalProperties, mesh, pMesh, "materialModel");
 materialModel_.correct();
 pointTensorField matP    = materialModel_.piola(matF, aleH, matJ);
-//pointScalarField matPres = materialModel_.getMaterialPressure(matF, aleH, matJ);
-//
 scalarField lambdaH = sqrt((inter.pointToEdge(aleH) & N) & (inter.pointToEdge(aleH) & N));
 scalarField aleUp___ = inter.pointToEdge( op.inverseScalar(matJ) ) * 
        (
@@ -367,17 +337,11 @@ scalarField aleUs___ = inter.pointToEdge( op.inverseScalar(matJ) ) *
 Info << "Creating ALE Spatial Model ..." << nl;
 aleModel spatialModel_(mechanicalProperties, mesh, pMesh, "spatialModel");
 spatialModel_.correct();
+// spatJdet and spatH are declared in 'solid model' up here
 pointTensorField spatP   = spatialModel_.piola(F,  spatH, spatJdet);
 
 // ALE - get Piola Star
-/*
-pointTensorField starP(
-		       IOobject("starP", runTime.timeName(), mesh, IOobject::NO_READ, IOobject::AUTO_WRITE), pMesh,
-		       dimensionedTensor("starP", matP.dimensions(), tensor::zero)
-		       );
-starP   = ((1.0-alpha)*matP) + (alpha*(trueF.T()&spatP));
-*/
-pointTensorField starP = ((1.0-alpha)*matP) + (alpha*(trueF.T()&spatP));
+pointTensorField starP = ((1.0-alpha_)*matP) + (alpha_*(trueF.T()&spatP));
 
 /*
     ____   ____  ________  _____       ___      ______  _____  _________  _____  ________   ______   
@@ -385,40 +349,21 @@ pointTensorField starP = ((1.0-alpha)*matP) + (alpha*(trueF.T()&spatP));
      \ \   / /    | |_ \_|  | |     /  .-.  \/ .'   \_|  | |  |_/ | | \_|  | |    | |_ \_|| (___ \_| 
       \ \ / /     |  _| _   | |   _ | |   | || |         | |      | |      | |    |  _| _  _.____`.  
        \ ' /     _| |__/ | _| |__/ |\  `-'  /\ `.___.'\ _| |_    _| |_    _| |_  _| |__/ || \____) |
-        \_/     |________||________| `.___.'  `.____ .'|_____|  |_____|  |_____||________| \______.' 	                                                                                                                                                                                                               */
-
-// ALE: pR and pTilde, step quantities for rhsLM
-pointVectorField pR
-(
-    IOobject ("pR", runTime.timeName(), mesh, IOobject::NO_READ, IOobject::AUTO_WRITE),
-    pMesh,
-    dimensionedVector("pR", dimensionSet(1,-2,-1,0,0,0,0), vector::zero)
+        \_/     |________||________| `.___.'  `.____ .'|_____|  |_____|  |_____||________| \______.' 	                                                                                                                                                                                                                                                                     */
+//- ALE: pR
+pointVectorField pR ( IOobject ("pR", runTime.timeName(), mesh, IOobject::NO_READ, IOobject::AUTO_WRITE), 
+    op.inverseScalar(matJ) * lm 
 );
-pR = op.inverseScalar(matJ) * lm;
-
-pointVectorField pTilde
-(
-    IOobject ("pTilde", runTime.timeName(), mesh, IOobject::NO_READ, IOobject::AUTO_WRITE),
-    pMesh,
-    dimensionedVector("pTilde", dimensionSet(1,-2,-1,0,0,0,0), vector::zero)
-);
-pTilde = matJ * pR;
 
 //- ALE: v
-pointVectorField v_ (
-	IOobject("v_", runTime.timeName(), mesh, IOobject::NO_READ, IOobject::AUTO_WRITE),
-	pMesh,
-	dimensionedVector("v_", dimensionSet(0,1,-1,0,0,0,0), vector::zero)
+pointVectorField v_ ( IOobject("v_", runTime.timeName(), mesh, IOobject::NO_READ, IOobject::AUTO_WRITE),
+    pR/rho 
 );
-v_ = pR/rho;
 
 //- ALE:  vHat
-pointVectorField vHat (
-	IOobject("vHat", runTime.timeName(), mesh, IOobject::NO_READ, IOobject::AUTO_WRITE),
-	pMesh,
-	dimensionedVector("vHat", dimensionSet(0,1,-1,0,0,0,0), vector::zero)
+pointVectorField vHat ( IOobject("vHat", runTime.timeName(), mesh, IOobject::NO_READ, IOobject::AUTO_WRITE), 
+    v_ + (trueF & solvedW) 
 );
-vHat = v_ + (trueF & solvedW);
 
 /*
     ____  ____       _       _____     ________  ____      ____  _     ____  ____  
@@ -430,40 +375,35 @@ vHat = v_ + (trueF & solvedW);
                                                                                        */
 
 //- ALE: Piola Hat
-pointTensorField PHat (
-    IOobject("PHat", runTime.timeName(), P.db(), IOobject::NO_READ, IOobject::NO_WRITE),
-    P.mesh(),
-    dimensionedTensor("PHat", dimensionSet(1,-1,-2,0,0,0,0), tensor::zero)
+pointTensorField PHat ( IOobject("PHat", runTime.timeName(), P.db(), IOobject::NO_READ, IOobject::NO_WRITE),
+    P & aleH
 );
-PHat = P & aleH ;
 
 //- ALE: kinetic Energy
-pointScalarField kinE (
-    IOobject("kinE", runTime.timeName(), E.db(), IOobject::NO_READ, IOobject::NO_WRITE),
-    E.mesh(),
-    dimensionedScalar("kinE", E.dimensions(), 0.0)
+pointScalarField kinE ( IOobject("kinE", runTime.timeName(), E.db(), IOobject::NO_READ, IOobject::NO_WRITE), //E.mesh(),
+    0.5 * (lm&lm) /rho //dimensionedScalar("kinE", E.dimensions(), 0.0)
 );
-//kinE =  0.5 * (lm&lm) / rho.value();
 
 //- ALE: potential Energy
-pointScalarField potE (
-    IOobject("potE", runTime.timeName(), E.db(), IOobject::NO_READ, IOobject::NO_WRITE),
-    E.mesh(),
+pointScalarField potE ( IOobject("potE", runTime.timeName(), E.db(), IOobject::NO_READ, IOobject::NO_WRITE), E.mesh(),
+    //(0.5*mu*Foam::pow(trueJ.primitiveField(), -2./3.) * (trueF&&trueF)) //- (3.*mu/2.) + (0.5*kappa*Foam::pow(trueJ-1,2.)) 
     dimensionedScalar("potE", E.dimensions(), 0.0)
 );
+//potE.internalField() = (0.5*mu*Foam::pow(trueJ.internalField(), -2./3.) );//* (trueF&&trueF)) ;//- (3.*mu/2.) + (0.5*kappa*Foam::pow(trueJ-1,2.))
+
 forAll(potE, n) {
-    kinE[n] = 0.5 * (lm[n]&lm[n]) / rho.value();//rho.value() * (vHat[n]&vHat[n]) ;//(lm[n]&lm[n]) / rho.value();
-    kinE[n] += 0.5 * rho.value() * (solvedW[n]&solvedW[n]);
+    //kinE[n] = 0.5 * (lm[n]&lm[n]) / rho.value();//rho.value() * (vHat[n]&vHat[n]) ;//(lm[n]&lm[n]) / rho.value();
+    //kinE[n] += 0.5 * rho.value() * (solvedW[n]&solvedW[n]);
     potE[n] = (0.5*mu.value()*Foam::pow(trueJ[n],-2./3.)*(trueF[n]&&trueF[n])) - (3*mu.value()/2.) + (0.5*kappa.value()*Foam::pow(trueJ[n]-1,2));
 }
 
+
 // - ALE: theoretical Energy
 pointScalarField theoE (
-    IOobject("theoE", runTime.timeName(), E.db(), IOobject::NO_READ, IOobject::NO_WRITE),
-    E.mesh(),
-    dimensionedScalar("theoE", E.dimensions(), 0.0)
+    IOobject("theoE", runTime.timeName(), E.db(), IOobject::NO_READ, IOobject::NO_WRITE), //E.mesh(),
+    kinE + potE //dimensionedScalar("theoE", E.dimensions(), 0.0)
 );
-theoE = kinE + potE;
+//theoE = kinE + potE;
 
 
 /*
@@ -508,13 +448,11 @@ Info << "Creating fields for fluxes ..." << endl;
 
 // Edge Stabilisation
 vectorField stabC    = inter.pointToEdge(matJ*rho)*(0.5*mech.SmatrixMod(aleUp___, aleUs___) & (vP - vM));
-
 tensorField stabJacC =   ((0.5*mech.SmatrixJacobianMod(aleUp___, aleUs___)) * (pP - pM))/rho.value(); 
-//(0.5/rho.value()) * (mech.SmatrixJacobianMod(aleUp___, aleUs___) & ((pP - pM) * (inter.pointToEdge(aleH) & (Sf/magSf))  )) ;
-//(0.5/rho) * (mech.SmatrixJacobianMod(aleUp___, aleUs___) * (pP - pM)) ;//& (inter.pointToEdge(aleH) & (Np)); 
+
 // Edge traction
-vectorField tC    = inter.pointToEdge(PHat) & N;  // case without Involution
-//
+vectorField tC    = inter.pointToEdge(PHat) & N;
+
 pointVectorField Px ( IOobject("Px", mesh), pMesh, vector::zero );
 pointVectorField Py ( IOobject("Py", mesh), pMesh, vector::zero );
 pointVectorField Pz ( IOobject("Pz", mesh), pMesh, vector::zero );
@@ -527,15 +465,18 @@ pointVectorField vector_100 ( IOobject("vector_100", mesh), pMesh, vector(1,0,0)
 pointVectorField vector_010 ( IOobject("vector_010", mesh), pMesh, vector(0,1,0) );
 pointVectorField vector_001 ( IOobject("vector_001", mesh), pMesh, vector(0,0,1) );
 //
+vector v100(1,0,0), v010(0,1,0), v001(0,0,1); // used in gEqns.H
+//
 tensorField P1C = inter.pointToEdge(Px) * N;   
 tensorField P2C = inter.pointToEdge(Py) * N;
-tensorField P3C = inter.pointToEdge(Pz) * N;     // case with Involution
+tensorField P3C = inter.pointToEdge(Pz) * N;
+
 // Edge linear momentum
-tensorField vC = inter.pointToEdge(vHat) * N;
+//tensorField vC = inter.pointToEdge(vHat) * N;   // not used anymore
 // Edge traction two
 tensorField tC2 = inter.pointToEdge( pR ) * N;
 // Edge material velocity
-tensorField wC = inter.pointToEdge( solvedW )  * N;
+//tensorField wC = inter.pointToEdge( solvedW )  * N;   // not used anymore
 // Edge alternative jacobian term
 scalarField HTwC = inter.pointToEdge( aleH.T() & solvedW ) & N;
 // ALE - The GCL technique distinction (commented code below) could
@@ -551,11 +492,19 @@ if (GCLtechnique == "withInvolution") {
     FatalErrorIn("updateVariables.H") << "GCL technique is not properly defined." << abort(FatalError);
 }
 */
-vectorField PmatHC    = inter.pointToEdge( matP & aleH ) & N;
+//vectorField PmatHC    = inter.pointToEdge( matP & aleH ) & N;          // not used anymore
 vectorField pRwHC     = inter.pointToEdge( (pR*solvedW) & aleH ) & N;
 
-scalarField Pmat_pmat = inter.pointToEdge( matP.T()&solvedW ) & N; // for energy, deprecated ?
-vectorField PstarHC   = inter.pointToEdge( starP & aleH ) & N; // alternative Pstar term for PmatHc
+//vectorField PstarHC   = inter.pointToEdge( starP & aleH ) & N;              // not used anymore
+
+pointVectorField D1 ( IOobject("D1", mesh), pMesh, vector::zero );
+pointVectorField D2 ( IOobject("D2", mesh), pMesh, vector::zero );
+pointVectorField D3 ( IOobject("D3", mesh), pMesh, vector::zero );
+forAll(D1, n) { 
+	D1[n] = vector(D[n].xx(), D[n].xy(), D[n].xz());
+	D2[n] = vector(D[n].yx(), D[n].yy(), D[n].yz());
+	D3[n] = vector(D[n].zx(), D[n].zy(), D[n].zz());
+}
 
 /*
     _______     ____  ____   ______  
@@ -566,62 +515,45 @@ vectorField PstarHC   = inter.pointToEdge( starP & aleH ) & N; // alternative Ps
    |____| |___||____||____| \______.' 
                                          */
 // ALE - RHS of jacobian equation
-pointScalarField rhsJ (
-	IOobject("rhsJ", mesh),
-	pMesh,
+pointScalarField rhsJ ( IOobject("rhsJ", mesh), pMesh,
 	dimensionedScalar("rhsJ", dimensionSet(0,0,-1,0,0,0,0), 0)
 );
 
 // RHS of linear momentum equation
-pointVectorField rhsLm (          // useless
-    IOobject ("rhsLm", mesh),
-    pMesh,
+pointVectorField rhsLm ( IOobject ("rhsLm", mesh), pMesh,
     dimensionedVector("rhsLm", dimensionSet(1,-2,-2,0,0,0,0), vector::zero)
+); //useless
+
+pointVectorField rhsLm1 ( IOobject ("rhsLm1", mesh), pMesh,
+    dimensionedVector("rhsLm1", lm.dimensions()/dimTime, vector::zero)
 );
-pointVectorField rhsLm1 (           // PH traction term
-    IOobject ("rhsLm1", mesh),
-    pMesh,
-    dimensionedVector("rhsLm1", dimensionSet(1,-2,-2,0,0,0,0), vector::zero)
+pointVectorField rhsLm2 ( IOobject ("rhsLm2", mesh), pMesh,
+    dimensionedVector("rhsLm2", lm.dimensions()/dimTime, vector::zero)
 );
-pointVectorField rhsLm2 (
-    IOobject ("rhsLm2", mesh),
-    pMesh,
-    dimensionedVector("rhsLm2", dimensionSet(1,-2,-2,0,0,0,0), vector::zero)
+pointVectorField rhsLm3 ( IOobject ("rhsLm3", mesh), pMesh,
+    dimensionedVector("rhsLm3", lm.dimensions()/dimTime, vector::zero)
 );
-pointVectorField rhsLm3 (
-    IOobject ("rhsLm3", mesh),
-    pMesh,
-    dimensionedVector("rhsLm3", dimensionSet(1,-2,-2,0,0,0,0), vector::zero)
+pointVectorField rhsLm4 ( IOobject ("rhsLm4", mesh), pMesh,
+    dimensionedVector("rhsLm4", lm.dimensions()/dimTime, vector::zero)
 );
-pointVectorField rhsLm4 (
-    IOobject ("rhsLm4", mesh),
-    pMesh,
-    dimensionedVector("rhsLm4", dimensionSet(1,-2,-2,0,0,0,0), vector::zero)
-);
-pointVectorField externalForces (             // external forces
+pointVectorField externalForces ( 
     IOobject("externalForces", runTime.timeName(), mesh, IOobject::READ_IF_PRESENT, IOobject::AUTO_WRITE), pMesh,
     dimensionedVector("externalForces", dimensionSet(1,-2,-2,0,0,0,0), vector::zero)
-    /*
-    IOobject ("externalForces", mesh),
-    pMesh,
-    dimensionedVector("externalForces", dimensionSet(1,-2,-2,0,0,0,0), vector::zero)
-    */
 );
 externalForces.correctBoundaryConditions();
 
 rhsLm4.primitiveFieldRef() = op.surfaceSum(stabC*magSf) ; 
-if (PHatTerm == "withoutInvolution") { 
-    rhsLm1.primitiveFieldRef() = op.surfaceSum(tC*magSf);
-} else if (PHatTerm == "withInvolution") {
+if (PHatTerm == "withInvolution") {
     rhsLm1.primitiveFieldRef() = 
-		    ((aleH && op.surfaceSum(P1C*magSf))*vector_100)
-		  + ((aleH && op.surfaceSum(P2C*magSf))*vector_010)
-                  + ((aleH && op.surfaceSum(P3C*magSf))*vector_001);  
+	((aleH && op.surfaceSum(P1C*magSf))*vector_100) + ((aleH && op.surfaceSum(P2C*magSf))*vector_010) + ((aleH && op.surfaceSum(P3C*magSf))*vector_001);  
+} else if (PHatTerm == "withoutInvolution") { 
+    rhsLm1.primitiveFieldRef() = op.surfaceSum(tC*magSf);
 }
+
 if (GCLtechnique == "withInvolution") {
-    rhsJ.primitiveFieldRef() = aleH && op.surfaceSum(wC*magSf);
+    rhsJ.primitiveFieldRef() = aleH && op.surfaceSum( inter.pointToEdge(solvedW) * Sf);
     rhsLm2.primitiveFieldRef() = op.surfaceSum(tC2*magSf) & (aleH.T() & solvedW);
-    rhsLm3.primitiveFieldRef() = pR * (aleH && (op.surfaceSum(wC*magSf)));
+    rhsLm3.primitiveFieldRef() = pR * (aleH && (op.surfaceSum( inter.pointToEdge(solvedW) * Sf)));
     //rhsLm.primitiveFieldRef() = rhsLm1 + rhsLm2  + rhsLm3;
 } else if (GCLtechnique == "withoutInvolution") {
     rhsJ.primitiveFieldRef() = op.surfaceSum(HTwC*magSf);
@@ -632,59 +564,66 @@ if (GCLtechnique == "withInvolution") {
 }
 
 // RHS of spatial J
-pointScalarField rhsSpatJ1(
-    IOobject("rhsSpatJ1", mesh),
-    pMesh,
-    dimensionedScalar("rhsSpatJ1", dimensionSet(0,0,-1,0,0,0,0), 0)
+pointScalarField rhsSpatJ1 ( IOobject("rhsSpatJ1", mesh), pMesh,
+    dimensionedScalar("rhsSpatJ1", spatJ.dimensions()/dimTime, 0)
 );
 rhsSpatJ1.primitiveFieldRef() = aleH && op.surfaceSum( inter.pointToEdge( v_ ) * Sf );	
-pointScalarField rhsSpatJ2(
-    IOobject("rhsSpatJ2", mesh),
-    pMesh,
-    dimensionedScalar("rhsSpatJ2", dimensionSet(0,0,-1,0,0,0,0), 0)
+
+pointScalarField rhsSpatJ2 ( IOobject("rhsSpatJ2", mesh), pMesh,
+    dimensionedScalar("rhsSpatJ2", spatJ.dimensions()/dimTime, 0)
 );
 rhsSpatJ2.primitiveFieldRef() = op.surfaceSum( inter.pointToEdge( (spatH.T()&trueF)&solvedW ) & Sf );
-pointScalarField rhsSpatJ3(
-    IOobject("rhsSpatJ3", mesh),
-    pMesh,
-    dimensionedScalar("rhsSpatJ3", dimensionSet(0,0,-1,0,0,0,0), 0)
+
+pointScalarField rhsSpatJ3 ( IOobject("rhsSpatJ3", mesh), pMesh,
+    dimensionedScalar("rhsSpatJ3", spatJ.dimensions()/dimTime, 0)
 );
-rhsSpatJ3.primitiveFieldRef() = op.surfaceSum( (stabJacC & (inter.pointToEdge(aleH)&(Sf/magSf)) ) & (inter.pointToEdge(aleH) & Sf) );
+rhsSpatJ3.primitiveFieldRef() = op.surfaceSum( (stabJacC & (inter.pointToEdge(spatH)&N) ) & (inter.pointToEdge(spatH) & Sf) ) ;
 
 // RHS of spatial F equation
-pointTensorField rhsF (
-    IOobject ("rhsF", mesh),
-    pMesh,
-    dimensionedTensor("rhsF",F.dimensions()/dimTime,tensor::zero)
+pointTensorField rhsF ( IOobject ("rhsF", mesh), pMesh,
+    dimensionedTensor("rhsF", F.dimensions()/dimTime,tensor::zero)
 );
+rhsF.primitiveFieldRef()    = op.surfaceSum( inter.pointToEdge(vHat)    * Sf );
 
 // ALE - RHS of material deformation gradient equation
-pointTensorField rhsMatF (
-    IOobject ("rhsMatF", mesh),
-    pMesh,
+pointTensorField rhsMatF ( IOobject ("rhsMatF", mesh), pMesh,
     dimensionedTensor("rhsMatF", matF.dimensions()/dimTime, tensor::zero)
 );
+rhsMatF.primitiveFieldRef() = op.surfaceSum( inter.pointToEdge(solvedW) * Sf );
 
 // ALE - RHS of solvedW velocity
-pointVectorField rhsW (
-    IOobject ("rhsW",runTime.timeName(), mesh, IOobject::NO_READ, IOobject::AUTO_WRITE),
-    pMesh,
-    dimensionedVector("rhsW", dimensionSet(0,1,-2,0,0,0,0), vector::zero)
+pointVectorField rhsW ( IOobject ("rhsW",runTime.timeName(), mesh, IOobject::NO_READ, IOobject::AUTO_WRITE), pMesh,
+    dimensionedVector("rhsW", solvedW.dimensions()/dimTime, vector::zero)
 );
+rhsW.primitiveFieldRef() = op.surfaceSum( inter.pointToEdge(starP &aleH ) & Sf ) / rho.value();
 
 // ALE - RHS of E energy
 pointScalarField rhsE1 ( IOobject ("rhsE1", mesh), pMesh,
-    dimensionedScalar("rhsE1",E.dimensions()/dimTime, 0.0)
+    dimensionedScalar("rhsE1", E.dimensions()/dimTime, 0.0)
 );
 pointScalarField rhsE2 ( IOobject ("rhsE2", mesh), pMesh,
-    dimensionedScalar("rhsE2",E.dimensions()/dimTime, 0.0)
+    dimensionedScalar("rhsE2", E.dimensions()/dimTime, 0.0)
 );
 pointScalarField rhsE ( IOobject ("rhsE", mesh), pMesh,
-    dimensionedScalar("rhsE",E.dimensions()/dimTime, 0.0)
+    dimensionedScalar("rhsE", E.dimensions()/dimTime, 0.0)
 );
 rhsE1.primitiveFieldRef() = op.surfaceSum( inter.pointToEdge(PHat.T()&(lm/rho.value()))             & Sf );
-rhsE2.primitiveFieldRef() = op.surfaceSum( inter.pointToEdge((aleH.T()&solvedW) * E)  & Sf );
+rhsE2.primitiveFieldRef() = op.surfaceSum( inter.pointToEdge((aleH.T()&solvedW) * E/matJ)  & Sf );
 rhsE = rhsE1 + rhsE2;
+
+// ALE - RHS of plasticity variables
+pointTensorField rhsD ( IOobject("rhsD", mesh), pMesh,
+    dimensionedTensor("rhsD", DH.dimensions()/dimTime, tensor::zero)
+);
+rhsD.primitiveFieldRef()     = //op.surfaceSum( inter.pointToEdge((D&aleH.T()) & solvedW) * Sf );
+             ( op.surfaceSum( inter.pointToEdge(D1*(aleH.T()&solvedW)) & Sf ) * vector_100)
+	   + ( op.surfaceSum( inter.pointToEdge(D2*(aleH.T()&solvedW)) & Sf ) * vector_010)
+	   + ( op.surfaceSum( inter.pointToEdge(D3*(aleH.T()&solvedW)) & Sf ) * vector_001);
+
+pointScalarField rhsAlpha ( IOobject("rhsAlpha", mesh), pMesh,
+    dimensionedScalar("rhsAlpha", alphaH.dimensions()/dimTime, 0.0)
+);
+rhsAlpha.primitiveFieldRef() = op.surfaceSum( inter.pointToEdge(alpha*(aleH.T()&solvedW)) & Sf );
 
 
 /*

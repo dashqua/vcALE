@@ -11,10 +11,13 @@ p.write();
 
 E.write();
 lm.write();
-solvedW.write();
+////solvedW.write();
 
 // print Von Mises quantities if relevant
-model.writeVars();
+//model.writeVars();
+
+//DH.write();
+//alphaH.write();
 
 
 if (doPostPro == "activated") {
@@ -51,7 +54,7 @@ if (doPostPro == "activated") {
     }
     lm_theo.write();
     //Compute the error and print it
-    Info << "L0-error of LM:\n L2errorLM = " << op.L2diffX(lm, lm_theo, V) << nl;
+    Info << "L2-error of LM:\n L2errorLM = " << op.L2diffXYZ(lm, lm_theo, V) << nl;
     lm_theo.write();
   }
 
@@ -93,7 +96,6 @@ Info << "sample solvedW     : " << solvedW[index] << nl;
 Info << "sample lm          : " << lm[index]  << nl;
 Info << "sample pR          : " << pR[index]  << nl;
 Info << "sample tC2         : " << tC2[index] << nl;
-Info << "sample wC          : " << wC[index] << nl;
 Info << "sample lambdaH     : " << lambdaH[index] << nl;
 Info << "sample rhsLm1      : " << rhsLm1[index] << nl;
 Info << "sample rhsLm2      : " << rhsLm2[index] << nl;

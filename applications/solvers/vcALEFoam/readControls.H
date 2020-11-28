@@ -65,13 +65,17 @@ Info << "value of 'traction': " << traction << nl;
 // 2. "withoutInvolution" = GCL coverage without involution
 const word& GCLtechnique = mechanicalProperties.lookupOrDefault<word>("GCLtechnique", "withoutInvolution");
 if (GCLtechnique != "withoutInvolution" && GCLtechnique != "withInvolution") { 
-	FatalErrorIn("readControls.H") << "Invalid keyword for 'GCLtechnique' in constant/mechanicalProperties."
+    FatalErrorIn("readControls.H") << "Invalid keyword for 'GCLtechnique' in constant/mechanicalProperties."
 		                       << abort(FatalError);
 }
 Info << "GCL technique: " << GCLtechnique << nl;
 
 // ALE - PHatTerm: with or without involution?
 const word& PHatTerm  = mechanicalProperties.lookupOrDefault<word>("PHatTerm", "withoutInvolution");
+if (PHatTerm != "withoutInvolution" && PHatTerm != "withInvolution") {
+  FatalErrorIn("readControls.H") << "Invalid keyword for 'PHatTerm' in constant/mechanicalProperties."
+	                         << abort(FatalError); 
+}
 Info << "PHat term: " << PHatTerm << nl;
 
 // Addition of an option to do postProcessing:
@@ -85,10 +89,13 @@ if (timeStepping != "constant" && timeStepping != "variable") {
                                    << abort(FatalError);
 }
 
-//const DimensionedScalar& alpha_ = mechanicalProperties.lookupOrDefault<scalar>("alpha", 0.0);
-//const scalar& alpha = alpha_.value();
-const scalar& alpha = readScalar(mechanicalProperties.lookup("alpha"));
-Info << "Average P* coefficient alpha: " << alpha << nl;
+const scalar& alpha_ = readScalar(mechanicalProperties.lookup("alpha"));
+if (alpha_ < 0) { 
+  FatalErrorIn("readControls.H") << "Invalid 'alpha' value in constant/mechanicalProperties." << abort(FatalError) ;
+} else if (alpha_ > 1) { 
+  FatalErrorIn("readControls.H") << "Invalid 'alpha' value in constant/mechanicalProperties." << abort(FatalError) ;
+}
+Info << "Average P* coefficient alpha: " << alpha_ << nl;
 
 // Courant-Friedrichs-Lewy Number
 const scalar& cfl = readScalar(controlDict.lookup("cfl"));
