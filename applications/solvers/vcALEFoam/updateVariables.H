@@ -33,9 +33,11 @@ spatJdet = det(F); //spatJ   = det(F);
 spatH    = spatJdet * op.invT(F);//spatJ * op.invT(F);
 spatP    = spatialModel_.piola(F,  spatH, spatJdet);             //P(spatial)
 
+//starP   = ((1.0-alpha_)*matP) + (alpha_*(trueF.T()&spatP));    // P*
+
 // Update 'true'/solid quantities
 trueF = F & op.inverse(matF);
-trueJ = det(F);
+trueJ = det(trueF);
 trueH = trueJ * op.invT(trueF);
 if (solidModel__ == "vonMises") {
     Info << "vonMises model correct" << nl;

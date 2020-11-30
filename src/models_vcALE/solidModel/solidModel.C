@@ -199,7 +199,9 @@ void solidModel::correct(
 	CpInv = Finv_ & b_ & Finv_.T();//
       }
 
-    } else { /* If this is not a Von Mises model, do nothing */ }
+    } else { /* If this is not a Von Mises model, do nothing */
+   	FatalErrorIn("solidModel.C") << "error in parameters of solid model" << abort(FatalError);
+    }
 
 
 }

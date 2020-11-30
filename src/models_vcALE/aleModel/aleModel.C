@@ -115,8 +115,7 @@ void aleModel::correct()
     scalar t = mesh_.time().value();
     scalar pi = Foam::constant::mathematical::pi, pi2 = pi*pi, T2=T_*T_;
     forAll(wDot_, p)
-    {	    
-      //Info << "correcting ALE Motion Mapping\n";
+    {	/*    
       scalar X = mesh_.points()[p][0];
       scalar Y = mesh_.points()[p][1];
       wDot_[p][0] = 2*beta_*pi2/T2 * Foam::sin(2*pi*X/1.) * Foam::sin(2*pi*Y/6.)
@@ -124,6 +123,42 @@ void aleModel::correct()
       wDot_[p][1] = 40*beta_*pi2/T2 * Foam::sin(2*pi*X/1.) * Foam::sin(2*pi*Y/6.)
 	* ((Foam::cos(2*pi*t/T_)*Foam::cos(2*pi*t/T_)) - (Foam::sin(2*pi*t/T_)*Foam::sin(2*pi*t/T_)));
       wDot_[p][2] = 0; 
+      */
+
+      scalar X = mesh_.points()[p][0];
+      scalar Y = mesh_.points()[p][1];
+      scalar Z = mesh_.points()[p][2];
+            motMap_[p][0] =
+	      X +   beta_ * Foam::sin(2*pi*X) * Foam::sin(pi*Y/3.0) * Foam::sin(pi*t/T_)*Foam::sin(pi*t/T_);
+	          motMap_[p][1] =
+		    Y + 5*beta_ * Foam::sin(2*pi*X) * Foam::sin(pi*Y/3.0) * Foam::sin(2*pi*t/T_)*Foam::sin(2*pi*t/T_);
+		  motMap_[p][2] = Z;
+		  //Info << "correcting ALE Velocity\n";
+		        w_[p][0] =
+			  2*beta_*pi/T_ * Foam::sin(2*pi*X) * Foam::sin(pi*Y/3.0) * Foam::sin(pi*t/T_) * Foam::cos(pi*t/T_);
+			      w_[p][1] =
+				20.0*beta_*pi/T_ * Foam::sin(pi*Y/3.0) * Foam::sin(2*pi*X) * Foam::sin(pi*Y/3.0) * Foam::cos(2*pi*t/T_) * Foam::sin(2*pi*t/T_);
+			      w_[p][2] = 0.0;
+			      //Info << "correcting ALE defGrad\n";
+			            defGrad_[p] = tensor
+				      (
+				       1 + 4*beta_*pi * Foam::sin(2*pi*X) * Foam::cos(2*pi*X) * Foam::sin(pi*Y/3.0) * Foam::sin(pi*Y/3.0) * Foam::sin(pi*t/T_),
+				       2*beta_*pi/3.0 * Foam::sin(2*pi*X) * Foam::sin(2*pi*X) * Foam::cos(pi*Y/3.0) * Foam::sin(pi*Y/3.0) * Foam::sin(pi*t/T_),
+				       0,//
+				       20.0*beta_*pi * Foam::cos(2*pi*X) * Foam::sin(2*pi*X) * Foam::sin(pi*Y/3.0) * Foam::sin(pi*Y/3.0) * Foam::sin(2*pi*t/T_),
+				       1 + 10.0*beta_*pi/3.0 * Foam::sin(2*pi*X) * Foam::sin(2*pi*X) * Foam::cos(pi*Y/3.0) * Foam::sin(pi*Y/3.0) * Foam::sin(2*pi*t/T_),
+				       0,//
+				       0,
+				       0,
+				       1//
+				       );
+				    J_[p] = det(defGrad_[p]);
+				    H_[p] = J_[p] * inv(defGrad_[p]).T();
+				    wDot_[p][0] = 2*beta_*pi2/T2 * Foam::sin(2*pi*X) * Foam::sin(pi*Y/3.0)
+				      * ((Foam::cos(pi*t/T_)*Foam::cos(pi*t/T_)) - (Foam::sin(pi*t/T_)*Foam::sin(pi*t/T_)));
+				    wDot_[p][1] = 40*beta_*pi2/T2 * Foam::sin(2*pi*X) * Foam::sin(pi*Y/3.0)
+				      * ((Foam::cos(2*pi*t/T_)*Foam::cos(2*pi*t/T_)) - (Foam::sin(2*pi*t/T_)*Foam::sin(2*pi*t/T_)));
+				    wDot_[p][2] = 0;
       
     }   
 } else if (fictitiousMotionType() == "sinusoid_order2") {

@@ -26,7 +26,7 @@ if (GCLtechnique == "withInvolution") {
     //rhsLm3.primitiveFieldRef() -= rhsLm3.primitiveFieldRef();
 }
 
-rhsW.primitiveFieldRef() = op.surfaceSum( inter.pointToEdge(starP &aleH ) & Sf ) / rho.value();
+rhsW.primitiveFieldRef() = op.surfaceSum( inter.pointToEdge(starP) & Sf ) / rho.value();
 //op.surfaceSum(PstarHC*magSf) / rho.value();
 
 rhsSpatJ1.primitiveFieldRef() = spatH && op.surfaceSum( inter.pointToEdge( v_ ) * Sf );
@@ -66,21 +66,9 @@ forAll(mesh.boundary(), patch) {
                 nodeB = mesh.faces()[face][0];
                 nodeC = mesh.faces()[face][1];
             }
-/*
-	    vector tanLM1 = (I - (Npf*Npf)) & lm[node]; 
-	    vector tanLM2 = (I - (Npf*Npf)) & lm[nodeB];   
-	    vector tanLM3 = (I - (Npf*Npf)) & lm[nodeC];
 
-            vector normLM1 = (Npf*Npf) & lm[node];
-	    vector normLM2 = (Npf*Npf) & lm[nodeB];
-	    vector normLM3 = (Npf*Npf) & lm[nodeC];
-
-            tensor PH1 = matP[node]  & aleH[node];    tensor PstarH1 = starP[node]  & aleH[node];
-	    tensor PH2 = matP[nodeB] & aleH[nodeB];   tensor PstarH2 = starP[nodeB] & aleH[nodeB];
-	    tensor PH3 = matP[nodeC] & aleH[nodeC];   tensor PstarH3 = starP[nodeC] & aleH[nodeC];
-*/
-	    vector pR1 = pR[node]; vector pR2 = pR[nodeB]; vector pR3 = pR[nodeC]; 
-	    tensor D1 = D[node],         D2 = D[nodeB],         D3 = D[nodeC];
+	    vector pR1    = pR[node],       pR2 = pR[nodeB],       pR3 = pR[nodeC]; 
+	    tensor D1     = D[node],         D2 = D[nodeB],         D3 = D[nodeC];
 	    scalar alpha1 = alpha[node], alpha2 = alpha[nodeB], alpha3 = alpha[nodeC];
 
 	    vector v1 = v_[node];  vector vH1 = vHat[node];  vector w1 = solvedW[node];
@@ -110,13 +98,24 @@ forAll(mesh.boundary(), patch) {
 	           PylocC = vector(P[nodeC].xy(),P[nodeC].yy(),P[nodeC].zy()),
 	           PzlocC = vector(P[nodeC].xz(),P[nodeC].yz(),P[nodeC].zz());
 
-	    tensor HT1 = HT[node], HT2 = HT[nodeB], HT3 = HT[nodeC];
+	    //tensor HT1 = aleH[node].T(), HT2 = aleH[nodeB].T(), HT3 = aleH[nodeC].T();
+	    //tensor spatHT1 = spatH[node].T(), spatHT2 = spatH[nodeB].T(), spatHT3 = spatH[nodeC].T();
+            // important: all quantities operating on available variables (ex: aleH.T(), spatH.T())
+	    //            have to be declared carefully here.
 
             tensor gvC_1 = v1 * Npf, gvC_2 = v2 * Npf, gvC_3 = v3 * Npf;
-	    vector HTFw1 = (spatHT[node] &  trueF[node])  & w1, 
-		   HTFw2 = (spatHT[nodeB] & trueF[nodeB]) & w2, 
-		   HTFw3 = (spatHT[nodeC] & trueF[nodeC]) & w3;
+/*
+	    tensor     HT1 = aleH[node].T(),      HT2 = aleH[nodeB].T(),      HT3 = aleH[nodeC].T();
+            tensor spatHT1 = spatH[node].T(), spatHT2 = spatH[nodeB].T(), spatHT3 = spatH[nodeC].T();
+*/
+	    tensor     HT1 = HT[node],      HT2 = HT[nodeB],      HT3 = HT[nodeC];
+            tensor spatHT1 = spatHT[node], spatHT2 = spatHT[nodeB], spatHT3 = spatHT[nodeC];
 	    
+	    vector HTFw1 = (spatHT1 & trueF[node])  & w1, 
+		   HTFw2 = (spatHT2 & trueF[nodeB]) & w2, 
+		   HTFw3 = (spatHT3 & trueF[nodeC]) & w3;
+	    
+
 	    const fvPatch& patx = mesh.boundary()[patch];
 	    if (patx.name().find("free") != string::npos) {                 // OK
 	      //tC_1 = vector::zero; //tC_2 = vector::zero; //tC_3 = vector::zero; 
@@ -172,18 +171,20 @@ forAll(mesh.boundary(), patch) {
 	    rhsSpat1Clocal = 0.125*( spatH[node] && (6*gvC_1 + gvC_2 + gvC_3))/3.;
 	    rhsSpat2Clocal = 0.125*(6*HTFw1 + HTFw2 + HTFw3)/3.;
 	    // here: future term for rhsW
-            rhsDClocal     = 0.125*( 6*(D1*((HT1&w1)&Npf)) + (D2*((HT2&w2)&Npf)) + (D3*((HT3&w3)&Npf)) )/3.;
+            //rhsDClocal     = 0.125*( 6*(D1*((aleH[node].T()&w1)&Npf)) + (D2*((aleH[nodeB].T()&w2)&Npf)) + (D3*((aleH[nodeC].T()&w3)&Npf)) )/3.;
+	    rhsDClocal     = 0.125*( 6*(D1*((HT1&w1)&Npf)) + (D2*((HT2&w2)&Npf)) + (D3*((HT3&w3)&Npf)) )/3.;
 	    rhsAlphaClocal = 0.125*( 6*(alpha1*(HT1&w1)) + (alpha2*(HT2&w2)) + (alpha3*(HT3&w3)))/3.;
 	    rhsLm1Clocal   = 0.125*(6*tC_1 + tC_2 + tC_3)/3.;
 
 	    if (GCLtechnique == "withInvolution") {
 	        tC2_1 = (pR1  * Npf);    tC2_2 = (pR2 * Npf);    tC2_3 = (pR3 * Npf);
 	        //tC3_1 = w1 * Npf;        tC3_2 = w2 * Npf;       tC3_3 = w3 * Npf;
-		rhsLm2Clocal = 0.125*( (6*tC2_1 + tC2_2 + tC2_3 ) & (HT[node] & solvedW[node]) )/3.;
+		rhsLm2Clocal = 0.125*( (6*tC2_1 + tC2_2 + tC2_3 ) & (aleH[node].T() & solvedW[node]) )/3.;
 	    } else if (GCLtechnique == "withoutInvolution") {
-   	        jC_1 = (HT1 & w1) & Npf;    jC_2 = (HT2 & w2) & Npf;    jC_3 = (HT3 & w3) & Npf;
-		//rhsLm2Clocal = 0.125*( pR[node] * (6*jC_1 + jC_2 + jC_3))/3.;
-		rhsLm2Clocal = 0.125*( 6*(((pR1*w1)&aleH[node]) & Npf) + (((pR2*w2)&aleH[nodeB]) & Npf) + (((pR3*w3)&aleH[nodeC]) & Npf) )/3.;
+   	        //jC_1 = (aleH[node].T() & w1) & Npf;    jC_2 = (aleH[nodeB].T() & w2) & Npf;    jC_3 = (aleH[nodeC].T() & w3) & Npf;
+		jC_1 = (HT1 & w1) & Npf;    jC_2 = (HT2 & w2) & Npf;    jC_3 = (HT3 & w3) & Npf;
+		rhsLm2Clocal = 0.125*( pR[node] * (6*jC_1 + jC_2 + jC_3))/3.;
+		//rhsLm2Clocal = 0.125*( 6*(((pR1*w1)&aleH[node]) & Npf) + (((pR2*w2)&aleH[nodeB]) & Npf) + (((pR3*w3)&aleH[nodeC]) & Npf) )/3.;
 	    }
             
 	    rhsF[node]      += vHatClocal     * (Sf_p.boundaryField()[patch][facei]);
