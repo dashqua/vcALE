@@ -75,18 +75,19 @@ forAll(mesh.boundary(), patch) {
 	    vector v2 = v_[nodeB]; vector vH2 = vHat[nodeB]; vector w2 = solvedW[nodeB];
 	    vector v3 = v_[nodeC]; vector vH3 = vHat[nodeC]; vector w3 = solvedW[nodeC];
 
-            scalar jC_1(0.0), jC_2(0.0), jC_3(0.0), rhsSpat1Clocal(0.0);
-	      
+            scalar jC_1(0.0), jC_2(0.0), jC_3(0.0), rhsSpat1Clocal(0.0), HTwClocal(0.0);
+	     
 	    vector tC_1(vector::zero), tC_2(vector::zero), tC_3(vector::zero),
 		   vHatClocal(vector::zero),
 	           wClocal(vector::zero),
 	           rhsLmSum(vector::zero), rhsLm1Clocal(vector::zero), rhsLm2Clocal(vector::zero),
 		   rhsSpat2Clocal(vector::zero),
-		   rhsAlphaClocal(vector::zero);
+		   rhsAlphaClocal(vector::zero),
+		   rhsWClocal(vector::zero);
 
 	    tensor tC2_1(tensor::zero), tC2_2(tensor::zero), tC2_3(tensor::zero),
 	           tC3_1(tensor::zero), tC3_2(tensor::zero), tC3_3(tensor::zero),
-		   rhsDClocal(tensor::zero);
+		   rhsDClocal(tensor::zero); 
 
 	    vector PxlocA = vector(P[node].xx(),P[node].yx(),P[node].zx()),
 	           PylocA = vector(P[node].xy(),P[node].yy(),P[node].zy()),
@@ -167,11 +168,10 @@ forAll(mesh.boundary(), patch) {
 
       	    vHatClocal     = 0.125*(6*vH1 + vH2 + vH3)/3.;
 	    wClocal        = 0.125*(6*w1 + w2 + w3)/3.;
-	    // here: future term for rhsMatJ
+	    HTwClocal      = 0.125*(6*((HT1&w1)&Npf) + ((HT2&w2)&Npf) + ((HT3&w3)&Npf))/3.;// here: future term for rhsMatJ
 	    rhsSpat1Clocal = 0.125*( spatH[node] && (6*gvC_1 + gvC_2 + gvC_3))/3.;
 	    rhsSpat2Clocal = 0.125*(6*HTFw1 + HTFw2 + HTFw3)/3.;
-	    // here: future term for rhsW
-            //rhsDClocal     = 0.125*( 6*(D1*((aleH[node].T()&w1)&Npf)) + (D2*((aleH[nodeB].T()&w2)&Npf)) + (D3*((aleH[nodeC].T()&w3)&Npf)) )/3.;
+	    rhsWClocal     = 0.125*(6*(starP[node]&Npf) + (starP[nodeB]&Npf) + (starP[nodeC]&Npf))/3.;// here: future term for rhsW
 	    rhsDClocal     = 0.125*( 6*(D1*((HT1&w1)&Npf)) + (D2*((HT2&w2)&Npf)) + (D3*((HT3&w3)&Npf)) )/3.;
 	    rhsAlphaClocal = 0.125*( 6*(alpha1*(HT1&w1)) + (alpha2*(HT2&w2)) + (alpha3*(HT3&w3)))/3.;
 	    rhsLm1Clocal   = 0.125*(6*tC_1 + tC_2 + tC_3)/3.;
@@ -189,10 +189,10 @@ forAll(mesh.boundary(), patch) {
             
 	    rhsF[node]      += vHatClocal     * (Sf_p.boundaryField()[patch][facei]);
 	    rhsMatF[node]   += wClocal        * (Sf_p.boundaryField()[patch][facei]);
-	    //rhsMatJ[node]    = vector::zero;   // At hte moment: w is 0 on boundaries
+	    rhsJ[node]   += HTwClocal         * (magSf_p.boundaryField()[patch][facei]);  //vector::zero;   // At the moment: w is 0 on boundaries
             rhsSpatJ1[node] += rhsSpat1Clocal * (magSf_p.boundaryField()[patch][facei]);
 	    rhsSpatJ2[node] += rhsSpat2Clocal & (Sf_p.boundaryField()[patch][facei]);
-	    rhsW[node]       = vector::zero;  // At the moment: fix BCs to 0 for w	    	   	   
+	    rhsW[node] = vector::zero;//rhsW[node]      += rhsWClocal     * (magSf_p.boundaryField()[patch][facei]); //rhsW[node]       = vector::zero;  // At the moment: fix BCs to 0 for w	    	   	   
             rhsD[node]      += rhsDClocal     * (magSf_p.boundaryField()[patch][facei]);
 	    rhsAlpha[node]  += rhsAlphaClocal & (Sf_p.boundaryField()[patch][facei]);
 	    rhsLm1[node]    += rhsLm1Clocal   * (magSf_p.boundaryField()[patch][facei]);
@@ -278,6 +278,7 @@ forAll(mesh.boundary(), patch) {
       forAll(mesh.faces()[face], nodei) {
         const label& node = mesh.faces()[face][nodei];
         lm[node]      = (I - (Npf*Npf)) & lm[node];
+	//solvedW[node] = (I - (Npf*Npf)) & solvedW[node];
       }
     }
   } else if (patx.name().find("skew") != string::npos) {
@@ -287,6 +288,7 @@ forAll(mesh.boundary(), patch) {
       forAll(mesh.faces()[face], nodei) {
         const label& node = mesh.faces()[face][nodei];
         lm[node]      = (Npf*Npf) & lm[node];
+	//solvedW[node] =  (I - (Npf*Npf)) & solvedW[node];
       }
     }
     
