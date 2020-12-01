@@ -56,17 +56,17 @@ aleModel::aleModel
      dimensionedVector("motMap", dimLength, vector::zero)
     ),
 
-    w_( IOobject("w", mesh_.time().timeName(), mesh_, IOobject::NO_READ, IOobject::AUTO_WRITE), pMesh_,
+    w_( IOobject("w", mesh_.time().timeName(), mesh_, IOobject::NO_READ, IOobject::NO_WRITE), pMesh_,
      dimensionedVector("w", dimLength/dimTime, vector::zero)     
     ),
     
     defGrad_( IOobject("defGrad", mesh_), pMesh_, Foam::tensor::I ),
 
-    J_( IOobject("J", mesh_.time().timeName(), mesh_, IOobject::NO_READ, IOobject::AUTO_WRITE), pMesh_, 1),
+    J_( IOobject("J", mesh_.time().timeName(), mesh_, IOobject::NO_READ, IOobject::NO_WRITE), pMesh_, 1),
 
     H_( IOobject("H", mesh_), pMesh_, Foam::tensor::I),
 
-    wDot_( IOobject("wDot", mesh_.time().timeName(), mesh_, IOobject::NO_READ, IOobject::AUTO_WRITE), pMesh_,
+    wDot_( IOobject("wDot", mesh_.time().timeName(), mesh_, IOobject::NO_READ, IOobject::NO_WRITE), pMesh_,
 	   dimensionedVector("wDot", w_.dimensions()/dimTime, vector::zero)     
     ),
     
@@ -273,7 +273,7 @@ pointTensorField aleModel::piola (pointTensorField& matF, pointTensorField& matH
 {
   pointTensorField matP
   (
-     IOobject (name_+"P", mesh_.time().timeName(), mesh_, IOobject::NO_READ, IOobject::AUTO_WRITE), pMesh_,
+     IOobject (name_+"P", mesh_.time().timeName(), mesh_, IOobject::NO_READ, IOobject::NO_WRITE), pMesh_,
      dimensionedTensor("matP", dimensionSet(1,-1,-2,0,0,0,0), tensor::zero)
   );
 

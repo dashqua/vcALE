@@ -96,13 +96,13 @@ Info << "Creating fields for post-processing ..." << endl;
 
 // Nodal displacements
 pointVectorField u (
-    IOobject ("u", runTime.timeName(), mesh, IOobject::NO_READ, IOobject::AUTO_WRITE),
+    IOobject ("u", runTime.timeName(), mesh, IOobject::NO_READ, IOobject::NO_WRITE),
     pMesh,
     dimensionedVector("u", dimLength, vector::zero)
 );
 // w Nodal displacements
 pointVectorField uw (
-    IOobject ("uw", runTime.timeName(), mesh, IOobject::NO_READ, IOobject::AUTO_WRITE),
+    IOobject ("uw", runTime.timeName(), mesh, IOobject::NO_READ, IOobject::NO_WRITE),
     pMesh,
     dimensionedVector("uw", dimLength, vector::zero)
 );
@@ -141,7 +141,7 @@ Info << "Creating strain measure fields ..." << endl;
 
 // ALE - SPatial J (to be solved)
 pointScalarField spatJ (
-        IOobject ("spatJ", runTime.timeName(), mesh, IOobject::NO_READ, IOobject::AUTO_WRITE), pMesh,
+        IOobject ("spatJ", runTime.timeName(), mesh, IOobject::NO_READ, IOobject::NO_WRITE), pMesh,
         dimensionedScalar("spatJ", dimensionSet(0,0,0,0,0,0,0), 1)	
 );
 
@@ -150,41 +150,41 @@ pointTensorField F ( IOobject("F", mesh), pMesh, Foam::tensor::I );
 
 // ALE - Material J (to be solved)
 pointScalarField matJ (
-	IOobject ("matJ", runTime.timeName(), mesh, IOobject::NO_READ, IOobject::AUTO_WRITE), pMesh,
+	IOobject ("matJ", runTime.timeName(), mesh, IOobject::NO_READ, IOobject::NO_WRITE), pMesh,
 	dimensionedScalar("matJ", dimensionSet(0,0,0,0,0,0,0), 1)
 );
 
 // ALE - Material F (to be solved)
 pointTensorField matF (
-        IOobject("matF", runTime.timeName(), mesh, IOobject::NO_READ, IOobject::AUTO_WRITE), pMesh,
+        IOobject("matF", runTime.timeName(), mesh, IOobject::NO_READ, IOobject::NO_WRITE), pMesh,
 	dimensionedTensor("matF", F.dimensions(), Foam::tensor::I)
 );
 
 Info << "Creating linear momentum field ..." << endl;
 // ALE - Referential LM (to be solved)
-pointVectorField lm ( IOobject("lm", runTime.timeName(), mesh, IOobject::MUST_READ, IOobject::AUTO_WRITE), pMesh );
+pointVectorField lm ( IOobject("lm", runTime.timeName(), mesh, IOobject::MUST_READ, IOobject::NO_WRITE), pMesh );
 
 Info << "Creating material velocity field ..." << endl;
 // ALE - Material velocity (to be solved)
 pointVectorField solvedW(
-	IOobject("solvedW", runTime.timeName(), mesh, IOobject::READ_IF_PRESENT, IOobject::AUTO_WRITE), pMesh,
+	IOobject("solvedW", runTime.timeName(), mesh, IOobject::READ_IF_PRESENT, IOobject::NO_WRITE), pMesh,
 	dimensionedVector("solvedW", dimLength/dimTime, vector::zero)
 );
 
 Info << "Creating energy field ..." << endl;
 pointScalarField E (
-	IOobject("E", runTime.timeName(), mesh, IOobject::READ_IF_PRESENT, IOobject::AUTO_WRITE), pMesh,
+	IOobject("E", runTime.timeName(), mesh, IOobject::READ_IF_PRESENT, IOobject::NO_WRITE), pMesh,
 	dimensionedScalar("E", dimensionSet(1,-1,-2,0,0,0,0), 0.0)
 );
 
 Info << "Creating Plasticity solved variables ..." << endl;
 pointTensorField DH (
-	IOobject("DH", runTime.timeName(), mesh, IOobject::NO_READ, IOobject::AUTO_WRITE), pMesh,
+	IOobject("DH", runTime.timeName(), mesh, IOobject::NO_READ, IOobject::NO_WRITE), pMesh,
 	dimensionedTensor("DH", dimless, tensor::I)
 );
 // plastic strain epsilon
 pointScalarField alphaH ( 
-	IOobject("alphaH", runTime.timeName(), mesh, IOobject::NO_READ, IOobject::AUTO_WRITE), 
+	IOobject("alphaH", runTime.timeName(), mesh, IOobject::NO_READ, IOobject::NO_WRITE), 
 	pMesh,
 	dimensionedScalar("alphaH", dimless, 0.0)
 );
@@ -249,7 +249,7 @@ trueH = trueJ * op.invT(trueF);
 //pointScalarField spatJ = det(F);
 //
 pointScalarField spatJdet(
-        IOobject ("spatJdet", runTime.timeName(), mesh, IOobject::NO_READ, IOobject::AUTO_WRITE),
+        IOobject ("spatJdet", runTime.timeName(), mesh, IOobject::NO_READ, IOobject::NO_WRITE),
         pMesh,
         dimensionedScalar("spatJdet", dimensionSet(0,0,0,0,0,0,0), 1)
 );
@@ -351,17 +351,17 @@ pointTensorField starP = ((1.0-alpha_)*matP) + (alpha_*(trueF.T()&spatP));
        \ ' /     _| |__/ | _| |__/ |\  `-'  /\ `.___.'\ _| |_    _| |_    _| |_  _| |__/ || \____) |
         \_/     |________||________| `.___.'  `.____ .'|_____|  |_____|  |_____||________| \______.' 	                                                                                                                                                                                                                                                                     */
 //- ALE: pR
-pointVectorField pR ( IOobject ("pR", runTime.timeName(), mesh, IOobject::NO_READ, IOobject::AUTO_WRITE), 
+pointVectorField pR ( IOobject ("pR", runTime.timeName(), mesh, IOobject::NO_READ, IOobject::NO_WRITE), 
     op.inverseScalar(matJ) * lm 
 );
 
 //- ALE: v
-pointVectorField v_ ( IOobject("v_", runTime.timeName(), mesh, IOobject::NO_READ, IOobject::AUTO_WRITE),
+pointVectorField v_ ( IOobject("v_", runTime.timeName(), mesh, IOobject::NO_READ, IOobject::NO_WRITE),
     pR/rho 
 );
 
 //- ALE:  vHat
-pointVectorField vHat ( IOobject("vHat", runTime.timeName(), mesh, IOobject::NO_READ, IOobject::AUTO_WRITE), 
+pointVectorField vHat ( IOobject("vHat", runTime.timeName(), mesh, IOobject::NO_READ, IOobject::NO_WRITE), 
     v_ + (trueF & solvedW) 
 );
 
@@ -537,7 +537,7 @@ pointVectorField rhsLm4 ( IOobject ("rhsLm4", mesh), pMesh,
     dimensionedVector("rhsLm4", lm.dimensions()/dimTime, vector::zero)
 );
 pointVectorField externalForces ( 
-    IOobject("externalForces", runTime.timeName(), mesh, IOobject::READ_IF_PRESENT, IOobject::AUTO_WRITE), pMesh,
+    IOobject("externalForces", runTime.timeName(), mesh, IOobject::READ_IF_PRESENT, IOobject::NO_WRITE), pMesh,
     dimensionedVector("externalForces", dimensionSet(1,-2,-2,0,0,0,0), vector::zero)
 );
 externalForces.correctBoundaryConditions();
@@ -592,7 +592,7 @@ pointTensorField rhsMatF ( IOobject ("rhsMatF", mesh), pMesh,
 rhsMatF.primitiveFieldRef() = op.surfaceSum( inter.pointToEdge(solvedW) * Sf );
 
 // ALE - RHS of solvedW velocity
-pointVectorField rhsW ( IOobject ("rhsW",runTime.timeName(), mesh, IOobject::NO_READ, IOobject::AUTO_WRITE), pMesh,
+pointVectorField rhsW ( IOobject ("rhsW",runTime.timeName(), mesh, IOobject::NO_READ, IOobject::NO_WRITE), pMesh,
     dimensionedVector("rhsW", solvedW.dimensions()/dimTime, vector::zero)
 );
 rhsW.primitiveFieldRef() = op.surfaceSum( inter.pointToEdge(starP &aleH ) & Sf ) / rho.value();
@@ -697,5 +697,5 @@ Info << "\nObjects all created !" << nl << nl << nl;
 
 
 
-
+pointVectorField Forces ( IOobject("Forces", mesh, IOobject::READ_IF_PRESENT, IOobject::NO_WRITE), pMesh, dimensionedVector("Forces", dimensionSet(1,1,-2,0,0,0,0), vector::zero));
 

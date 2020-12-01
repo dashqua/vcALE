@@ -941,6 +941,16 @@ vector operations::L2diffXYZ(pointVectorField& v1, pointVectorField& v2, const p
     return vector( Foam::sqrt(sumX), Foam::sqrt(sumY), Foam::sqrt(sumZ) );
 }
 
+vector operations::L2normXYZ(pointVectorField& v1, const pointScalarField& V){
+  scalar sumX(0.0), sumY(0.0), sumZ(0.0);
+    forAll(mesh_.points(), n){
+      sumX += V[n] * Foam::pow( v1[n][0] , 2);
+      sumY += V[n] * Foam::pow( v1[n][1] , 2);
+      sumZ += V[n] * Foam::pow( v1[n][2] , 2);      
+  }
+    return vector( Foam::sqrt(sumX), Foam::sqrt(sumY), Foam::sqrt(sumZ) );
+}
+  
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 } // End namespace Foam

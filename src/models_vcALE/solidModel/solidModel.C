@@ -73,14 +73,14 @@ solidModel::solidModel
   
     Ys_( IOobject("Ys", F.time().timeName(), F.db(), IOobject::NO_READ, IOobject::NO_WRITE), F.mesh(), Ys0_),
 
-    strain_p_( IOobject("strain_p", F.time().timeName(), F.db(), IOobject::NO_READ, IOobject::AUTO_WRITE), F.mesh(),
+    strain_p_( IOobject("strain_p", F.time().timeName(), F.db(), IOobject::NO_READ, IOobject::NO_WRITE), F.mesh(),
       dimensionedScalar("strain_p", dimless, 0.0)
     ),
     
     CpInv_ (F),
     tau_ (F),
 
-    vMises_( IOobject("vMises", F.time().timeName(), F.db(), IOobject::NO_READ, IOobject::AUTO_WRITE), F.mesh(),
+    vMises_( IOobject("vMises", F.time().timeName(), F.db(), IOobject::NO_READ, IOobject::NO_WRITE), F.mesh(),
      dimensionedScalar("vMises", dimensionSet(1,-1,-2,0,0,0,0), 0.0)
    )
   

@@ -22,6 +22,10 @@ lm.write();
 
 if (doPostPro == "activated") {
 
+
+Info << "sample L2 of Forces: " << op.L2normXYZ(Forces, V) << endl;
+
+
   if (tutorial == "swingingCube") {
     // Compute linear displacements or lm for small amplitudes
     const scalar& A = readScalar(runParameters.lookup("A"));
@@ -38,7 +42,7 @@ if (doPostPro == "activated") {
     const scalar t = runTime.value();
     pointScalarField U0 (IOobject("U0", mesh), pMesh, dimensionedScalar(runParameters.lookup("U0")));
     pointVectorField lm_theo (
-			     IOobject("lm_theo", runTime.timeName(), mesh, IOobject::NO_READ, IOobject::AUTO_WRITE), pMesh,
+			     IOobject("lm_theo", runTime.timeName(), mesh, IOobject::NO_READ, IOobject::NO_WRITE), pMesh,
 			     dimensionedVector("lm_theo", u.dimensions(), vector::zero)
 			     );
     forAll(lm_theo, n){
@@ -88,6 +92,9 @@ vector sum = vector::zero;
 forAll(u, node) { sum += u[node]; } 
 vector cog = sum / (sizeof( u ) / sizeof(u[0]));
 */
+
+
+/*
 scalar index = 129;
 
 Info << "time               : " << runTime.value() << nl;
@@ -109,5 +116,5 @@ Info << "sample spatJdet    : " << spatJdet[index] << nl;
 Info << "sample spatJ       : " << spatJ[index] << nl;
 //(rhsSpatJ1 + rhsSpatJ2 + rhsSpatJ3
 Info << "deltaT         : " << deltaT.value() << nl;
-
+*/
 }
