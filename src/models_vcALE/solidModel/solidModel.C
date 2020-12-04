@@ -82,12 +82,15 @@ solidModel::solidModel
 
     vMises_( IOobject("vMises", F.time().timeName(), F.db(), IOobject::NO_READ, IOobject::NO_WRITE), F.mesh(),
      dimensionedScalar("vMises", dimensionSet(1,-1,-2,0,0,0,0), 0.0)
-   )
+    ),
+
+    HardeningLaw_("constant")
   
 {
   if (model_ == "vonMises"){
     Hm_    = dict.subDict("solidModel").subDict("vonMisesDict").lookup("Hm");
     Ys0_   = dict.subDict("solidModel").subDict("vonMisesDict").lookup("Ys");
+    HardeningLaw_ = dict.subDict("solidModel").subDict("vonMisesDict").lookup("HardeningLaw");
   }
 }
 

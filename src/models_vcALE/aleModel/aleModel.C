@@ -111,7 +111,18 @@ aleModel::~aleModel() {}
 void aleModel::correct()
 {
  if (usePstar_) { return; }
- if (fictitiousMotionType() == "sinusoid_order2inTime") {
+ if (fictitiousMotionType() == "sinusoid_order2inTime_roller") {
+    scalar t = mesh_.time().value();
+    scalar pi = Foam::constant::mathematical::pi, T=T_, pi2 = pi*pi, T2=T_*T_;
+    forAll(wDot_, p) {
+      scalar X = mesh_.points()[p][0];
+      scalar Y = mesh_.points()[p][1];
+      //scalar Z = mesh_.points()[p][2];  
+      wDot_[p][0] = (2*beta_*pi2/T2) * (Foam::cos(pi*t/T)*Foam::cos(pi*t/T) - Foam::sin(pi*t/T)*Foam::sin(pi*t/T) )         * Foam::sin(2*pi*X/1.) * (Foam::cos(2*pi*Y/6.)+Foam::sin(2*pi*Y/6.));
+      wDot_[p][1]= (40*beta_*pi2/T2) * (Foam::cos(2*pi*t/T)*Foam::cos(2*pi*t/T) - Foam::sin(2*pi*t/T)*Foam::sin(2*pi*t/T) ) * Foam::sin(2*pi*Y/6.) * (Foam::cos(2*pi*X/1.)+Foam::sin(2*pi*X/1.));
+      wDot_[p][2] = 0;
+    }
+ } else if (fictitiousMotionType() == "sinusoid_order2inTime") {
     scalar t = mesh_.time().value();
     scalar pi = Foam::constant::mathematical::pi, pi2 = pi*pi, T2=T_*T_;
     forAll(wDot_, p)
@@ -295,28 +306,6 @@ pointTensorField aleModel::piola (pointTensorField& matF, pointTensorField& matH
   return matP;
 }
 
-// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
-/*
-pointScalarField aleModel::getMaterialPressure (pointTensorField& matF, pointTensorField& matH, pointScalarField& matJ)
-{
-  pointScalarField matPres
-  (
-     IOobject ("matPres", mesh_.time().timeName(), mesh_, IOobject::NO_READ, IOobject::AUTO_WRITE),
-     pMesh_,
-     dimensionedScalar("matPres", dimensionSet(1,-1,-2,0,0,0,0), 0.0)
-  );
-
-  if (model_ == "neoHookean") { 
-    forAll(mesh_.points(), n) {
-      matPres[n] = kappa_.value()*(matJ[n]-1.0) ;
-    }
-  } else {
-    FatalErrorIn("aleModel.C") << "Material Pressure Model is not properly defined." << abort(FatalError);
-  }
-  
-  return matPres;
-}
-*/
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 }

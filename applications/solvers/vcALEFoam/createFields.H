@@ -419,21 +419,23 @@ Info << "Creating fields for gradient ..." << endl;
 // Gradient class
 gradientSchemes grad(mesh, Sf, V);
 
-// Gradient of nodal linear momentum
+// Gradient and reconstruction of spatial velocity
 tensorField vGrad = grad.gradient(v_);
-
-// Reconstruction of nodal linear momentum
 vectorField vM(mesh.edges().size());
 vectorField vP(mesh.edges().size());
 grad.reconstruct(v_, vGrad, vM, vP);
 
-// Gradient of pressure
+// Gradient and reconstruction of pressure
 vectorField pGrad = grad.gradient(p);
-
-// Reconstruction of nodal pressure
 scalarField pM(mesh.edges().size());
 scalarField pP(mesh.edges().size());
 grad.reconstruct(p, pGrad, pM, pP);
+
+// Gradient and reconstruction of nodal material velocity
+tensorField wGrad = grad.gradient(solvedW);
+vectorField wM(mesh.edges().size());
+vectorField wP(mesh.edges().size());
+grad.reconstruct(solvedW, wGrad, wM, wP);
 
 /*
       ________  _____  _____  _____  ____  ____  ________   ______   
@@ -449,6 +451,7 @@ Info << "Creating fields for fluxes ..." << endl;
 // Edge Stabilisation
 vectorField stabC    = inter.pointToEdge(matJ*rho)*(0.5*mech.SmatrixMod(aleUp___, aleUs___) & (vP - vM));
 tensorField stabJacC =   ((0.5*mech.SmatrixJacobianMod(aleUp___, aleUs___)) * (pP - pM))/rho.value(); 
+vectorField stabWC   = rho.value() * 0.5 * (mech.SmatrixMod(aleUp___, aleUs___) & (wP - wP));
 
 // Edge traction
 vectorField tC    = inter.pointToEdge(PHat) & N;
@@ -535,12 +538,12 @@ pointVectorField rhsLm3 ( IOobject ("rhsLm3", mesh), pMesh,
 );
 pointVectorField rhsLm4 ( IOobject ("rhsLm4", mesh), pMesh,
     dimensionedVector("rhsLm4", lm.dimensions()/dimTime, vector::zero)
-);
+);/*
 pointVectorField externalForces ( 
     IOobject("externalForces", runTime.timeName(), mesh, IOobject::READ_IF_PRESENT, IOobject::NO_WRITE), pMesh,
     dimensionedVector("externalForces", dimensionSet(1,-2,-2,0,0,0,0), vector::zero)
 );
-externalForces.correctBoundaryConditions();
+externalForces.correctBoundaryConditions();*/
 
 rhsLm4.primitiveFieldRef() = op.surfaceSum(stabC*magSf) ; 
 if (PHatTerm == "withInvolution") {
@@ -579,6 +582,11 @@ pointScalarField rhsSpatJ3 ( IOobject("rhsSpatJ3", mesh), pMesh,
 );
 rhsSpatJ3.primitiveFieldRef() = op.surfaceSum( (stabJacC & (inter.pointToEdge(spatH)&N) ) & (inter.pointToEdge(spatH) & Sf) ) ;
 
+pointScalarField rhsSpatJalt ( IOobject("rhsSpatJalt", mesh), pMesh,
+    dimensionedScalar("rhsSpatJalt", spatJ.dimensions()/dimTime, 0)
+);
+rhsSpatJalt.primitiveFieldRef() = op.surfaceSum( inter.pointToEdge(spatH&vHat) & Sf );
+
 // RHS of spatial F equation
 pointTensorField rhsF ( IOobject ("rhsF", mesh), pMesh,
     dimensionedTensor("rhsF", F.dimensions()/dimTime,tensor::zero)
@@ -592,10 +600,15 @@ pointTensorField rhsMatF ( IOobject ("rhsMatF", mesh), pMesh,
 rhsMatF.primitiveFieldRef() = op.surfaceSum( inter.pointToEdge(solvedW) * Sf );
 
 // ALE - RHS of solvedW velocity
-pointVectorField rhsW ( IOobject ("rhsW",runTime.timeName(), mesh, IOobject::NO_READ, IOobject::NO_WRITE), pMesh,
+pointVectorField rhsW ( IOobject ("rhsW", runTime.timeName(), mesh, IOobject::NO_READ, IOobject::NO_WRITE), pMesh,
     dimensionedVector("rhsW", solvedW.dimensions()/dimTime, vector::zero)
 );
 rhsW.primitiveFieldRef() = op.surfaceSum( inter.pointToEdge(starP &aleH ) & Sf ) / rho.value();
+
+pointVectorField rhsW2 ( IOobject ("rhsW", runTime.timeName(), mesh, IOobject::NO_READ, IOobject::NO_WRITE), pMesh,
+    dimensionedVector("rhsW2", solvedW.dimensions()/dimTime, vector::zero)
+);
+rhsW2.primitiveFieldRef() = op.surfaceSum( stabWC*magSf );
 
 // ALE - RHS of E energy
 pointScalarField rhsE1 ( IOobject ("rhsE1", mesh), pMesh,

@@ -1,6 +1,3 @@
-// Update external Forces
-//externalForces.correctBoundaryConditions();
-
 // Strain measures
 stretch = mech.stretch();
 
@@ -33,14 +30,11 @@ spatJdet = det(F); //spatJ   = det(F);
 spatH    = spatJdet * op.invT(F);//spatJ * op.invT(F);
 spatP    = spatialModel_.piola(F,  spatH, spatJdet);             //P(spatial)
 
-//starP   = ((1.0-alpha_)*matP) + (alpha_*(trueF.T()&spatP));    // P*
-
 // Update 'true'/solid quantities
 trueF = F & op.inverse(matF);
 trueJ = det(trueF);
 trueH = trueJ * op.invT(trueF);
 if (solidModel__ == "vonMises") {
-    Info << "vonMises model correct" << nl;
     D = DH / matJ; alpha = alphaH / matJ; 
     model.correct(trueF, trueH, trueJ, spatJ, matJ, D, alpha);
     forAll(D, n) { DH[n] = D[n] * matJ[n];  alphaH[n] = alpha[n] * matJ[n]; }
@@ -63,10 +57,14 @@ grad.reconstruct(v_, vGrad, vM, vP);
 p = model.pressure();
 pGrad = grad.gradient(p);
 grad.reconstruct(p, pGrad, pM, pP);
+//
+wGrad = grad.gradient(solvedW);
+grad.reconstruct(solvedW, wGrad, wM, wP);
 
 // Average terms
 stabC    = inter.pointToEdge(matJ*rho)*(0.5*mech.SmatrixMod(aleUp___, aleUs___) & (vP - vM));
 stabJacC = ((0.5*mech.SmatrixJacobianMod(aleUp___, aleUs___)) * (pP - pM))/rho.value();
+stabWC   = rho.value() * 0.5 * (mech.SmatrixMod(aleUp___, aleUs___) & (wP - wP));
 
 if (PHatTerm == "withInvolution") {
   forAll(Px, n) { 
@@ -86,12 +84,8 @@ if (GCLtechnique == "withInvolution") {
     HTwC  = inter.pointToEdge( aleH.T() & solvedW ) & N;
     pRwHC = inter.pointToEdge( (pR*solvedW) & aleH ) & N;					      
 } 
-//vC  = inter.pointToEdge( vHat )      * N;
-//wC  = inter.pointToEdge( solvedW )   * N;
-
-//PmatHC    = inter.pointToEdge( matP  & aleH ) & N;
 if (solidModel__ == "vonMises") {	
-    D = DH / matJ;    alpha = alpha / matJ;
+    //D = DH / matJ;    alpha = alpha / matJ;
     forAll(D1, n) {
         D1[n] = vector(D[n].xx(), D[n].xy(), D[n].xz());
         D2[n] = vector(D[n].yx(), D[n].yy(), D[n].yz());

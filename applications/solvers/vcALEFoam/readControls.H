@@ -116,8 +116,8 @@ Info << "Computation of solvedW's RHS: use of Pstar (1) or wDot (0): " << usePst
 // ALE - For update of solvedW
 // update material motion every x iteration
 //const scalar updateEvery = mechanicalProperties.lookupOrDefault<scalar>("updateEvery", 1);
-const scalar& updateEvery = readScalar(mechanicalProperties.lookup("updateEvery"));
-scalar curTimeStep = 0;
+//const scalar& updateEvery = readScalar(mechanicalProperties.lookup("updateEvery"));
+//scalar curTimeStep = 0;
 
 
 
@@ -126,15 +126,14 @@ scalar curTimeStep = 0;
 // int nbRKstages = 3;// 2 or 3;
 const scalar& nbRKstages_ = readScalar(controlDict.lookup("RungeKuttaStages"));
 const int nbRKstages(nbRKstages_);
-
-//Info << "nbRKstages_ : " << nbRKstages_ << nl;
-//Info << "nbRKstages  : " << nbRKstages  << nl;
 /*
+Info << "nbRKstages  : " << nbRKstages  << nl;
 if (nbRKstages != 2 || nbRKstages != 3) {
     FatalErrorIn("readControls.H") << "'RungeKuttaStages' has to be '2' or '3'." << abort(FatalError);
 }
 */
 
-
-
+// Force Roller BCs for solvedW ?
+bool rollerBCforW = mechanicalProperties.lookupOrDefault<bool>("rollerBCforW", false);
+Info << "Do we apply roller boundary conditions for w ? " << (rollerBCforW ? "yes" : "no") << nl;
 //

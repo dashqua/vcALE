@@ -111,6 +111,9 @@ class solidModel
 
         //- Von Mises stresses
         pointScalarField vMises_;
+
+        //- HardeningLaw
+        word HardeningLaw_;
   
 private:
 

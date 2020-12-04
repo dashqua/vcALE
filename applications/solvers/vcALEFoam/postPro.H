@@ -16,8 +16,8 @@ lm.write();
 // print Von Mises quantities if relevant
 //model.writeVars();
 
-//DH.write();
-//alphaH.write();
+DH.write();
+alphaH.write();
 
 
 if (doPostPro == "activated") {
