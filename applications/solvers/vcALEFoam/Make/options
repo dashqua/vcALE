@@ -2,6 +2,7 @@ EXE_INC = \
 	-I$(PWD)/../../../src/models_vcALE/lnInclude \
 	-I$(PWD)/../../../src/schemes_vcALE/lnInclude \
 	-I$(PWD)/../../../src/mathematics_vcALE/lnInclude \
+	-I$(PWD)/../../../src/paperFunctions_vcALE/lnInclude \
 	-I$(LIB_SRC)/finiteVolume/lnInclude \
 	-I$(LIB_SRC)/meshTools/lnInclude
 
@@ -11,6 +12,7 @@ EXE_LIBS = \
 	-lModels_vcALE \
 	-lSchemes_vcALE \
 	-lMathematics_vcALE \
+        -lpaperFunctions_vcALE \
 	-L$(FOAM_LIBBIN) \
 	-lfiniteVolume \
 	-lmeshTools \

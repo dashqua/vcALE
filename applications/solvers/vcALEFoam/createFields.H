@@ -47,6 +47,9 @@ const dimensionedScalar& h = op.minimumEdgeLength();
 // Continuum mechanics class
 mechanics mech(mesh, Sf);
 
+// Initialize paper Functions
+paperFunctions pf(mechanicalProperties, paperFunctionsProperties, mesh, pMesh);
+
 /*
        ______    ___      ___   _______     ______   _____  ____  _____       _     _________  ________   ______   
      .' ___  | .'   `.  .'   `.|_   __ \   |_   _ `.|_   _||_   \|_   _|     / \   |  _   _  ||_   __  |.' ____ \

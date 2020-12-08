@@ -1,0 +1,3 @@
+paperFunctions.C
+
+LIB = $(FOAM_USER_LIBBIN)/libpaperFunctions_vcALE

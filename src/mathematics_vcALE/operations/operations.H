@@ -279,7 +279,7 @@ public:
         scalar integrateOverDomain(pointScalarField& , const pointScalarField&);
 
         // direct L2-difference of 2 vectorsFields
-        scalar L2diffX(pointVectorField&, pointVectorField&, const pointScalarField&);
+        scalar L0diffX(pointVectorField&, pointVectorField&, const pointScalarField&);
         vector L2diffXYZ(pointVectorField&, pointVectorField&, const pointScalarField&);
         vector L2normXYZ(pointVectorField&, const pointScalarField&);  
 };

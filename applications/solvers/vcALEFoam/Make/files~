@@ -1,3 +1,0 @@
-solidVertexFoam.C
-
-EXE = $(FOAM_USER_APPBIN)/solidVertexFoam

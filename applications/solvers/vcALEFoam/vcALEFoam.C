@@ -44,6 +44,7 @@ Description
 #include "dualMesh.H"
 #include "operations.H"
 #include "aleModel.H"
+#include "paperFunctions.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 

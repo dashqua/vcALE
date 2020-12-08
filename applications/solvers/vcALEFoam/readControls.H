@@ -52,6 +52,12 @@ IOdictionary fvSolution
     )
 );
 
+// papr Functions dictionary
+IOdictionary paperFunctionsProperties (
+  IOobject ("paperFunctionsProperties", runTime.system(), mesh, 
+	  IOobject::MUST_READ_IF_MODIFIED, IOobject::NO_WRITE)
+);
+
 
 Info << "Reading data from dictionaries ..." << endl;
 
