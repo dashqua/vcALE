@@ -114,6 +114,10 @@ class solidModel
 
         //- HardeningLaw
         word HardeningLaw_;
+
+        //- delta and tauInf parameters for newton raphson nonlinear law
+        scalar delta_;
+        scalar tauInf_;
   
 private:
 
@@ -189,6 +193,10 @@ public:
 				 pointScalarField&/*,
 				 pointTensorField& */
 				 );
+
+
+        scalar NewtonRaphson(tensor, tensor, scalar, scalar);
+  //  solidModel::NewtonRaphson(tensor& Fnode, tensor& bnode, scalar& strain_pnode, scalar& f
   
         // Print
 

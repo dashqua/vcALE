@@ -84,13 +84,20 @@ solidModel::solidModel
      dimensionedScalar("vMises", dimensionSet(1,-1,-2,0,0,0,0), 0.0)
     ),
 
-    HardeningLaw_("constant")
+    HardeningLaw_("constant"),
+    delta_(0.0),
+    tauInf_(0.0)
   
 {
   if (model_ == "vonMises"){
     Hm_    = dict.subDict("solidModel").subDict("vonMisesDict").lookup("Hm");
     Ys0_   = dict.subDict("solidModel").subDict("vonMisesDict").lookup("Ys");
-    HardeningLaw_ = dict.subDict("solidModel").subDict("vonMisesDict").lookup("HardeningLaw");
+    dict.subDict("solidModel").subDict("vonMisesDict").lookup("HardeningLaw") >> HardeningLaw_;
+    if (HardeningLaw_ == "nonLinear") {
+      dict.subDict("solidModel").subDict("vonMisesDict").lookup("delta") >> delta_;
+      dict.subDict("solidModel").subDict("vonMisesDict").lookup("tauInf") >> tauInf_;
+    }
+    Info << "Hardening Law: " << HardeningLaw_ << nl;
   }
 }
 
@@ -160,7 +167,12 @@ void solidModel::correct(
 	vector eStretch = vector::zero;
 	if (f > 0.0){
 	  directionV = tauDevT/(sqrt(2.0/3.0)*sqrt(tauDevT & tauDevT));
-	  plasticM = f/(3.0*mu_.value() + Hm_.value());
+
+	  if (HardeningLaw_ == "nonLinear") {
+	    plasticM = NewtonRaphson(F_[nodeID], b_[nodeID], strain_p[nodeID], f);
+	  } else {
+	    plasticM = f/(3.0*mu_.value() + Hm_.value());
+	  }
 
 	  // Elastic Stretch Vector
 	  eStretch = vector(
@@ -353,6 +365,23 @@ void solidModel::correct(pointTensorField& F, pointTensorField& H, pointScalarFi
 
 }
 
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+scalar solidModel::NewtonRaphson(tensor Fnode, tensor bnode, scalar strain_pnode, scalar f) {
+  scalar plasticM = 0, plasticMold = 0;
+  scalar J = det(Fnode);
+  // parameters to define: delta_ , tauInf_
+  scalar muBar = (1./3.)*mu_.value()*Foam::pow(J,-2./3.) * tr(bnode);
+  scalar F = f + Ys0_.value() + Hm_.value()*strain_pnode + (tauInf_-Ys0_.value())*(1-Foam::exp(-delta_*strain_pnode));
+  while (true){
+    scalar T = (3*muBar*plasticMold) + Ys0_.value() + Hm_.value()*(strain_pnode+plasticMold) + (tauInf_-Ys0_.value())*(1-Foam::exp(-delta_*(strain_pnode+plasticMold)));
+    scalar rhs = (T-F)/(3*muBar + Hm_.value() + delta_*(tauInf_-Ys0_.value())*Foam::exp(-delta_*(strain_pnode+plasticMold)) );
+    plasticMold = plasticM;
+    plasticM = plasticMold - rhs;
+    Info << "plasticM: " << plasticM << nl;
+  }
+  return plasticM;
+}
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 

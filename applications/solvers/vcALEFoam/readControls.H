@@ -89,6 +89,7 @@ if (timeStepping != "constant" && timeStepping != "variable") {
                                    << abort(FatalError);
 }
 
+/*
 const scalar& alpha_ = readScalar(mechanicalProperties.lookup("alpha"));
 if (alpha_ < 0) { 
   FatalErrorIn("readControls.H") << "Invalid 'alpha' value in constant/mechanicalProperties." << abort(FatalError) ;
@@ -96,6 +97,11 @@ if (alpha_ < 0) {
   FatalErrorIn("readControls.H") << "Invalid 'alpha' value in constant/mechanicalProperties." << abort(FatalError) ;
 }
 Info << "Average P* coefficient alpha: " << alpha_ << nl;
+*/
+const scalar& muMaterial_ = readScalar(mechanicalProperties.lookup("muMaterial"));
+const scalar& muSpatial_  = readScalar(mechanicalProperties.lookup("muSpatial"));
+Info << "Coefficient for Pstar -> muMaterial: " << muMaterial_ << " ___ muSpatial: " << muSpatial_ << nl;
+
 
 // Courant-Friedrichs-Lewy Number
 const scalar& cfl = readScalar(controlDict.lookup("cfl"));
@@ -107,7 +113,6 @@ if (cfl <= 0.0 || cfl > 1.0) {
 // Stabilisation parameter for near incompressibility
 const scalar& beta =
     readScalar(fvSolution.lookup("incompressiblilityCoefficient"));
-
 
 // ALE - For P*: use of manufactured motion or use of P*-based RHS for solvedW
 bool usePstar = mechanicalProperties.lookupOrDefault<bool>("usePstar", false);

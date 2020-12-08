@@ -283,9 +283,9 @@ public:
         vector L2diffXYZ(pointVectorField&, pointVectorField&, const pointScalarField&);
         vector L2normXYZ(pointVectorField&, const pointScalarField&);  
 };
-
+  
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
-
+  
 } // End namespace Foam
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //

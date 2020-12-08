@@ -41,7 +41,8 @@ if (solidModel__ == "vonMises") {
 } else {
     model.correct(trueF, trueH, trueJ, spatJ, matJ);
 }
-starP   = ((1.0-alpha_)*matP) + (alpha_*(trueF.T()&spatP));    // P*
+starP   = (0.5*muMaterial_*matP) + (0.5*muSpatial_*(trueF.T()&spatP));
+//((1.0-alpha_)*matP) + (alpha_*(trueF.T()&spatP));    // P*
 P = model.piola();
 
 // Update velocities

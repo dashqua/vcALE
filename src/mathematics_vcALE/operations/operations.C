@@ -952,7 +952,7 @@ vector operations::L2normXYZ(pointVectorField& v1, const pointScalarField& V){
 }
   
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
-
+  
 } // End namespace Foam
 
 // ************************************************************************* //
