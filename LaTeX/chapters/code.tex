@@ -409,7 +409,17 @@ and
 \end{subequations}
 
 
+\subsubsection{Manufactured 2D material mapping with roller BCs}
 
+\begin{equation}
+	\vect{\psi}_\beta(\cchi,t) = 
+	\begin{pmatrix}
+		\chi_1 + \beta sin^2\left(\frac{\pi t}{T}\right) sin\left(\frac{2\pi\chi_1}{\chi_{1,R}}\right) \left[cos\left(\frac{2\pi\chi_2}{\chi_{2,R}}\right)+sin\left(\frac{2\pi\chi_2}{\chi_{2,R}}\right)\right] \\
 
-
+		\chi_2 + 5*\beta sin^2\left(\frac{2*\pi t}{T}\right) sin\left(\frac{2\pi\chi_2}{\chi_{2,R}}\right) \left[cos\left(\frac{2\pi\chi_1}{\chi_{1,R}}\right)+sin\left(\frac{2\pi\chi_1}{\chi_{1,R}}\right)\right] \\
+		
+		\chi_3
+	\end{pmatrix},
+\end{equation}
+with $0<\beta<0.02$ the intensity parameter, $T$ the period of the sinusoidal motion (typically indexed on the simulation physical time), $\chi_{1,R}$ and $\chi_{2,R}$ the dimensions of the box.
 %

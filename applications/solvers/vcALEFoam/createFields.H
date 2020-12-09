@@ -344,7 +344,7 @@ spatialModel_.correct();
 pointTensorField spatP   = spatialModel_.piola(F,  spatH, spatJdet);
 
 // ALE - get Piola Star
-pointTensorField starP = (0.5*muMaterial_*matP) + (0.5*muSpatial_*(trueF.T()&spatP));
+pointTensorField starP = (0.5*muMaterial_*pf.Fbar(matP)) + (0.5*muSpatial_*(trueF.T()&pf.Fbar(spatP)));
 //((1.0-alpha_)*matP) + (alpha_*(trueF.T()&spatP));
 
 /*

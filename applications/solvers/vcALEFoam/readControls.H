@@ -54,7 +54,7 @@ IOdictionary fvSolution
 
 // papr Functions dictionary
 IOdictionary paperFunctionsProperties (
-  IOobject ("paperFunctionsProperties", runTime.system(), mesh, 
+  IOobject ("paperFunctionsProperties", runTime.constant(), mesh, 
 	  IOobject::MUST_READ_IF_MODIFIED, IOobject::NO_WRITE)
 );
 

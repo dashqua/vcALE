@@ -36,14 +36,19 @@ SourceFiles
 #define paperFunctions_H
 
 #include "fvMesh.H"
+#include "volFields.H"
+#include "surfaceFields.H"
 #include "pointFields.H"
 #include "vectorList.H"
-#include "operations.H"
+#include "tensorList.H"
+#include "fvc.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 namespace Foam
 {
+
+  class fvMesh;
 
 class paperFunctions
 {
@@ -70,6 +75,9 @@ class paperFunctions
 
   //- Bulk modulus
   dimensionedScalar kappa_;
+
+  // Function for Fbar
+  word FbarFunction;
   
 private:
 
@@ -81,8 +89,8 @@ private:
 
 public:
 
-    //- Runtime type information
-    TypeName("paperFunctions");
+  //- Runtime type information
+  TypeName("paperFunctions");
 
 
   //- Constructor
@@ -93,7 +101,8 @@ public:
 
 
   // Member functions
-
+  pointTensorField Fbar (pointTensorField&);
+  
 };
 
 

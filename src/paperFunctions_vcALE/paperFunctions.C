@@ -53,7 +53,9 @@ paperFunctions::paperFunctions
     nu_(dict.lookup("nu")),
     mu_(E_/(2.0*(1.0 + nu_))),
     lambda_(nu_*E_/((1.0 + nu_)*(1.0 - 2.0*nu_))),
-    kappa_(lambda_ + (2.0/3.0)*mu_)
+    kappa_(lambda_ + (2.0/3.0)*mu_),
+
+    FbarFunction(paperdict.lookup("FbarFunction"))
       
 { }
 
@@ -63,6 +65,18 @@ paperFunctions::~paperFunctions() {}
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
+pointTensorField paperFunctions::Fbar (pointTensorField& F){
+    pointTensorField Fbar = F;
+    if (FbarFunction == "Function1"){
+	    Info << "yes" << nl;
+      forAll(mesh_.points(), n) {
+	Fbar[n] = tensor(1,0,0,
+			 0,F[n].yy(),0,
+			 0,0,1);
+      }
+    }
+    return Fbar;
+  }
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 }
