@@ -131,7 +131,6 @@ if (tutorial == "swingingCube") {
    }
    x = u + X; 
 }
-
 /*
     ______     ___   _____  ____   ____  ________  ______     ____   ____  _       _______     ______   
   .' ____ \  .'   `.|_   _||_  _| |_  _||_   __  ||_   _ `.  |_  _| |_  _|/ \     |_   __ \  .' ____ \
@@ -203,7 +202,9 @@ pointScalarField alphaH (
                                                                                                       */
 Info << "Creating Plasticity scaled variables ..." << nl;
 pointTensorField D = DH / matJ;
-pointScalarField alpha = alphaH / matJ;
+pointScalarField alpha ( 
+	IOobject("alpha", runTime.timeName(), mesh, IOobject::NO_READ, IOobject::NO_WRITE), alphaH / matJ
+		);
 
 Info << "Creating constitutive model ..." << endl;
 // Deformation gradient tensor for P material model
@@ -238,8 +239,7 @@ if (tutorial == "swingingCube") {
 		      );
       F = trueF;
     }
-}
-
+} 
 
 // cofactor tensor for P material model
 pointTensorField trueH ( IOobject("trueH", mesh), pMesh, Foam::tensor::I );
@@ -261,7 +261,14 @@ pointTensorField spatH = spatJdet * op.invT(F);//spatJ * op.invT(F);
 
 // Solid Model
 solidModel model(trueF, mechanicalProperties, mesh);
-model.correct(trueF, trueH, trueJ, spatJ, matJ);
+const word& solidModel__ = mechanicalProperties.subDict("solidModel").lookup("solidModel");
+if (solidModel__ == "vonMises") {
+    D = DH / matJ; alpha = alphaH / matJ;
+    model.correct(trueF, trueH, trueJ, spatJ, matJ, D, alpha);
+    forAll(D, n) { DH[n] = D[n] * matJ[n];  alphaH[n] = alpha[n] * matJ[n]; }
+} else {
+    model.correct(trueF, trueH, trueJ, spatJ, matJ);
+}
 
 // Model quantities
 const dimensionedScalar& rho   = model.density();
@@ -344,7 +351,7 @@ spatialModel_.correct();
 pointTensorField spatP   = spatialModel_.piola(F,  spatH, spatJdet);
 
 // ALE - get Piola Star
-pointTensorField starP = (0.5*muMaterial_*pf.Fbar(matP)) + (0.5*muSpatial_*(trueF.T()&pf.Fbar(spatP)));
+pointTensorField starP = (0.5*muMaterial_*matP) + (0.5*muSpatial_*(pf.Fbar(trueF).T()&spatP));
 //((1.0-alpha_)*matP) + (alpha_*(trueF.T()&spatP));
 
 /*
@@ -502,7 +509,7 @@ if (GCLtechnique == "withInvolution") {
 //vectorField PmatHC    = inter.pointToEdge( matP & aleH ) & N;          // not used anymore
 vectorField pRwHC     = inter.pointToEdge( (pR*solvedW) & aleH ) & N;
 
-//vectorField PstarHC   = inter.pointToEdge( starP & aleH ) & N;              // not used anymore
+vectorField PstarHC   = inter.pointToEdge( starP & aleH ) & N;              // not used anymore
 
 pointVectorField D1 ( IOobject("D1", mesh), pMesh, vector::zero );
 pointVectorField D2 ( IOobject("D2", mesh), pMesh, vector::zero );

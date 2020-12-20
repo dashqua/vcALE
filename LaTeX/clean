@@ -1,0 +1,2 @@
+#!/bin/bash
+rm -rf *.gz *.aux *.log *.bbl *.blg *.fls *.xml *.out *.bib *.fdb_latexmk *.yaml

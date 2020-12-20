@@ -118,6 +118,7 @@ class solidModel
         //- delta and tauInf parameters for newton raphson nonlinear law
         scalar delta_;
         scalar tauInf_;
+        scalar tolerance_; 
   
 private:
 
@@ -170,6 +171,8 @@ public:
 
             const dimensionedScalar& Us() const { return Us_; }
 
+            const pointScalarField& vonMises() const { return vMises_; }
+  
         // Edit
 
 	    //-ALE: Correct CpInv, strain_p and Piola 
@@ -195,7 +198,7 @@ public:
 				 );
 
 
-        scalar NewtonRaphson(tensor, tensor, scalar, scalar);
+             scalar NewtonRaphson(scalar, tensor, tensor, scalar, scalar);
   //  solidModel::NewtonRaphson(tensor& Fnode, tensor& bnode, scalar& strain_pnode, scalar& f
   
         // Print

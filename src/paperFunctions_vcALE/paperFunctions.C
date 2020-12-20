@@ -57,7 +57,10 @@ paperFunctions::paperFunctions
 
     FbarFunction(paperdict.lookup("FbarFunction"))
       
-{ }
+{ 
+    Info << "paperFunction:" << nl
+	 << "-> FbarFunction: " << FbarFunction <<nl;
+}
 
 
 // * * * * * * * * * * * * * * * Destructor  * * * * * * * * * * * * * * * * //
@@ -68,11 +71,28 @@ paperFunctions::~paperFunctions() {}
 pointTensorField paperFunctions::Fbar (pointTensorField& F){
     pointTensorField Fbar = F;
     if (FbarFunction == "Function1"){
-	    Info << "yes" << nl;
       forAll(mesh_.points(), n) {
 	Fbar[n] = tensor(1,0,0,
 			 0,F[n].yy(),0,
 			 0,0,1);
+      }
+    }
+    if (FbarFunction == "Function2"){
+      forAll(mesh_.boundary(), patch) {
+      const fvPatch& patx = mesh_.boundary()[patch];
+      if (patx.name().find("roller") != string::npos) {
+
+        forAll(mesh_.boundaryMesh()[patch], facei) {
+          const label& face = mesh_.boundaryMesh()[patch].start() + facei;
+          forAll(mesh_.faces()[face], nodei) {
+            const label& node = mesh_.faces()[face][nodei];
+            Fbar[node]      = tensor(1,0,0,
+			             0,F[node].yy(),0,
+				     0,0,1
+			    );
+          }
+        }
+      }
       }
     }
     return Fbar;

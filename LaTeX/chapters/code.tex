@@ -280,8 +280,14 @@ And it is obtained that a patch satisfying the constant velocities condition als
 \end{equation*}
 \end{note}
 %
+\subsection{Conservation of the material Jacobian}
+The conservation of the material Jacobian is given subsequently given as:
+\begin{equation}
+	\frac{\partial \J_{\psi}}{\partial t} = \DIV \left( \mat{H}_{\psi}^T \vect{w} \right)
+\end{equation}
+%
 \subsection{Conservation of the spatial Deformation Gradient}
-In low order discretisations, the conservation of the Deformation Gradient aims at avoiding locking (especially in a nearly-incompressible scenario). It yields 
+In low order discretization, the conservation of the Deformation Gradient aims at avoiding locking (especially in a nearly-incompressible scenario). It yields 
 \begin{equation}
 	\frac{\partial \mat{F}_{\phi}}{\partial t} = \GRAD_{\cchi} \left( \hat{\vect{v}} \right)
 \end{equation}
@@ -331,30 +337,135 @@ where $\dot{\vect{w}}$ is a given acceleration term.
 
 A second approach is to solve the following conservation law:
 \begin{equation}
-	\frac{\partial \vect{w}}{\partial t} = \DIV_{\cchi} \left( \mat{P}^* \right)
+	\frac{\partial \vect{w}}{\partial t} = \DIV_{\cchi} \left( \mat{P}^\star \right)
 \end{equation}
 %
+$\mat{P}^\star$ is computed according to an averaged potential:
+\begin{equation}
+	\mat{P}^\star = \frac{1}{2}\mu_\psi\mat{P}_\psi +\frac{1}{2}\mu_\phi\bar{\mat{F}}^T\mat{P}_\phi
+\end{equation}
+
 \subsection{Conservation of the linear momentum}
 The linear momentum follows the following conservation law:
 \begin{equation}
 	f
 \end{equation}
 
+\subsection{ALE mixed formulation}
+\begin{equation}
+	\frac{\partial}{\partial t}
+	\begin{bmatrix}
+		\vect{p}_{\cchi} \\
+		\rho\vect{w} \\
+		\mat{F}_{\psi} \\
+		\mat{F}_{\phi} \\
+		\J_{\psi} \\
+		\J_{\phi} \\
+		\hat{\mat{D}} \\
+		\hat{\alpha} \\
+		\E_{\cchi}
+	\end{bmatrix}
+	-
+	\DIV_{\cchi}
+	\begin{bmatrix}
+		\left(\mat{P}\mat{H}_{\phi}\right) + (\frac{\vect{p}_{\cchi}}{\J_{\psi}}\otimes\vect{w})\mat{H}_{\psi} \\
+		\mat{P}^\star \\
+		\vect{w}\otimes\mat{I} \\
+		\hat{\vect{v}}\otimes\mat{I} \\
+		\mat{H}_{\psi}^T\vect{w} \\
+		\mat{H}_{\psi}^T\mat{F}\vect{w} \\
+		\mat{D} \otimes\left(\mat{H}_{\psi}^T\vect{w}\right) \\
+		\alpha\mat{H}_{\psi}^T\vect{w} \\
+		\left( \mat{P}\mat{H}_{\psi} \right)^T \frac{\vect{p}_{\cchi}}{\rho} + \mat{H}_{\psi}^T \vect{w}\E_{\cchi}
+	\end{bmatrix}
+    =
+    \begin{bmatrix}
+    	\vect{0} \\
+    	\vect{0} \\
+    	\mat{0} \\
+    	\mat{0} \\
+    	0 \\
+    	\mat{H}_{\phi} \bm{:} \GRAD_{\cchi}\vect{v} \\
+    	-2\dot{\gamma} \left( \mat{F}^{-1}\frac{\partial \phi}{\partial \tau}\mat{b}^e\mat{F}^{-T} \right) \\
+    	\dot{\gamma} \\
+    	0
+    \end{bmatrix}
+	~
+	\begin{matrix}
+		\leftarrow \text{stab}\\
+		\leftarrow \text{stab}\\
+		\\
+		\\
+		\\
+		\leftarrow \text{stab}\\
+		\\
+		\\
+		
+	\end{matrix}
+,
+\end{equation}
+with $\hat{\mat{D}} = \J_{\psi}\mat{D} = \J_{\psi} \mat{C}^{p,-1}$ and $\mat{C}^{p,-1}$ the inverse of the plastic right Cauchy tensor, $\hat{\alpha} = \J_{\psi}\alpha$ and $\alpha$ the plastic strain, $\vect{p}_R = \frac{\vect{p}_{\cchi}}{\J_{\psi}}$ the material linear momentum, $\vect{v} = \frac{\vect{p}_R}{\rho}$ the material velocity, $\hat{\vect{v}} = \vect{v} + \mat{F}\vect{w}$ the projected spatial velocity, $\hat{\mat{P}} = \mat{P}\mat{H}_{\psi}$ the projected first Piola tensor and $\mat{P}^\star$ Piola tensor of the material deformation. 
+
+\newpage
 \section{Boundary Conditions}
+This sections addresses the setup of the different boundary conditions proposed for the linear momentum $\vect{p}_{\cchi}$, the projected traction $\hat{\vect{t}} = \hat{\mat{P}}\N$, and the material velocity $\vect{w}$.
+%
+The boundary conditions for the two physical quantities $\vect{p}_{\cchi}, \hat{\vect{t}}$ are defined by the problem's requirements and can be:
+\begin{itemize}
+	\setlength\itemsep{\lineskip}
+	\item free, corresponding to an absence of constraint,
+	\item fixed, corresponding to the enforcement of a value picked by the user,
+	\item traction, corresponding to a pre-defined applied traction,
+	\item roller, corresponding to a symmetric boundary condition
+	\item skew-symmetric, corresponding to the use of the opposite operator of the latter.
+\end{itemize}
+The boundary conditions for $\vect{w}$ are defined by the user, according to the degree of freedom of motion set by the user and can either be:
+\begin{itemize}
+	\setlength\itemsep{\lineskip}
+	\item fixed to 0, corresponding to an absence of motion on the boundary and therefore an exclusively inside motion of the nodes,
+	\item roller, corresponding to a possibility for the nodes to slide along their boundary.
+\end{itemize}
+
+On the other hand, boundary conditions can be applied in two different ways: Weak boundary conditions refer to enforcement on the faces for the fluxes, and are used in the computation of the boundary terms. Strong boundary conditions are directly applied on the nodes and are called after the update of the variables.
+
+The evaluation of the fluxes is based on a weighted average stencil \cite{Luo1995,Ibrahim2018} defined for a node "a" as 
+\begin{equation}
+	\vect{F}^\gamma_a = \frac{6\vect{F}_a + \vect{F}_b + \vect{F}_c}{8},
+\end{equation}
+with b,c the two other nodes that together with node a define boundary face $\gamma$.
+
 \subsection{Free}
-\subsection{Clamp}
+\begin{subequations}
+\begin{align}
+	\hat{\vect{t}}_i^{\gamma} &= \vect{0}
+\end{align}
+\end{subequations}
+\subsection{Fixed}
+\begin{subequations}
+	\begin{align}
+		\hat{\vect{t}}_i^{\gamma} &= \mat{P}_i \N_\gamma
+	\end{align}
+\end{subequations}
+clamp, time varying, 0
 \subsection{Traction}
+\begin{subequations}
+	\begin{align}
+		\hat{\vect{t}}_i^{\gamma} &= (\N\otimes\N) \mat{P}_i \N_\gamma
+	\end{align}
+\end{subequations}
 \subsection{Roller}
 \subsection{Skew-symmetric}
 
 
 
-
+\newpage
+\section{Models}
+ALE and solid models are virtually the same 
 
 
 
 \newpage 
-\subsection{Time integration}
+\section{Time integration}
 \begin{subequations}
 2 stages Runge-Kutta
 \begin{align}
@@ -408,7 +519,7 @@ and
 \end{equation}
 \end{subequations}
 
-
+\newpage 
 \subsubsection{Manufactured 2D material mapping with roller BCs}
 
 \begin{equation}
@@ -423,3 +534,17 @@ and
 \end{equation}
 with $0<\beta<0.02$ the intensity parameter, $T$ the period of the sinusoidal motion (typically indexed on the simulation physical time), $\chi_{1,R}$ and $\chi_{2,R}$ the dimensions of the box.
 %
+\newpage
+\section{Test cases}
+\subsection{Plane Strain Tensile}
+example 5.1 of \cite{Armero2003}, section 4.3.2 of \cite{Simo1992}, example 3.6 of \cite{DeSouzaNeto1996}, \cite{Simo1985}, \cite{Tvergaard1981}
+
+\bigbreak
+
+True Load vs Displacement
+\begin{equation}
+	\mat{\sigma}_L = \mat{P}\mat{H}_{\psi}\mat{H}^{-T}
+\end{equation}
+
+
+

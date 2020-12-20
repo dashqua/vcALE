@@ -42,7 +42,7 @@ aleModel::aleModel
 (
     const dictionary& dict,
     const fvMesh& vm,
-    pointMesh& pMesh,
+        pointMesh& pMesh,
     const word name
 )
 :
@@ -93,11 +93,14 @@ aleModel::aleModel
     if (!usePstar_) {
       dict.subDict(name_).subDict("neoHookeanDict").lookup("fictitiousMotionType") >> fictitiousMotionType_;
       dict.subDict(name_).subDict("neoHookeanDict").lookup("beta") >> beta_;
-      
       dict.subDict(name_).subDict("neoHookeanDict").lookup("XR") >> XR;
       dict.subDict(name_).subDict("neoHookeanDict").lookup("YR")>> YR;
-    
       dict.subDict(name_).subDict("neoHookeanDict").lookup("T") >> T_;
+      Info << "neoHookean models parameters: " << nl
+	   << "-> beta = " << beta_ << nl
+	   << "-> T = " << T_ << nl
+	   << "-> XR = " << XR << nl
+	   << "-> YR = " << YR << nl;
     }
   }
 }
@@ -111,7 +114,42 @@ aleModel::~aleModel() {}
 void aleModel::correct()
 {
  if (usePstar_) { return; }
- if (fictitiousMotionType() == "sinusoid_order2inTime_roller") {
+ if (fictitiousMotionType() == "sinusoid_order2inTime_roller_slice") { 
+    scalar t = mesh_.time().value();
+    scalar pi = Foam::constant::mathematical::pi, T=T_, pi2 = pi*pi, T2=T_*T_;
+    forAll(wDot_, p) { 
+      scalar x = mesh_.points()[p][0];
+      scalar y = mesh_.points()[p][1];
+      scalar z = mesh_.points()[p][2];
+      scalar rho = Foam::sqrt( (x*x) + (z*z) );
+      scalar X = rho;
+      scalar Y = y;
+      wDot_[p][0] = (2*beta_*pi2/T2) * (Foam::cos(pi*t/T)*Foam::cos(pi*t/T) - Foam::sin(pi*t/T)*Foam::sin(pi*t/T) )         * Foam::sin(2*pi*X/0.0032) * (Foam::cos(2*pi*Y/0.0324)+Foam::sin(2*pi*Y/0.0324));
+      wDot_[p][1]= (40*beta_*pi2/T2) * (Foam::cos(2*pi*t/T)*Foam::cos(2*pi*t/T) - Foam::sin(2*pi*t/T)*Foam::sin(2*pi*t/T) ) * Foam::sin(2*pi*Y/0.0324) * (Foam::cos(2*pi*X/0.0032)+Foam::sin(2*pi*X/0.0032));
+     wDot_[p][2] = 0;
+
+
+
+      /*
+      scalar R  = (X*X) + (Y*Y) + (Z*Z);
+      if (R > 0) {
+	if ((Z/R) < 1.0) {
+	scalar theta = acos( Z/R );
+      // 1. projection onto 2D plane
+      X /= Foam::sin(theta); Y /= Foam::sin(theta); Z /= Foam::cos(theta);
+      // 2. mapping sinusoid_order2inTime_roller
+      wDot_[p][0] = (2*beta_*pi2/T2) * (Foam::cos(pi*t/T)*Foam::cos(pi*t/T) - Foam::sin(pi*t/T)*Foam::sin(pi*t/T) )         * Foam::sin(2*pi*X/0.0032) * (Foam::cos(2*pi*Y/0.0324)+Foam::sin(2*pi*Y/0.0324));
+      wDot_[p][1]= (40*beta_*pi2/T2) * (Foam::cos(2*pi*t/T)*Foam::cos(2*pi*t/T) - Foam::sin(2*pi*t/T)*Foam::sin(2*pi*t/T) ) * Foam::sin(2*pi*Y/0.0324) * (Foam::cos(2*pi*X/0.0032)+Foam::sin(2*pi*X/0.0032));
+      wDot_[p][2] = 0;
+      // 3. Reprojection onto original plane
+      wDot_[p][0] *= Foam::sin(theta);
+      wDot_[p][1] *= Foam::sin(theta);
+	}
+      }
+      */
+    }
+ }
+ else if (fictitiousMotionType() == "sinusoid_order2inTime_roller") {
     scalar t = mesh_.time().value();
     scalar pi = Foam::constant::mathematical::pi, T=T_, pi2 = pi*pi, T2=T_*T_;
     forAll(wDot_, p) {

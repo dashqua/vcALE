@@ -64,26 +64,15 @@ forAll(mesh.boundary(), patch) {
 	    tensor D1     = D[node],         D2 = D[nodeB],         D3 = D[nodeC];
 	    scalar alpha1 = alpha[node], alpha2 = alpha[nodeB], alpha3 = alpha[nodeC];
 	    tensor starP1 = starP[node], starP2 = starP[nodeB], starP3 = starP[nodeC];
-/*
-	    tensor     HT1 = aleH[node].T(),      HT2 = aleH[nodeB].T(),      HT3 = aleH[nodeC].T();
-            tensor spatHT1 = spatH[node].T(), spatHT2 = spatH[nodeB].T(), spatHT3 = spatH[nodeC].T();
-*/
+	    
 	    tensor     HT1 = HT[node],         HT2 = HT[nodeB],         HT3 = HT[nodeC];
             tensor spatHT1 = spatHT[node], spatHT2 = spatHT[nodeB], spatHT3 = spatHT[nodeC];
-/*
-	    vector v1 = v_[node];  vector vH1 = vHat[node];  vector w1 = solvedW[node];
-	    vector v2 = v_[nodeB]; vector vH2 = vHat[nodeB]; vector w2 = solvedW[nodeB];
-	    vector v3 = v_[nodeC]; vector vH3 = vHat[nodeC]; vector w3 = solvedW[nodeC];
-*/
-            vector v1  = v_[node],    v2 = v_[nodeB],    v3 = v_[nodeC],
+            
+	    vector v1  = v_[node],    v2 = v_[nodeB],    v3 = v_[nodeC],
 	           vH1 = vHat[node], vH2 = vHat[nodeB], vH3 = vHat[nodeC],
 		   w1  = solvedW[node], w2 = solvedW[nodeB], w3 = solvedW[nodeC];
 
-	    if (rollerBCforW){ 
-		    w1 = (I-(Npf*Npf)) & w1, w2 = (I-(Npf*Npf)) & w2, w3 = (I-(Npf*Npf)) & w3; 
-		    //vector newNpf = (aleH[node]&Npf)/lambdaH[node];
-		    //w1 = (I-(newNpf*newNpf)) & w1, w2 = (I-(newNpf*newNpf)) & w2, w3 = (I-(newNpf*newNpf)) & w3;
-	    }
+	    if (rollerBCforW){  w1 = (I-(Npf*Npf)) & w1, w2 = (I-(Npf*Npf)) & w2, w3 = (I-(Npf*Npf)) & w3;  }
 
             scalar jC_1(0.0), jC_2(0.0), jC_3(0.0), rhsSpatJ1Clocal(0.0), HTwClocal(0.0);
 	     
@@ -192,7 +181,6 @@ forAll(mesh.boundary(), patch) {
 	    rhsJ[node]      += HTwClocal      * (magSf_p.boundaryField()[patch][facei]);  //vector::zero; 
             rhsSpatJ1[node] += rhsSpatJ1Clocal * (magSf_p.boundaryField()[patch][facei]);
 	    rhsSpatJ2[node] += rhsSpatJ2Clocal & (Sf_p.boundaryField()[patch][facei]);
-	    //rhsSpatJalt[node] += rhsSpatJaltClocal & (Sf_p.boundaryField()[patch][facei]);
 	    if (rollerBCforW) { rhsW[node] += rhsWClocal & (Sf_p.boundaryField()[patch][facei]); } else { rhsW[node] = vector::zero; }
             rhsD[node]      += rhsDClocal     * (magSf_p.boundaryField()[patch][facei]);
 	    rhsAlpha[node]  += rhsAlphaClocal & (Sf_p.boundaryField()[patch][facei]);
@@ -210,7 +198,6 @@ op.volumeIntegrateGlobal(
     V
 );
 op.volumeIntegrate(rhsW2, V);
-//op.volumeIntegrate(rhsSpatJalt, V);
 
 // Update
 forAll(x, n) {
@@ -255,7 +242,16 @@ forAll(mesh.boundary(), patch) {
         lm[node]      = (Npf*Npf) & lm[node];
       }
     }  
-  }
+  } /* else if (patx.name().find("fixed") != string::npos) {
+    forAll(mesh.boundaryMesh()[patch], facei) {
+      const label& face = mesh.boundaryMesh()[patch].start() + facei;
+      vector Npf = N_p.boundaryField()[patch][facei];
+      forAll(mesh.faces()[face], nodei) {
+        const label& node = mesh.faces()[face][nodei];
+        if (t.value()<tauBC) { lm[node]      = -uMaxBC * ((t.value()/tauBC)-1) * vector(0,1,0) ; }
+      }
+    }  
+  } */
   //
   if (rollerBCforW) {
     forAll(mesh.boundaryMesh()[patch], facei) {

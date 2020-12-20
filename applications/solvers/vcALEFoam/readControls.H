@@ -95,17 +95,15 @@ if (timeStepping != "constant" && timeStepping != "variable") {
                                    << abort(FatalError);
 }
 
-/*
-const scalar& alpha_ = readScalar(mechanicalProperties.lookup("alpha"));
-if (alpha_ < 0) { 
-  FatalErrorIn("readControls.H") << "Invalid 'alpha' value in constant/mechanicalProperties." << abort(FatalError) ;
-} else if (alpha_ > 1) { 
-  FatalErrorIn("readControls.H") << "Invalid 'alpha' value in constant/mechanicalProperties." << abort(FatalError) ;
-}
-Info << "Average P* coefficient alpha: " << alpha_ << nl;
-*/
+// Stabilisation parameter for near incompressibility
+const scalar& beta =
+    readScalar(fvSolution.lookup("incompressiblilityCoefficient"));
+
+// ALE - For P*: use of manufactured motion or use of P*-based RHS for solvedW
+bool usePstar = mechanicalProperties.lookupOrDefault<bool>("usePstar", false);
+Info << "Computation of solvedW's RHS: use of Pstar (1) or wDot (0): " << usePstar << nl;
 const scalar& muMaterial_ = readScalar(mechanicalProperties.lookup("muMaterial"));
-const scalar& muSpatial_  = readScalar(mechanicalProperties.lookup("muSpatial"));
+const scalar& muSpatial_  = readScalar(mechanicalProperties.lookup("muSpatial")) ;
 Info << "Coefficient for Pstar -> muMaterial: " << muMaterial_ << " ___ muSpatial: " << muSpatial_ << nl;
 
 
@@ -116,13 +114,6 @@ if (cfl <= 0.0 || cfl > 1.0) {
                                    << abort(FatalError);
 }
 
-// Stabilisation parameter for near incompressibility
-const scalar& beta =
-    readScalar(fvSolution.lookup("incompressiblilityCoefficient"));
-
-// ALE - For P*: use of manufactured motion or use of P*-based RHS for solvedW
-bool usePstar = mechanicalProperties.lookupOrDefault<bool>("usePstar", false);
-Info << "Computation of solvedW's RHS: use of Pstar (1) or wDot (0): " << usePstar << nl;
 
 // ALE - For update of solvedW
 // update material motion every x iteration
@@ -148,3 +139,8 @@ if (nbRKstages != 2 || nbRKstages != 3) {
 bool rollerBCforW = mechanicalProperties.lookupOrDefault<bool>("rollerBCforW", false);
 Info << "Do we apply roller boundary conditions for w ? " << (rollerBCforW ? "yes" : "no") << nl;
 //
+//
+//
+// To remove
+//scalar tauBC  = 0; mechanicalProperties.lookup("tauBC") >> tauBC;
+//scalar uMaxBC = 0; mechanicalProperties.lookup("uMaxBC") >> uMaxBC;

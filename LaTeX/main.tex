@@ -1,16 +1,17 @@
 \documentclass[12pt, twoside, titlepage, a4paper]{book}
-\newcommand\LTXT{"C:/Users/thomas/OneDrive - Swansea University/Documents/LaTeXTemplates"}%{../../../../../mnt/c/Users/thomas/OneDrive\ -\ Swansea\ University/Documents/LaTeXTemplates/}%{../../../../../mnt/c/Users/thomas/OneDrive - Swansea University/Documents/LaTeXTemplates}%{../LaTeXTemplates}
+\newcommand\LTXT{"C:/Users/thomas/OneDrive - Swansea University/Documents/LaTeXTemplates"}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%% COMMANDS %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %\input{"C:/Users/thomas/OneDrive - Swansea University/Documents/LaTeXTemplates/utilities/commands.tex"}
 \input{\LTXT/utilities/commands.tex}
+\bibliography{./References/MyCollection}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%% ACRONYMS %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%\input{\LTXT/utilities/acronyms_abbrevs.tex}
+\input{\LTXT/utilities/acronyms_abbrevs.tex}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%% GRAPHIC PATH %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -24,8 +25,7 @@
 		%chapters/numericalResults
 %}
 
-%\date{\today}
-%\bibliography{\LTXT/References/MyCollection}
+\date{\today}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%% DOCUMENT %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -42,6 +42,6 @@
 %\include{chapters/Openfoam}
 %\include{chapters/MathematicalFoundations}
 %
-%\part{References}
-%\printbibliography[heading=none]
+\part{References}
+\printbibliography[heading=none]
 \end{document}

@@ -18,13 +18,38 @@ lm.write();
 
 DH.write();
 alphaH.write();
-
+alpha.write();
+model.vonMises().write();
 
 if (doPostPro == "activated") {
 
+	// Load computation
+  pointScalarField Load(
+	IOobject("Load", runTime.timeName(), mesh, IOobject::NO_READ, IOobject::NO_WRITE), pMesh,
+	dimensionedScalar("Load", dimless, 0.0)
+		  );
+  scalar Load_ = 0.0;
+  forAll(mesh.boundary(), patch) {
+    const fvPatch& patx = mesh.boundary()[patch];
+    if (patx.name().find("fixed") != string::npos) {
+      forAll(mesh.boundaryMesh()[patch], facei) {
+        const label& face = mesh.boundaryMesh()[patch].start() + facei;
+          vector Npf = N_p.boundaryField()[patch][facei];
+          forAll(mesh.faces()[face], nodei) {
+          const label& node = mesh.faces()[face][nodei];
+          //Load[node]      = (P[node] & Npf) & vector(0,1,0);
+	  Load_ += (P[node]&Npf) & vector(0,1,0);
+        }
+      }
+    }
+  }
+  Info << "Load = " << Load_    //op.L2normScalar(Load,V) 
+       << " - TopDisp = " << u[3] << nl;
 
-Info << "sample L2 of Forces: " << op.L2normXYZ(Forces, V) << endl;
-
+  if (isFSI) { 
+    Info << "sample L2 of Forces: " << op.L2normXYZ(Forces, V) << endl;
+    uD.write();
+  }
 
   if (tutorial == "swingingCube") {
     // Compute linear displacements or lm for small amplitudes

@@ -281,7 +281,8 @@ public:
         // direct L2-difference of 2 vectorsFields
         scalar L0diffX(pointVectorField&, pointVectorField&, const pointScalarField&);
         vector L2diffXYZ(pointVectorField&, pointVectorField&, const pointScalarField&);
-        vector L2normXYZ(pointVectorField&, const pointScalarField&);  
+        vector L2normXYZ(pointVectorField&, const pointScalarField&);
+        scalar L2normScalar(pointScalarField&, const pointScalarField&); 
 };
   
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //

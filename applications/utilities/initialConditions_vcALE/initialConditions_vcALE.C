@@ -105,11 +105,12 @@ int main(int argc, char *argv[])
     );
 
     if (tutorial == "bendingColumnLM")
-    {
+    {	
+	const dimensionedScalar& amplitude(runParameters.lookup("amplitude"));
     	forAll(mesh.points(), node)
 	{
-		vector res(1,0,0);	
-		lm[node] = rho.value() * X[node].y()*res;
+		vector res(1,0,0);
+		lm[node] = amplitude.value() * ( rho.value() * X[node].y()*res );
 	}
     }
 
@@ -186,6 +187,16 @@ int main(int argc, char *argv[])
 	  lm[n][1] = 0;//U0[n] * B * Foam::cos(pi*X/2.) * Foam::sin(pi*Y/2.) * Foam::cos(pi*Z/2.);
 	  lm[n][2] = 0;//U0[n] * C * Foam::cos(pi*X/2.) * Foam::cos(pi*Y/2.) * Foam::sin(pi*Z/2.);
 	}
+    } else if  (tutorial == "planeStrainTensionTest") {
+	    /*
+	pointVectorField topDisp ( 
+	  IOobject("topDisp", mesh), pMesh, dimensionedVector(runParameters.lookup("topDisp"))
+	);
+	
+	pointVectorField v = ;
+	lm = 
+	*/
+
     } else {
 	Info << "Initial Conditions: nothing is applied." << nl;
     }
