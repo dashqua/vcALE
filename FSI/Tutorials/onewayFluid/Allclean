@@ -1,0 +1,10 @@
+#!/bin/bash
+rm -rf ./precice-run ./precice-Solid-* ./precice-Fluid-*
+
+cd Solid
+./clean
+cd ..
+
+cd Fluid
+./clean
+cd ..

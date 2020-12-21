@@ -1,0 +1,33 @@
+#!/bin/bash
+
+# Participant 1: Fluid
+Participant1="Fluid"
+Solver1="pimpleFoam"
+   
+    echo "Starting the ${Participant1} participant..."
+    cd ${Participant1}
+    #./clean
+    ./prepare
+    cd ..
+    ${Solver1} -case ${Participant1} > ${Participant1}.log 2>&1 &
+    #PIDParticipant1=$!
+  
+# Participant 2: Solid
+Participant2="Solid"
+Solver2="vcALEFoam"
+
+    echo "Starting the ${Participant2} participant..."
+    cd ${Participant2}
+    ./clean
+    ./prepare
+    cd ..
+    ${Solver2} -case ${Participant2} > ${Participant2}.log 2>&1 &
+    #PIDParticipant2=$!
+
+# Wait for all the participants to finish
+#echo "Waiting for the participants to exit..."
+#wait ${PIDParticipant1}
+#wait ${PIDParticipant2}
+
+echo "end"
+
