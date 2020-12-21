@@ -48,6 +48,7 @@ if (doPostPro == "activated") {
 
   if (isFSI) { 
     Info << "sample L2 of Forces: " << op.L2normXYZ(Forces, V) << endl;
+    Forces.write();
     uD.write();
   }
 

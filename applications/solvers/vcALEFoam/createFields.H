@@ -549,14 +549,9 @@ pointVectorField rhsLm3 ( IOobject ("rhsLm3", mesh), pMesh,
 );
 pointVectorField rhsLm4 ( IOobject ("rhsLm4", mesh), pMesh,
     dimensionedVector("rhsLm4", lm.dimensions()/dimTime, vector::zero)
-);/*
-pointVectorField externalForces ( 
-    IOobject("externalForces", runTime.timeName(), mesh, IOobject::READ_IF_PRESENT, IOobject::NO_WRITE), pMesh,
-    dimensionedVector("externalForces", dimensionSet(1,-2,-2,0,0,0,0), vector::zero)
 );
-externalForces.correctBoundaryConditions();*/
-
 rhsLm4.primitiveFieldRef() = op.surfaceSum(stabC*magSf) ; 
+
 if (PHatTerm == "withInvolution") {
     rhsLm1.primitiveFieldRef() = 
 	((aleH && op.surfaceSum(P1C*magSf))*vector_100) + ((aleH && op.surfaceSum(P2C*magSf))*vector_010) + ((aleH && op.surfaceSum(P3C*magSf))*vector_001);  
@@ -720,6 +715,6 @@ dual.printDualMeshCentroid();
 Info << "\nObjects all created !" << nl << nl << nl;
 
 
-
+/*
 pointVectorField Forces (IOobject("Forces", mesh, IOobject::READ_IF_PRESENT, IOobject::NO_WRITE), pMesh, dimensionedVector("Forces", dimensionSet(1,1,-2,0,0,0,0), vector::zero));
-
+*/

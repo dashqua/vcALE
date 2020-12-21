@@ -24,11 +24,18 @@ forAll(mesh.boundary(), patch) {
 }
 
 
-  pointVectorField uD(
+pointVectorField uD(
         IOobject("uD", runTime.timeName(), mesh, IOobject::READ_IF_PRESENT, IOobject::AUTO_WRITE), pMesh
-  );
+);
+
+
+pointVectorField Forces (
+	IOobject("Forces", runTime.timeName(), mesh, IOobject::READ_IF_PRESENT, IOobject::AUTO_WRITE), pMesh, dimensionedVector("Forces", dimensionSet(1,1,-2,0,0,0,0), vector::zero)
+);
+
 
 if (isFSI) {
   Info << "This is a FSI problem." << nl;
+
   uD = u;
 }
